@@ -1,0 +1,53 @@
+# AD Helper - One-Click Application Setup
+
+## Files Created
+
+1. **ADHelper_App.bat** - Basic launcher script
+2. **ADHelper_Launcher.bat** - Enhanced launcher with error handling
+3. **ADhelper_fixed.ps1** - Main PowerShell script
+
+## Creating a One-Click Application
+
+### Option 1: Direct Shortcut (Recommended)
+
+1. **Right-click** on `ADHelper_Launcher.bat`
+2. Select **"Create shortcut"**
+3. **Right-click** on the created shortcut → **Properties**
+4. Click **"Change Icon..."** button
+5. Browse to find an icon or use system icons
+6. **Rename** the shortcut to "AD Helper" or "AD"
+
+### Option 2: Desktop Shortcut
+
+1. **Right-click** on your Desktop
+2. Select **"New"** → **"Shortcut"**
+3. Enter the location: `[path_to_script_folder]\ADHelper_Launcher.bat`
+4. Name it "AD Helper" or "AD"
+5. Right-click the new shortcut → **Properties** → **Change Icon**
+
+## Icon Suggestions
+
+To make it look like "AD":
+- Use Windows Character Map to find letters A and D
+- Create a custom icon using Paint or icon editor
+- Use existing folder icon and rename it
+- Search online for "AD letters icon" and download
+
+## Running the Application
+
+Simply **double-click** the shortcut to:
+1. Open a terminal window
+2. Launch PowerShell
+3. Run the AD Helper script automatically
+
+## Features
+
+- **One-click execution** - No need to manually run PowerShell
+- **Error handling** - Shows helpful error messages if script fails
+- **Auto-termination** - Window closes automatically on success
+- **Keeps window open** - On errors for troubleshooting
+- **Clear branding** - Shows "AD Helper" in window title
+
+## Security Note
+
+The script uses `-ExecutionPolicy Bypass` to run PowerShell scripts. Ensure you trust the script before running.
