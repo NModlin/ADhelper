@@ -844,15 +844,69 @@ try {
 catch {
     Write-Warning "Active Directory module is not installed."
     Write-Host "This module requires RSAT (Remote Server Administration Tools)." -ForegroundColor Yellow
-    Write-Host "RSAT must be installed manually from Windows Features or Settings." -ForegroundColor Yellow
-    Write-Host "`nFor Windows 10/11:" -ForegroundColor Cyan
-    Write-Host "  Settings > Apps > Optional Features > Add a feature > RSAT: Active Directory" -ForegroundColor Gray
-    Write-Host "`nFor Windows Server:" -ForegroundColor Cyan
-    Write-Host "  Install-WindowsFeature RSAT-AD-PowerShell" -ForegroundColor Gray
-    Write-Error "Cannot continue without Active Directory module."
-    Stop-Transcript
-    Read-Host "Press Enter to exit..."
-    return
+    Write-Host "`nAttempting automatic installation..." -ForegroundColor Cyan
+
+    # Check if running as administrator
+    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+    if (-not $isAdmin) {
+        Write-Warning "Administrator privileges required to install RSAT."
+        Write-Host "`n💡 Please run this script as Administrator to enable automatic RSAT installation." -ForegroundColor Yellow
+        Write-Host "`nAlternatively, install RSAT manually:" -ForegroundColor Cyan
+        Write-Host "  Windows 10/11: Settings > Apps > Optional Features > Add a feature > RSAT: Active Directory" -ForegroundColor Gray
+        Write-Host "  Windows Server: Install-WindowsFeature RSAT-AD-PowerShell" -ForegroundColor Gray
+        Write-Error "Cannot continue without Active Directory module."
+        Stop-Transcript
+        Read-Host "Press Enter to exit..."
+        return
+    }
+
+    # Attempt to install RSAT
+    try {
+        Write-Host "Installing RSAT: Active Directory Domain Services tools..." -ForegroundColor Yellow
+        Write-Host "This may take several minutes depending on your internet connection..." -ForegroundColor Gray
+
+        # Try Windows 10/11 method first
+        $rsatCapability = Get-WindowsCapability -Name "Rsat.ActiveDirectory*" -Online -ErrorAction SilentlyContinue
+
+        if ($rsatCapability) {
+            Write-Host "Downloading and installing RSAT components..." -ForegroundColor Cyan
+            $result = Add-WindowsCapability -Name "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0" -Online -ErrorAction Stop
+
+            if ($result.RestartNeeded) {
+                Write-Warning "RSAT installation requires a system restart."
+                Write-Host "Please restart your computer and run this script again." -ForegroundColor Yellow
+                Stop-Transcript
+                Read-Host "Press Enter to exit..."
+                return
+            }
+
+            Write-Host "✅ RSAT installed successfully!" -ForegroundColor Green
+            Write-Host "Attempting to load Active Directory module..." -ForegroundColor Cyan
+
+            # Try to import the module again
+            Import-Module ActiveDirectory -ErrorAction Stop
+            Write-Host "✅ Active Directory module is now ready." -ForegroundColor Green
+        }
+        else {
+            # Try Windows Server method
+            Write-Host "Attempting Windows Server installation method..." -ForegroundColor Cyan
+            Install-WindowsFeature RSAT-AD-PowerShell -ErrorAction Stop
+            Import-Module ActiveDirectory -ErrorAction Stop
+            Write-Host "✅ Active Directory module is now ready." -ForegroundColor Green
+        }
+    }
+    catch {
+        Write-Error "Failed to install RSAT automatically: $($_.Exception.Message)"
+        Write-Host "`n💡 Please install RSAT manually:" -ForegroundColor Yellow
+        Write-Host "  Windows 10/11: Settings > Apps > Optional Features > Add a feature > RSAT: Active Directory" -ForegroundColor Gray
+        Write-Host "  Windows Server: Install-WindowsFeature RSAT-AD-PowerShell" -ForegroundColor Gray
+        Write-Host "`nOr run PowerShell as Administrator and execute:" -ForegroundColor Yellow
+        Write-Host "  Get-WindowsCapability -Name RSAT.ActiveDirectory* -Online | Add-WindowsCapability -Online" -ForegroundColor Gray
+        Stop-Transcript
+        Read-Host "Press Enter to exit..."
+        return
+    }
 }
 
 # Load System.Web for URL decoding
