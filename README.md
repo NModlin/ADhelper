@@ -1,10 +1,36 @@
-# ADhelper - Active Directory & Microsoft 365 User Management Tool
+# ADhelper - Active Directory & Jira Management App
 
-![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue)
+![React](https://img.shields.io/badge/React-19.2.3-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)
+![Electron](https://img.shields.io/badge/Electron-39.2.7-blue)
+![Material-UI](https://img.shields.io/badge/Material--UI-7.3.7-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
-**ADhelper** is a comprehensive PowerShell script that streamlines the onboarding process for new users by automating Active Directory group assignments, Microsoft 365 license provisioning, and Exchange Online proxy address configuration.
+## 🚀 Quick Start
+
+**Browser Mode (Recommended):**
+```bash
+npm run dev:vite
+```
+Then open: `http://127.0.0.1:5173`
+
+**Desktop Mode (Electron):**
+```bash
+npm run dev
+```
+
+See [HOW_TO_RUN.md](HOW_TO_RUN.md) for detailed instructions.
+
+---
+
+## 📖 About
+
+**ADhelper** is a modern web/desktop application that combines:
+1. **Active Directory Management** - PowerShell-based user onboarding automation
+2. **Jira Ticket Management** - Find and update stale tickets automatically
+
+Built with React, TypeScript, Material-UI, and Electron. Works in both browser and desktop modes!
 
 ## 🎯 What Does It Do?
 
