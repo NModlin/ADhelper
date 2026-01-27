@@ -1,0 +1,2913 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260126104503
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 55788
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 10:45:03] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+PS>TerminatingError(Remove-UserFromMFABlocking): "Cannot process argument transformation on parameter 'Credential'. userName"
+Remove-UserFromMFABlocking : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2180 char:103
++ ... FABlocking -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Remove-UserFromMFABlocking], 
+ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Remove-UserFromMFABlocking
+Remove-UserFromMFABlocking : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2180 char:103
++ ... FABlocking -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Remove-UserFromMFABlocking], ParameterBindingArgumentTransform
+   ationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Remove-UserFromMFABlocking
+
+
+❌ MFA Blocking Group removal failed.
+   Error:
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126104554
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126104559
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 2004
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 10:45:59] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+Remove-UserFromMFABlocking : ❌ Failed to remove user from MFA Blocking group: Either the target name is incorrect or 
+the server has rejected the client credentials.
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2180 char:34
++ ... valResult = Remove-UserFromMFABlocking -SamAccountName $samToProcess  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Remove-UserFromMFABlocking
+Remove-UserFromMFABlocking : ❌ Failed to remove user from MFA Blocking group: Either the target name is
+incorrect or the server has rejected the client credentials.
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2180 char:34
++ ... valResult = Remove-UserFromMFABlocking -SamAccountName $samToProcess  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Remove-UserFromMFABlocking
+
+
+❌ MFA Blocking Group removal failed.
+   Error: Either the target name is incorrect or the server has rejected the client credentials.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126104638
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126104643
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 800
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 10:46:44] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+Remove-UserFromMFABlocking : ❌ Failed to remove user from MFA Blocking group: Either the target name is incorrect or 
+the server has rejected the client credentials.
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2180 char:34
++ ... valResult = Remove-UserFromMFABlocking -SamAccountName $samToProcess  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Remove-UserFromMFABlocking
+Remove-UserFromMFABlocking : ❌ Failed to remove user from MFA Blocking group: Either the target name is
+incorrect or the server has rejected the client credentials.
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2180 char:34
++ ... valResult = Remove-UserFromMFABlocking -SamAccountName $samToProcess  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Remove-UserFromMFABlocking
+
+
+❌ MFA Blocking Group removal failed.
+   Error: Either the target name is incorrect or the server has rejected the client credentials.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> $global:?
+True
+**********************
+Windows PowerShell transcript end
+End time: 20260126105140
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126105909
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 45376
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 10:59:09] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126105924
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126105931
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 51500
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 10:59:31] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+PS>TerminatingError(Remove-UserFromMFABlocking): "Cannot process argument transformation on parameter 'Credential'. userName"
+Remove-UserFromMFABlocking : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2205 char:103
++ ... FABlocking -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Remove-UserFromMFABlocking], 
+ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Remove-UserFromMFABlocking
+Remove-UserFromMFABlocking : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2205 char:103
++ ... FABlocking -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Remove-UserFromMFABlocking], ParameterBindingArgumentTransformationExc
+   eption
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Remove-UserFromMFABlocking
+
+
+❌ MFA Blocking Group operation failed.
+   Error:
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> $global:?
+True
+**********************
+Windows PowerShell transcript start
+Start time: 20260126110005
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 54428
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 11:00:05] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+  ❌ Credential/Authentication Error
+     Your admin credentials may be invalid or expired.
+     Please restart the script and re-enter your credentials.
+
+❌ MFA Blocking Group operation failed.
+
+🔐 CREDENTIAL ERROR
+   Your admin credentials are invalid, expired, or lack permissions.
+
+   To fix this:
+   1. Exit the script (option 10)
+   2. Restart and enter valid admin credentials
+   3. Ensure your account has permission to modify group membership
+
+nmodlin
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126110129
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126110139
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 47976
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 11:01:39] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+  ❌ Credential/Authentication Error
+     Your admin credentials may be invalid or expired.
+     Please restart the script and re-enter your credentials.
+
+❌ MFA Blocking Group operation failed.
+
+🔐 CREDENTIAL ERROR
+   Your admin credentials are invalid, expired, or lack permissions.
+
+   To fix this:
+   1. Exit the script (option 10)
+   2. Restart and enter valid admin credentials
+   3. Ensure your account has permission to modify group membership
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+WARNING: Invalid choice. Please try again.
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126111813
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126111818
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 55832
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 11:18:18] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+WARNING: Invalid choice. Please try again.
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+PS>TerminatingError(Remove-UserFromMFABlocking): "Cannot process argument transformation on parameter 'Credential'. userName"
+Remove-UserFromMFABlocking : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2205 char:103
++ ... FABlocking -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Remove-UserFromMFABlocking], 
+ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Remove-UserFromMFABlocking
+Remove-UserFromMFABlocking : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2205 char:103
++ ... FABlocking -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Remove-UserFromMFABlocking], ParameterBindingArgumentTransformationExc
+   eption
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Remove-UserFromMFABlocking
+
+
+❌ MFA Blocking Group operation failed.
+   Error:
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126112714
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126112952
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 56636
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 11:29:52] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+WARNING: Error initializing default drive: 'Unable to find a default server with Active Directory Web Services running.'.
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Unable to find a default server with Active Directory Web Services running."
+  ❌ Failed to process MFA Blocking group removal: Unable to find a default server with Active Directory Web Services running.
+
+❌ MFA Blocking Group operation failed.
+   Error: Unable to find a default server with Active Directory Web Services running.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+  ❌ Credential/Authentication Error
+     Your admin credentials may be invalid or expired.
+     Please restart the script and re-enter your credentials.
+
+❌ MFA Blocking Group operation failed.
+
+🔐 CREDENTIAL ERROR
+   Your admin credentials are invalid, expired, or lack permissions.
+
+   To fix this:
+   1. Exit the script (option 10)
+   2. Restart and enter valid admin credentials
+   3. Ensure your account has permission to modify group membership
+
+2
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126115316
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126115321
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 43136
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 11:53:21] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+  ❌ Credential/Authentication Error
+     Your admin credentials may be invalid or expired.
+     Please restart the script and re-enter your credentials.
+
+❌ MFA Blocking Group operation failed.
+
+🔐 CREDENTIAL ERROR
+   Your admin credentials are invalid, expired, or lack permissions.
+
+   To fix this:
+   1. Exit the script (option 10)
+   2. Restart and enter valid admin credentials
+   3. Ensure your account has permission to modify group membership
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126120137
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126120156
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 55384
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 12:01:56] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+  ❌ Credential/Authentication Error
+     Your admin credentials may be invalid or expired.
+     Please restart the script and re-enter your credentials.
+
+❌ MFA Blocking Group operation failed.
+
+🔐 CREDENTIAL ERROR
+   Your admin credentials are invalid, expired, or lack permissions.
+
+   To fix this:
+   1. Exit the script (option 10)
+   2. Restart and enter valid admin credentials
+   3. Ensure your account has permission to modify group membership
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+  ❌ Credential/Authentication Error
+     Your admin credentials may be invalid or expired.
+     Please restart the script and re-enter your credentials.
+
+❌ MFA Blocking Group operation failed.
+
+🔐 CREDENTIAL ERROR
+   Your admin credentials are invalid, expired, or lack permissions.
+
+   To fix this:
+   1. Exit the script (option 10)
+   2. Restart and enter valid admin credentials
+   3. Ensure your account has permission to modify group membership
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260126120357
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260126120403
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 45672
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-26 12:04:03] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\A-NMODLIN:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+WARNING: Invalid choice. Please try again.
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+PS>TerminatingError(Get-ADUser): "Either the target name is incorrect or the server has rejected the client credentials."
+  ❌ Credential/Authentication Error
+     Your admin credentials may be invalid or expired.
+     Please restart the script and re-enter your credentials.
+
+❌ MFA Blocking Group operation failed.
+
+🔐 CREDENTIAL ERROR
+   Your admin credentials are invalid, expired, or lack permissions.
+
+   To fix this:
+   1. Exit the script (option 10)
+   2. Restart and enter valid admin credentials
+   3. Ensure your account has permission to modify group membership
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+WARNING: Invalid choice. Please try again.
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+**********************
+Windows PowerShell transcript start
+Start time: 20260127095908
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 4468
+PSVersion: 5.1.26100.7462
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7462
+BuildVersion: 10.0.26100.7462
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 09:59:08] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+User: Stephen Monaco (smonaco)
+  ℹ️  User is NOT in MFA Blocking group - no action needed
+
+✅ User 'smonaco' is NOT in the MFA Blocking group.
+   No action is required - the user can already register for MFA.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Remove User from MFA Blocking Group                       ║
+╚════════════════════════════════════════════════════════════╝
+
+This will remove a user from the MFA Registration Blocking group.
+After removal, a verification task will be scheduled to confirm
+the change has replicated across Active Directory (35 min delay).
+
+=== MFA Blocking Group Removal ===
+Target Group: CN=MFA_registration_blocking,OU=Security Groups,DC=RPL,DC=Local
+User: Patrick Jordan (pjordan)
+  ℹ️  User is NOT in MFA Blocking group - no action needed
+
+✅ User 'pjordan' is NOT in the MFA Blocking group.
+   No action is required - the user can already register for MFA.
+
+**********************
+Windows PowerShell transcript start
+Start time: 20260127105514
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 41568
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 10:55:14] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+PS>TerminatingError(Process-User): "Cannot process argument transformation on parameter 'Credential'. userName"
+Process-User : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:1983 char:72
++ ... ocess-User -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Process-User], ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Process-User
+Process-User : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:1983 char:72
++ ... ocess-User -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Process-User], ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Process-User
+
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260127105542
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260127105557
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 50204
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 10:55:58] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+1
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Processing User: lchamp                                   ║
+╚════════════════════════════════════════════════════════════╝
+
+✅ Found user: Lucas Champ
+   UPN: LChamp@Rehrig.com
+   Account Status: Enabled ✅
+
+=== Validating User Attributes ===
+✅ JDEUserName: LChamp
+✅ Manager: CN=O.J. Witherite,OU=Rehrig,OU=Accounts,DC=RPL,DC=Local
+✅ Job Title: RSO Site Manager
+
+✅ All required attributes are already populated.
+
+🚀 Using parallel processing for group assignment...
+
+=== Adding to Groups (Parallel Processing) ===
+🚀 Processing 8 groups with parallel execution...
+  ℹ️  Already member of: CN=All_Employees,OU=Adaxes Managed,OU=Security Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=US Employees,OU=Distribution Lists,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=USEmployees,OU=Adaxes Managed,OU=Security Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=Password Policy - Standard User No Expiration,OU=Security Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=Intune User Enrollment,OU=Security Groups,DC=RPL,DC=Local
+  ✅ Added to: CN=Help Desk Access,OU=Security Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=RehrigVPN,OU=Mgr-Owner-Approval-Required,OU=Self Service Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=RehrigVPN_Distro,OU=Distribution Lists,DC=RPL,DC=Local
+
+Group Membership Summary (Parallel):
+  Groups added: 1
+  Already member: 7
+
+=== Fixing Proxy Addresses ===
+Found 2 missing proxy addresses.
+Adding missing addresses now...
+✅ Successfully updated proxy addresses.
+
+╔════════════════════════════════════════════════════════════╗
+║  FINAL SUMMARY FOR: Lucas Champ                           ║
+╚════════════════════════════════════════════════════════════╝
+
+Operation Results:
+  Validation: ✅ Success
+  Groups:     ✅ Success
+  Proxies:    ✅ Success
+  Processing: 🚀 Parallel (Faster)
+
+🎉 All operations completed successfully!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+=== Resetting User Password ===
+✅ Found user: Myranda Lynn Fincher
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+Reset-UserPassword : Failed to reset password: The 'ConvertTo-SecureString' command was found in the module
+'Microsoft.PowerShell.Security', but the module could not be loaded. For more information, run 'Import-Module
+Microsoft.PowerShell.Security'.
+At C:\Github\ADhelper\ADhelper_fixed.ps1:2057 char:32
++ ... wPassword = Reset-UserPassword -SamAccountName $userInput -Credential ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Reset-UserPassword
+
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> $global:?
+True
+**********************
+Windows PowerShell transcript start
+Start time: 20260127110707
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 35028
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:07:07] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+PS>TerminatingError(Process-User): "Cannot process argument transformation on parameter 'Credential'. userName"
+Process-User : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:1983 char:72
++ ... ocess-User -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Process-User], ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Process-User
+Process-User : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:1983 char:72
++ ... ocess-User -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Process-User], ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Process-User
+
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260127110858
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260127110903
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 50624
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:09:04] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+\
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+**********************
+Windows PowerShell transcript start
+Start time: 20260127111717
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 42900
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:17:18] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+✅ Found stored admin credentials.
+   DEBUG: Credential type = System.Object[]
+   DEBUG: Username =
+   DEBUG: Returning stored credential...
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+DEBUG: adminCredential type = System.Object[]
+DEBUG: adminCredential.UserName =
+PS>TerminatingError(Process-User): "Cannot process argument transformation on parameter 'Credential'. userName"
+Process-User : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:1988 char:72
++ ... ocess-User -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Process-User], ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Process-User
+Process-User : Cannot process argument transformation on parameter 'Credential'. userName
+At C:\Github\ADhelper\ADhelper_fixed.ps1:1988 char:72
++ ... ocess-User -SamAccountName $samToProcess -Credential $adminCredential
++                                                          ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Process-User], ParameterBindingArgumentTransformationException
+    + FullyQualifiedErrorId : ParameterArgumentTransformationError,Process-User
+
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> $global:?
+True
+**********************
+Windows PowerShell transcript start
+Start time: 20260127111954
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 54584
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:19:54] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+y
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260127112020
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260127112028
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 55132
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:20:28] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+**********************
+Windows PowerShell transcript start
+Start time: 20260127114626
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 44672
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:46:26] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260127114703
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260127114707
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 50672
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:47:07] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+**********************
+Windows PowerShell transcript start
+Start time: 20260127115649
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 40828
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:56:49] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+   DEBUG: CredRead result = True
+   DEBUG: UserName from credential = 'RPL.LOCAL\a-nmodlin'
+   DEBUG: CredentialBlobSize = 26
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> $global:?
+True
+**********************
+Windows PowerShell transcript end
+End time: 20260127115733
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260127115951
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 58348
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 11:59:51] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+Enter password for RPL.LOCAL\a-nmodlin:
+✅ Credentials stored securely in Windows Credential Manager.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+Exiting AD Helper Advanced.
+**********************
+Windows PowerShell transcript end
+End time: 20260127120035
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260127120040
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 42280
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 12:00:40] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+PS>TerminatingError(Import-Module): "The following error occurred while loading the extended type data file: Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AuditToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member AccessToString is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Sddl is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Access is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Group is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Owner is already present.
+Error in TypeData "System.Security.AccessControl.ObjectSecurity": The member Path is already present.
+"
+WARNING: Username entry was canceled.
+C:\Github\ADhelper\ADhelper_fixed.ps1 : Failed to initialize credentials. Exiting script.
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,ADhelper_fixed.ps1
+C:\Github\ADhelper\ADhelper_fixed.ps1 : Failed to initialize credentials. Exiting script.
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,ADhelper_fixed.ps1
+
+**********************
+Windows PowerShell transcript end
+End time: 20260127120218
+**********************
+**********************
+Windows PowerShell transcript start
+Start time: 20260127120225
+Username: RPL\nmodlin
+RunAs User: RPL\nmodlin
+Configuration Name: 
+Machine: RPC-ASLSWHS8GCX (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -ExecutionPolicy Bypass -File ADhelper_fixed.ps1
+Process ID: 50900
+PSVersion: 5.1.26100.7627
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7627
+BuildVersion: 10.0.26100.7627
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\ADHelper-Log.txt
+Script session is being logged to: .\ADHelper-Log.txt
+[2026-01-27 12:02:25] === New ADHelper Session Started ===
+
+╔════════════════════════════════════════════════════════════╗
+║  Checking Required Modules...                              ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Active Directory module...
+✅ Active Directory module is ready.
+
+Initializing credential storage...
+✅ Native Windows Credential Manager is ready.
+
+╔════════════════════════════════════════════════════════════╗
+║  Module Status Summary                                     ║
+╚════════════════════════════════════════════════════════════╝
+  Active Directory: ✅ Ready
+  Credential Store: ✅ Ready
+  Voice Commands:   ❌ Disabled
+  Parallel Proc:    ✅ Enabled
+
+✅ All required modules ready!
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  Secure Credential Initialization                          ║
+╚════════════════════════════════════════════════════════════╝
+   [Cred Debug] CredRead for 'ADHelper_AdminCred' returned: True
+   [Cred Debug] Username: RPL.LOCAL\a-nmodlin, BlobSize: 26
+   [Cred Debug] Successfully created PSCredential for: RPL.LOCAL\a-nmodlin
+✅ Found stored admin credentials.
+
+✅ Secure credential initialization completed.
+
+
+
+╔════════════════════════════════════════════════════════════╗
+║  AD HELPER - Advanced Group & Proxy Manager               ║
+║  🚀 Parallel Processing  🎤 Voice Commands  🔐 Secure Creds║
+╚════════════════════════════════════════════════════════════╝
+  [1] Process User (Validation → Groups → Proxies)
+  [2] Process Bulk Users (CSV or Array) 🚀
+  [3] Reset User Password
+  [4] Unlock User Account
+  [5] Create New User Account
+  [6] Voice Commands Mode
+  [7] Toggle Parallel Processing (True)
+  [8] Settings & Configuration
+  [9] Remove from MFA Blocking Group 🔓
+  [10] Exit
+
+╔════════════════════════════════════════════════════════════╗
+║  Processing User: nmodlin                                  ║
+╚════════════════════════════════════════════════════════════╝
+
+✅ Found user: Nathan Modlin
+   UPN: nmodlin@rehrig.com
+   Account Status: Enabled ✅
+
+=== Validating User Attributes ===
+✅ JDEUserName: nmodlin
+✅ Manager: CN=David Hutton,OU=Rehrig,OU=Accounts,DC=RPL,DC=Local
+✅ Job Title: User Support Analyst
+
+✅ All required attributes are already populated.
+
+🚀 Using parallel processing for group assignment...
+
+=== Adding to Groups (Parallel Processing) ===
+🚀 Processing 8 groups with parallel execution...
+  ℹ️  Already member of: CN=All_Employees,OU=Adaxes Managed,OU=Security Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=US Employees,OU=Distribution Lists,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=USEmployees,OU=Adaxes Managed,OU=Security Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=Password Policy - Standard User No Expiration,OU=Security Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=Intune User Enrollment,OU=Security Groups,DC=RPL,DC=Local
+  ✅ Added to: CN=Help Desk Access,OU=Security Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=RehrigVPN,OU=Mgr-Owner-Approval-Required,OU=Self Service Groups,DC=RPL,DC=Local
+  ℹ️  Already member of: CN=RehrigVPN_Distro,OU=Distribution Lists,DC=RPL,DC=Local
+
+Group Membership Summary (Parallel):
+  Groups added: 1
+  Already member: 7
+
+=== Fixing Proxy Addresses ===
+✅ Proxy addresses are already compliant.
+
+╔════════════════════════════════════════════════════════════╗
+║  FINAL SUMMARY FOR: Nathan Modlin                         ║
+╚════════════════════════════════════════════════════════════╝
+
+Operation Results:
+  Validation: ✅ Success
+  Groups:     ✅ Success
+  Proxies:    ✅ Success
+  Processing: 🚀 Parallel (Faster)
+
+🎉 All operations completed successfully!
+
