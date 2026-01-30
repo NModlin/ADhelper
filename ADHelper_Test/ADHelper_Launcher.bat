@@ -13,8 +13,8 @@ echo.
 cd /d "%~dp0"
 
 :: Check if PowerShell script exists
-if not exist "ADhelper_fixed.ps1" (
-    echo ERROR: ADhelper_fixed.ps1 not found in current directory!
+if not exist "ADhelper.ps1" (
+    echo ERROR: ADhelper.ps1 not found in current directory!
     echo Current directory: %CD%
     echo.
     pause
@@ -22,7 +22,7 @@ if not exist "ADhelper_fixed.ps1" (
 )
 
 :: Run PowerShell script with proper execution policy
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '%~dp0ADhelper_fixed.ps1'"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '%~dp0ADhelper.ps1'"
 
 :: Keep window open if script exits with error
 if %errorlevel% neq 0 (
