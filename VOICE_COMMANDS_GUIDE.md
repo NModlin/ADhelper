@@ -112,6 +112,44 @@ Use any of these methods:
 
 ---
 
+## 🔧 Voice Commands Test & Diagnostics (Option 10)
+
+AD Helper includes a built-in testing wizard to verify your voice commands are working correctly.
+
+### How to Access
+1. From the main menu, select **Option 10** - "Voice Commands Test & Diagnostics"
+
+### What It Tests
+1. **Prerequisites Check**
+   - System.Speech assembly availability
+   - Speech Recognition Engine initialization
+   - Audio input device detection
+
+2. **Interactive Command Testing**
+   - Guides you through each voice command one at a time
+   - Shows what to say and alternative phrases
+   - Displays what was recognized and confidence level
+   - Confirms if the command mapped correctly
+
+3. **Debug Information**
+   - If a command fails, shows:
+     - Raw text that was recognized
+     - Confidence percentage
+     - Whether timeout was reached
+     - Suggestions for improvement
+
+4. **Test Summary**
+   - Success rate (e.g., "8/9 commands working")
+   - List of failed commands with recommendations
+
+### Tips for Testing
+- Speak clearly when prompted
+- Press Enter to skip any command
+- Say "exit" to stop testing early
+- Commands are NOT executed during testing (safe mode)
+
+---
+
 ## 📞 Support
 
 If voice commands continue to have issues:
