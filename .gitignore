@@ -44,7 +44,18 @@ packages/
 *.log
 logs/
 
-# PowerShell specific
-*.ps1
-*.psm1
-*.psd1
+# Node modules
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+release/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
