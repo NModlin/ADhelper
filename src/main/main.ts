@@ -137,3 +137,129 @@ ipcMain.handle('run-adhelper-script', async (event, username: string, operation:
   });
 });
 
+// IPC Handlers for Windows Credential Manager
+ipcMain.handle('save-credential', async (event, target: string, username: string, password: string) => {
+  const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
+
+  return new Promise((resolve, reject) => {
+    const ps = spawn('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-File', scriptPath,
+      '-Action', 'Save',
+      '-Target', target,
+      '-Username', username,
+      '-Password', password
+    ]);
+
+    let stdout = '';
+    let stderr = '';
+
+    ps.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    ps.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    ps.on('close', (code) => {
+      try {
+        const result = JSON.parse(stdout);
+        if (result.success) {
+          resolve(result);
+        } else {
+          reject(result);
+        }
+      } catch (error) {
+        reject({ success: false, error: stderr || stdout || 'Failed to parse response' });
+      }
+    });
+
+    ps.on('error', (error) => {
+      reject({ success: false, error: error.message });
+    });
+  });
+});
+
+ipcMain.handle('get-credential', async (event, target: string) => {
+  const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
+
+  return new Promise((resolve, reject) => {
+    const ps = spawn('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-File', scriptPath,
+      '-Action', 'Get',
+      '-Target', target
+    ]);
+
+    let stdout = '';
+    let stderr = '';
+
+    ps.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    ps.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    ps.on('close', (code) => {
+      try {
+        const result = JSON.parse(stdout);
+        if (result.success) {
+          resolve(result);
+        } else {
+          // Return null if credential not found (not an error)
+          resolve({ success: true, username: null, password: null });
+        }
+      } catch (error) {
+        reject({ success: false, error: stderr || stdout || 'Failed to parse response' });
+      }
+    });
+
+    ps.on('error', (error) => {
+      reject({ success: false, error: error.message });
+    });
+  });
+});
+
+ipcMain.handle('delete-credential', async (event, target: string) => {
+  const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
+
+  return new Promise((resolve, reject) => {
+    const ps = spawn('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-File', scriptPath,
+      '-Action', 'Delete',
+      '-Target', target
+    ]);
+
+    let stdout = '';
+    let stderr = '';
+
+    ps.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    ps.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    ps.on('close', (code) => {
+      try {
+        const result = JSON.parse(stdout);
+        resolve(result);
+      } catch (error) {
+        reject({ success: false, error: stderr || stdout || 'Failed to parse response' });
+      }
+    });
+
+    ps.on('error', (error) => {
+      reject({ success: false, error: error.message });
+    });
+  });
+});
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -7,120 +7,354 @@ import {
   Button,
   Grid,
   Divider,
-  Switch,
-  FormControlLabel,
   Alert,
+  IconButton,
+  InputAdornment,
+  Chip,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LockIcon from '@mui/icons-material/Lock';
+import { electronAPI, isElectron } from '../electronAPI';
 
 const Settings: React.FC = () => {
-  const [adDomain, setAdDomain] = useState('RPL.Local');
-  const [adServer, setAdServer] = useState('');
-  const [m365TenantId, setM365TenantId] = useState('');
-  const [autoSave, setAutoSave] = useState(true);
-  const [notifications, setNotifications] = useState(true);
-  const [saved, setSaved] = useState(false);
+  // Jira Credentials
+  const [jiraUrl, setJiraUrl] = useState('');
+  const [jiraEmail, setJiraEmail] = useState('');
+  const [jiraApiToken, setJiraApiToken] = useState('');
+  const [showJiraToken, setShowJiraToken] = useState(false);
+  const [jiraLoaded, setJiraLoaded] = useState(false);
 
-  const handleSave = () => {
-    // Save settings logic here
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  // AD Credentials
+  const [adUsername, setAdUsername] = useState('');
+  const [adPassword, setAdPassword] = useState('');
+  const [showAdPassword, setShowAdPassword] = useState(false);
+  const [adLoaded, setAdLoaded] = useState(false);
+
+  // UI State
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Load credentials on mount
+  useEffect(() => {
+    loadJiraCredentials();
+    loadADCredentials();
+  }, []);
+
+  const loadJiraCredentials = async () => {
+    try {
+      const result = await electronAPI.getCredential('ADHelper_Jira');
+      if (result.success && result.username && result.password) {
+        // Username format: "url|email"
+        const [url, email] = result.username.split('|');
+        setJiraUrl(url || '');
+        setJiraEmail(email || '');
+        setJiraApiToken(result.password || '');
+        setJiraLoaded(true);
+      }
+    } catch (err) {
+      console.error('Failed to load Jira credentials:', err);
+    }
+  };
+
+  const loadADCredentials = async () => {
+    try {
+      const result = await electronAPI.getCredential('ADHelper_ActiveDirectory');
+      if (result.success && result.username && result.password) {
+        setAdUsername(result.username);
+        setAdPassword(result.password);
+        setAdLoaded(true);
+      }
+    } catch (err) {
+      console.error('Failed to load AD credentials:', err);
+    }
+  };
+
+  const handleSaveJira = async () => {
+    if (!jiraUrl || !jiraEmail || !jiraApiToken) {
+      setError('Please fill in all Jira fields');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Store URL and email in username field (separated by |)
+      const username = `${jiraUrl}|${jiraEmail}`;
+      const result = await electronAPI.saveCredential('ADHelper_Jira', username, jiraApiToken);
+
+      if (result.success) {
+        setSaved(true);
+        setJiraLoaded(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        setError(result.error || 'Failed to save Jira credentials');
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to save Jira credentials');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveAD = async () => {
+    if (!adUsername || !adPassword) {
+      setError('Please fill in all AD fields');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await electronAPI.saveCredential('ADHelper_ActiveDirectory', adUsername, adPassword);
+
+      if (result.success) {
+        setSaved(true);
+        setAdLoaded(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        setError(result.error || 'Failed to save AD credentials');
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to save AD credentials');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteJira = async () => {
+    setLoading(true);
+    try {
+      await electronAPI.deleteCredential('ADHelper_Jira');
+      setJiraUrl('');
+      setJiraEmail('');
+      setJiraApiToken('');
+      setJiraLoaded(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError('Failed to delete Jira credentials');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAD = async () => {
+    setLoading(true);
+    try {
+      await electronAPI.deleteCredential('ADHelper_ActiveDirectory');
+      setAdUsername('');
+      setAdPassword('');
+      setAdLoaded(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError('Failed to delete AD credentials');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Settings
+        Secure Credentials
       </Typography>
       <Typography variant="body1" color="text.secondary" paragraph>
-        Configure application settings and preferences
+        Manage your credentials securely using {isElectron ? 'Windows Credential Manager' : 'browser storage'}
       </Typography>
+
+      {!isElectron && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          <strong>Browser Mode:</strong> Credentials are stored in browser localStorage.
+          For secure storage using Windows Credential Manager, please use the desktop app.
+        </Alert>
+      )}
+
+      {isElectron && (
+        <Alert severity="info" sx={{ mb: 3 }} icon={<LockIcon />}>
+          <strong>Secure Storage:</strong> Your credentials are encrypted and stored in Windows Credential Manager.
+        </Alert>
+      )}
 
       {saved && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Settings saved successfully!
+          Credentials saved successfully!
+        </Alert>
+      )}
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+          {error}
         </Alert>
       )}
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Active Directory Settings
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <TextField
-              fullWidth
-              label="AD Domain"
-              variant="outlined"
-              value={adDomain}
-              onChange={(e) => setAdDomain(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="AD Server (Optional)"
-              variant="outlined"
-              value={adServer}
-              onChange={(e) => setAdServer(e.target.value)}
-              placeholder="dc01.domain.local"
-              sx={{ mb: 2 }}
-            />
-            <Typography variant="body2" color="text.secondary">
-              Configure your Active Directory domain and server settings.
-            </Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Microsoft 365 Settings
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <TextField
-              fullWidth
-              label="Tenant ID"
-              variant="outlined"
-              value={m365TenantId}
-              onChange={(e) => setM365TenantId(e.target.value)}
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              sx={{ mb: 2 }}
-            />
-            <Typography variant="body2" color="text.secondary">
-              Configure your Microsoft 365 tenant settings.
-            </Typography>
-          </Paper>
-        </Grid>
-
+        {/* Jira Credentials */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Application Preferences
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h6">
+                Jira API Credentials
+              </Typography>
+              {jiraLoaded && (
+                <Chip label="Saved" color="success" size="small" />
+              )}
+            </Box>
+            <Divider sx={{ mb: 3 }} />
+
+            <TextField
+              fullWidth
+              label="Jira URL"
+              variant="outlined"
+              value={jiraUrl}
+              onChange={(e) => setJiraUrl(e.target.value)}
+              placeholder="https://your-domain.atlassian.net"
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              fullWidth
+              label="Jira Email"
+              variant="outlined"
+              type="email"
+              value={jiraEmail}
+              onChange={(e) => setJiraEmail(e.target.value)}
+              placeholder="your-email@company.com"
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              fullWidth
+              label="Jira API Token"
+              variant="outlined"
+              type={showJiraToken ? 'text' : 'password'}
+              value={jiraApiToken}
+              onChange={(e) => setJiraApiToken(e.target.value)}
+              placeholder="Your Jira API token"
+              sx={{ mb: 2 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowJiraToken(!showJiraToken)}
+                      edge="end"
+                    >
+                      {showJiraToken ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              Get your API token from: Jira → Profile → Security → API Tokens
             </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={autoSave}
-                  onChange={(e) => setAutoSave(e.target.checked)}
-                />
-              }
-              label="Auto-save credentials"
-            />
-            <br />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={notifications}
-                  onChange={(e) => setNotifications(e.target.checked)}
-                />
-              }
-              label="Enable notifications"
-            />
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<SaveIcon />}
+                onClick={handleSaveJira}
+                disabled={loading}
+              >
+                Save Jira Credentials
+              </Button>
+              {jiraLoaded && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={handleDeleteJira}
+                  disabled={loading}
+                >
+                  Delete
+                </Button>
+              )}
+            </Box>
           </Paper>
         </Grid>
 
+        {/* AD Credentials */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h6">
+                Active Directory Credentials
+              </Typography>
+              {adLoaded && (
+                <Chip label="Saved" color="success" size="small" />
+              )}
+            </Box>
+            <Divider sx={{ mb: 3 }} />
+
+            <TextField
+              fullWidth
+              label="AD Username"
+              variant="outlined"
+              value={adUsername}
+              onChange={(e) => setAdUsername(e.target.value)}
+              placeholder="domain\\username or username@domain.com"
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              fullWidth
+              label="AD Password"
+              variant="outlined"
+              type={showAdPassword ? 'text' : 'password'}
+              value={adPassword}
+              onChange={(e) => setAdPassword(e.target.value)}
+              placeholder="Your AD password"
+              sx={{ mb: 2 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowAdPassword(!showAdPassword)}
+                      edge="end"
+                    >
+                      {showAdPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              These credentials will be used for Active Directory operations
+            </Typography>
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<SaveIcon />}
+                onClick={handleSaveAD}
+                disabled={loading}
+              >
+                Save AD Credentials
+              </Button>
+              {adLoaded && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={handleDeleteAD}
+                  disabled={loading}
+                >
+                  Delete
+                </Button>
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* About */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
@@ -134,20 +368,9 @@ const Settings: React.FC = () => {
               <strong>Author:</strong> NModlin
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              ADHelper - Modern desktop application for Active Directory and Jira management
+              ADHelper - Secure credential management for Active Directory and Jira
             </Typography>
           </Paper>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<SaveIcon />}
-            onClick={handleSave}
-          >
-            Save Settings
-          </Button>
         </Grid>
       </Grid>
     </Box>
