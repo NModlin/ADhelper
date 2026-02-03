@@ -14,7 +14,7 @@ cd /d "%~dp0"
 
 :: Check if PowerShell script exists
 if not exist "ADhelper.ps1" (
-    echo ERROR: ADhelper.ps1 not found in current directory!
+    echo ERROR: ADhelper_fixed.ps1 not found in current directory!
     echo Current directory: %CD%
     echo.
     pause
