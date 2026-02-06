@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -16,6 +16,9 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
+  IconButton,
+  Collapse,
+  Tooltip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonIcon from '@mui/icons-material/Person';
@@ -23,6 +26,10 @@ import GroupIcon from '@mui/icons-material/Group';
 import EmailIcon from '@mui/icons-material/Email';
 import LicenseIcon from '@mui/icons-material/CardMembership';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import TerminalIcon from '@mui/icons-material/Terminal';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ClearIcon from '@mui/icons-material/Clear';
 import { electronAPI, isElectron } from '../electronAPI';
 
 const ADHelper: React.FC = () => {
@@ -31,6 +38,15 @@ const ADHelper: React.FC = () => {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string[]>([]);
+  const [showTerminal, setShowTerminal] = useState(true);
+  const terminalRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll terminal to bottom when new content arrives
+  useEffect(() => {
+    if (terminalRef.current && showTerminal) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [progress, showTerminal]);
 
   const handleSearch = async () => {
     if (!username.trim()) {
@@ -42,6 +58,7 @@ const ADHelper: React.FC = () => {
     setError(null);
     setResult(null);
     setProgress([]);
+    setShowTerminal(true); // Auto-show terminal when processing starts
 
     try {
       // Listen for progress updates
@@ -59,6 +76,34 @@ const ADHelper: React.FC = () => {
     } finally {
       electronAPI.removeADHelperProgressListener();
     }
+  };
+
+  const clearTerminal = () => {
+    setProgress([]);
+  };
+
+  const formatTerminalLine = (line: string) => {
+    // Parse ANSI color codes and PowerShell formatting
+    let color = 'inherit';
+    let fontWeight = 'normal';
+
+    // Check for common PowerShell output patterns
+    if (line.includes('✅') || line.includes('SUCCESS')) {
+      color = '#4caf50'; // Green
+    } else if (line.includes('❌') || line.includes('ERROR') || line.includes('Failed')) {
+      color = '#f44336'; // Red
+    } else if (line.includes('⚠️') || line.includes('WARNING') || line.includes('WARN')) {
+      color = '#ff9800'; // Orange
+    } else if (line.includes('💡') || line.includes('INFO')) {
+      color = '#2196f3'; // Blue
+    } else if (line.includes('🔍') || line.includes('Checking')) {
+      color = '#00bcd4'; // Cyan
+    } else if (line.includes('===') || line.includes('---')) {
+      color = '#9e9e9e'; // Gray
+      fontWeight = 'bold';
+    }
+
+    return { color, fontWeight };
   };
 
   const operations = [
@@ -117,6 +162,125 @@ const ADHelper: React.FC = () => {
         </Alert>
       )}
 
+      {/* Terminal Output Section */}
+      {(loading || progress.length > 0) && (
+        <Paper sx={{ mb: 3, overflow: 'hidden' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              p: 2,
+              bgcolor: '#1e1e1e',
+              color: '#fff',
+              borderBottom: showTerminal ? '1px solid #333' : 'none',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TerminalIcon />
+              <Typography variant="h6">
+                PowerShell Terminal Output
+              </Typography>
+              {loading && (
+                <Chip
+                  label="Running"
+                  size="small"
+                  color="primary"
+                  icon={<CircularProgress size={12} sx={{ color: 'white !important' }} />}
+                />
+              )}
+              {!loading && progress.length > 0 && (
+                <Chip label="Completed" size="small" color="success" />
+              )}
+            </Box>
+            <Box>
+              <Tooltip title="Clear terminal">
+                <IconButton
+                  size="small"
+                  onClick={clearTerminal}
+                  sx={{ color: 'white', mr: 1 }}
+                  disabled={loading}
+                >
+                  <ClearIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={showTerminal ? 'Collapse terminal' : 'Expand terminal'}>
+                <IconButton
+                  size="small"
+                  onClick={() => setShowTerminal(!showTerminal)}
+                  sx={{ color: 'white' }}
+                >
+                  {showTerminal ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+          <Collapse in={showTerminal}>
+            <Box
+              ref={terminalRef}
+              sx={{
+                bgcolor: '#1e1e1e',
+                color: '#d4d4d4',
+                p: 2,
+                fontFamily: '"Consolas", "Courier New", monospace',
+                fontSize: '13px',
+                maxHeight: 500,
+                minHeight: 200,
+                overflow: 'auto',
+                '&::-webkit-scrollbar': {
+                  width: '10px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: '#2d2d2d',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#555',
+                  borderRadius: '5px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  background: '#777',
+                },
+              }}
+            >
+              {progress.length === 0 && loading && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#00bcd4' }}>
+                  <CircularProgress size={16} sx={{ color: '#00bcd4' }} />
+                  <Typography sx={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
+                    Initializing PowerShell script...
+                  </Typography>
+                </Box>
+              )}
+              {progress.map((line, index) => {
+                const style = formatTerminalLine(line);
+                return (
+                  <Box
+                    key={index}
+                    sx={{
+                      color: style.color,
+                      fontWeight: style.fontWeight,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.5,
+                      mb: 0.5,
+                    }}
+                  >
+                    {line}
+                  </Box>
+                );
+              })}
+              {loading && progress.length > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#00bcd4', mt: 1 }}>
+                  <CircularProgress size={12} sx={{ color: '#00bcd4' }} />
+                  <Typography sx={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
+                    Processing...
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Collapse>
+        </Paper>
+      )}
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <Card>
@@ -137,21 +301,6 @@ const ADHelper: React.FC = () => {
         </Grid>
 
         <Grid item xs={12} md={8}>
-          {loading && (
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Processing...
-              </Typography>
-              <Box sx={{ maxHeight: 400, overflow: 'auto', mt: 2 }}>
-                {progress.map((line, index) => (
-                  <Typography key={index} variant="body2" sx={{ fontFamily: 'monospace', mb: 0.5 }}>
-                    {line}
-                  </Typography>
-                ))}
-              </Box>
-            </Paper>
-          )}
-
           {result && !loading && (
             <Paper sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -167,7 +316,7 @@ const ADHelper: React.FC = () => {
             </Paper>
           )}
 
-          {!loading && !result && !error && (
+          {!loading && !result && !error && progress.length === 0 && (
             <Paper sx={{ p: 3, textAlign: 'center' }}>
               <PersonIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">

@@ -170,10 +170,15 @@ function Initialize-SecureCredentials {
         # Try to retrieve existing credentials
         $existingCred = Get-WindowsCredential -Target "ADHelper_AdminCred"
         if ($existingCred) {
-            Write-Host "✅ Found stored admin credentials." -ForegroundColor Green
-            $useStored = Read-Host "Use stored credentials? (Y/N)"
-            if ($useStored -eq 'Y' -or $useStored -eq 'y') {
+            Write-Host "✅ Found stored admin credentials for: $($existingCred.UserName)" -ForegroundColor Green
+            $useStored = Read-Host "Use stored credentials? (Y/N) [Default: Y]"
+            # Default to Yes if user just presses Enter
+            if ([string]::IsNullOrWhiteSpace($useStored) -or $useStored -eq 'Y' -or $useStored -eq 'y') {
+                Write-Host "   Using stored credentials..." -ForegroundColor Cyan
                 return $existingCred
+            }
+            else {
+                Write-Host "   Prompting for new credentials..." -ForegroundColor Yellow
             }
         }
 
@@ -1594,8 +1599,64 @@ function Create-NewUser {
             Write-Host "❌ Last name is required." -ForegroundColor Red
             return $false
         }
-        
-        $userInfo.SamAccountName = Read-Host "Enter username (sAMAccountName)"
+
+        # Check if standard username format exists and suggest alternative
+        Write-Host "`n🔍 Checking username availability..." -ForegroundColor Cyan
+
+        # Generate standard format: first letter of first name + last name (e.g., jdoe)
+        $standardUsername = ($userInfo.FirstName.Substring(0,1) + $userInfo.LastName).ToLower()
+        $suggestedUsername = $null
+
+        try {
+            # Check if standard format exists
+            $existingUser = Get-ADUser -Identity $standardUsername -Credential $Credential -ErrorAction Stop
+
+            # Standard format exists, suggest alternative
+            Write-Host "⚠️  Username '$standardUsername' already exists (used by: $($existingUser.Name))" -ForegroundColor Yellow
+
+            # Generate alternative: full first name + last name (e.g., johndoe)
+            $alternativeUsername = ($userInfo.FirstName + $userInfo.LastName).ToLower()
+
+            # Check if alternative also exists
+            try {
+                $existingAlt = Get-ADUser -Identity $alternativeUsername -Credential $Credential -ErrorAction Stop
+                Write-Host "⚠️  Alternative '$alternativeUsername' also exists (used by: $($existingAlt.Name))" -ForegroundColor Yellow
+                Write-Host "💡 You'll need to choose a different username." -ForegroundColor Gray
+            }
+            catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
+                # Alternative is available
+                $suggestedUsername = $alternativeUsername
+                Write-Host "✅ Suggested username: $suggestedUsername" -ForegroundColor Green
+            }
+            catch {
+                # Error checking alternative, just continue
+                Write-Host "💡 Consider using: $alternativeUsername" -ForegroundColor Gray
+            }
+        }
+        catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
+            # Standard format is available
+            $suggestedUsername = $standardUsername
+            Write-Host "✅ Suggested username: $suggestedUsername" -ForegroundColor Green
+        }
+        catch {
+            # Error checking, just continue without suggestion
+            Write-Host "💡 Unable to check username availability. Please verify manually." -ForegroundColor Gray
+        }
+
+        # Prompt for username with suggestion if available
+        if ($suggestedUsername) {
+            $userInfo.SamAccountName = Read-Host "Enter username (sAMAccountName) [Suggested: $suggestedUsername]"
+            # If user just presses Enter, use the suggestion
+            if ([string]::IsNullOrWhiteSpace($userInfo.SamAccountName)) {
+                $userInfo.SamAccountName = $suggestedUsername
+                Write-Host "   Using suggested username: $suggestedUsername" -ForegroundColor Cyan
+            }
+        }
+        else {
+            $userInfo.SamAccountName = Read-Host "Enter username (sAMAccountName)"
+        }
+
+        # Validate username was provided
         if ([string]::IsNullOrWhiteSpace($userInfo.SamAccountName)) {
             Write-Host "❌ Username is required." -ForegroundColor Red
             return $false

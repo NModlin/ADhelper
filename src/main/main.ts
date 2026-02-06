@@ -99,7 +99,7 @@ ipcMain.handle('execute-powershell', async (event, script: string, args: string[
 
 // IPC Handler for running the main ADHelper script
 ipcMain.handle('run-adhelper-script', async (event, username: string, operation: string) => {
-  const scriptPath = path.join(app.getAppPath(), 'ADhelper_fixed.ps1');
+  const scriptPath = path.join(app.getAppPath(), 'ADhelper.ps1');
   
   return new Promise((resolve, reject) => {
     const ps = spawn('powershell.exe', [

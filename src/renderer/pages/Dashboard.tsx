@@ -8,6 +8,7 @@ import {
   CardActions,
   Button,
   Box,
+  Avatar,
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -16,22 +17,51 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
 const Dashboard: React.FC = () => {
   const stats = [
-    { title: 'Users Processed Today', value: '0', icon: <PeopleIcon fontSize="large" />, color: '#1976d2' },
-    { title: 'Jira Tickets Updated', value: '0', icon: <AssignmentIcon fontSize="large" />, color: '#dc004e' },
-    { title: 'Success Rate', value: '100%', icon: <CheckCircleIcon fontSize="large" />, color: '#4caf50' },
-    { title: 'Active Sessions', value: '1', icon: <TrendingUpIcon fontSize="large" />, color: '#ff9800' },
+    { title: 'Users Processed Today', value: '0', icon: <PeopleIcon fontSize="large" />, color: '#0536B6' },  // Rehrig Blue Primary
+    { title: 'Jira Tickets Updated', value: '0', icon: <AssignmentIcon fontSize="large" />, color: '#FFC20E' },  // Rehrig Yellow
+    { title: 'Success Rate', value: '100%', icon: <CheckCircleIcon fontSize="large" />, color: '#27AE60' },  // Success Green
+    { title: 'Active Sessions', value: '1', icon: <TrendingUpIcon fontSize="large" />, color: '#3283FE' },  // Rehrig Light Blue
   ];
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Welcome to ADHelper
-      </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Manage Active Directory users and Jira tickets from one modern interface.
-      </Typography>
+      {/* Hero Section with Electric Blue Gradient */}
+      <Paper
+        sx={{
+          p: 4,
+          mb: 4,
+          background: 'linear-gradient(90deg, #0536B6 0%, #3283FE 100%)',  // Official Electric Blue gradient
+          color: 'white',
+          borderRadius: 3,
+          boxShadow: '0px 8px 24px rgba(5, 54, 182, 0.25)',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Avatar
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.2)',
+              width: 80,
+              height: 80,
+              fontSize: '2rem',
+              fontWeight: 700,
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+            }}
+          >
+            ADH
+          </Avatar>
+          <Box>
+            <Typography variant="h3" fontWeight={700} gutterBottom>
+              Welcome to ADHelper
+            </Typography>
+            <Typography variant="h6" sx={{ opacity: 0.95 }}>
+              Rehrig Pacific IT Administration Portal
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
 
-      <Grid container spacing={3} sx={{ mt: 2 }}>
+      <Grid container spacing={3}>
         {stats.map((stat, index) => (
           <Grid item xs={12} sm={6} md={3} key={index}>
             <Paper

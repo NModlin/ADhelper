@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -13,6 +13,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import Avatar from '@mui/material/Avatar';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
@@ -20,6 +21,9 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+
+// Import Rehrig theme
+import { getRehrigTheme } from './theme/rehrigTheme';
 
 // Import pages
 import Dashboard from './pages/Dashboard';
@@ -34,17 +38,7 @@ function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
 
-  const theme = createTheme({
-    palette: {
-      mode: darkMode ? 'dark' : 'light',
-      primary: {
-        main: '#1976d2',
-      },
-      secondary: {
-        main: '#dc004e',
-      },
-    },
-  });
+  const theme = getRehrigTheme(darkMode ? 'dark' : 'light');
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -59,11 +53,38 @@ function App() {
 
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          ADHelper
-        </Typography>
-      </Toolbar>
+      {/* Branded Sidebar Header */}
+      <Box
+        sx={{
+          p: 3,
+          background: 'linear-gradient(135deg, #0536B6 0%, #003063 100%)',  // Rehrig Blue to Navy
+          color: 'white',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Avatar
+            sx={{
+              bgcolor: '#FFC20E',  // Rehrig Yellow
+              color: '#003063',    // Rehrig Navy text
+              width: 56,
+              height: 56,
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              border: '3px solid rgba(255, 255, 255, 0.3)',
+            }}
+          >
+            ADH
+          </Avatar>
+          <Box>
+            <Typography variant="h6" fontWeight={700} noWrap>
+              ADHelper
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.9 }}>
+              Rehrig IT Tools
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
       <Divider />
       <List>
         {menuItems.map((item) => (
@@ -156,13 +177,35 @@ function App() {
           component="main"
           sx={{
             flexGrow: 1,
-            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
             width: { sm: `calc(100% - ${drawerWidth}px)` },
             mt: 8,
             overflow: 'auto',
           }}
         >
-          {renderPage()}
+          <Box sx={{ flexGrow: 1, p: 3 }}>
+            {renderPage()}
+          </Box>
+
+          {/* Footer */}
+          <Box
+            component="footer"
+            sx={{
+              py: 2,
+              px: 3,
+              mt: 'auto',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              background: (theme) => theme.palette.mode === 'light'
+                ? 'rgba(5, 54, 182, 0.02)'
+                : 'rgba(50, 131, 254, 0.05)',
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" align="center">
+              © 2026 Rehrig Pacific Company
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>

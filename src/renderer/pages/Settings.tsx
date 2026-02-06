@@ -34,7 +34,8 @@ const Settings: React.FC = () => {
   const [adLoaded, setAdLoaded] = useState(false);
 
   // UI State
-  const [saved, setSaved] = useState(false);
+  const [jiraSaved, setJiraSaved] = useState(false);
+  const [adSaved, setAdSaved] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -88,9 +89,9 @@ const Settings: React.FC = () => {
       const result = await electronAPI.saveCredential('ADHelper_Jira', username, jiraApiToken);
 
       if (result.success) {
-        setSaved(true);
+        setJiraSaved(true);
         setJiraLoaded(true);
-        setTimeout(() => setSaved(false), 3000);
+        setTimeout(() => setJiraSaved(false), 3000);
       } else {
         setError(result.error || 'Failed to save Jira credentials');
       }
@@ -114,9 +115,9 @@ const Settings: React.FC = () => {
       const result = await electronAPI.saveCredential('ADHelper_ActiveDirectory', adUsername, adPassword);
 
       if (result.success) {
-        setSaved(true);
+        setAdSaved(true);
         setAdLoaded(true);
-        setTimeout(() => setSaved(false), 3000);
+        setTimeout(() => setAdSaved(false), 3000);
       } else {
         setError(result.error || 'Failed to save AD credentials');
       }
@@ -135,8 +136,8 @@ const Settings: React.FC = () => {
       setJiraEmail('');
       setJiraApiToken('');
       setJiraLoaded(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setJiraSaved(true);
+      setTimeout(() => setJiraSaved(false), 3000);
     } catch (err) {
       setError('Failed to delete Jira credentials');
     } finally {
@@ -151,8 +152,8 @@ const Settings: React.FC = () => {
       setAdUsername('');
       setAdPassword('');
       setAdLoaded(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setAdSaved(true);
+      setTimeout(() => setAdSaved(false), 3000);
     } catch (err) {
       setError('Failed to delete AD credentials');
     } finally {
@@ -182,9 +183,15 @@ const Settings: React.FC = () => {
         </Alert>
       )}
 
-      {saved && (
+      {jiraSaved && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Credentials saved successfully!
+          Jira credentials saved successfully!
+        </Alert>
+      )}
+
+      {adSaved && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          AD credentials saved successfully!
         </Alert>
       )}
 
