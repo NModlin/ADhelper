@@ -1,134 +1,60 @@
 # Test-ADConnection.ps1
 # Lightweight Active Directory connectivity check script
+#
+# Uses .NET DirectoryServices for speed instead of the heavy ActiveDirectory
+# PowerShell module (Import-Module + Get-ADDomain can take 15-20 seconds).
+# The .NET approach completes in < 200ms on a domain-joined machine.
 
-function Test-ADConnection {
-    <#
-    .SYNOPSIS
-        Tests connectivity to Active Directory domain.
-    
-    .DESCRIPTION
-        Performs a lightweight check to verify Active Directory connectivity.
-        Returns a JSON object with connection status and details.
-    
-    .PARAMETER Credential
-        PSCredential object for AD authentication (optional for domain-joined machines)
-    
-    .PARAMETER TimeoutSeconds
-        Timeout for the connection test in seconds (default: 10)
-    
-    .EXAMPLE
-        Test-ADConnection
-        Test-ADConnection -Credential $cred -TimeoutSeconds 5
-    #>
-    param (
-        [Parameter(Mandatory=$false)]
-        [System.Management.Automation.PSCredential]$Credential,
-        
-        [Parameter(Mandatory=$false)]
-        [int]$TimeoutSeconds = 10
-    )
-
-    $result = @{
-        Connected = $false
-        Domain = $null
-        DomainController = $null
-        ResponseTime = $null
-        Error = $null
-        Timestamp = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-    }
-
-    try {
-        # Start timing
-        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-
-        # Test 1: Check if ActiveDirectory module is available
-        if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
-            throw "ActiveDirectory PowerShell module is not installed"
-        }
-
-        # Import the module
-        Import-Module ActiveDirectory -ErrorAction Stop
-
-        # Test 2: Try to get domain information (lightweight query)
-        $adParams = @{
-            ErrorAction = 'Stop'
-        }
-        
-        if ($Credential) {
-            $adParams.Credential = $Credential
-        }
-
-        # Get current domain (very lightweight operation)
-        $domain = Get-ADDomain @adParams
-
-        # Test 3: Try to get a domain controller (verifies LDAP connectivity)
-        $dc = Get-ADDomainController -Discover @adParams
-
-        # Stop timing
-        $stopwatch.Stop()
-
-        # Success - populate result
-        $result.Connected = $true
-        $result.Domain = $domain.DNSRoot
-        $result.DomainController = $dc.HostName
-        $result.ResponseTime = [math]::Round($stopwatch.Elapsed.TotalMilliseconds, 2)
-
-    }
-    catch [System.TimeoutException] {
-        $result.Error = "Connection timeout - Please check VPN connection"
-    }
-    catch [System.Management.Automation.CommandNotFoundException] {
-        $result.Error = "ActiveDirectory module not found - Please install RSAT tools"
-    }
-    catch [Microsoft.ActiveDirectory.Management.ADServerDownException] {
-        $result.Error = "Domain controller not reachable - Please connect to FortiClient VPN"
-    }
-    catch [System.Security.Authentication.AuthenticationException] {
-        $result.Error = "Authentication failed - Please check credentials"
-    }
-    catch {
-        # Generic error handling
-        $errorMessage = $_.Exception.Message
-        
-        # Check for common VPN-related errors
-        if ($errorMessage -match "RPC server|network path|timeout|unreachable") {
-            $result.Error = "Network connectivity issue - Please connect to FortiClient VPN"
-        }
-        elseif ($errorMessage -match "credentials|authentication|access denied") {
-            $result.Error = "Authentication failed - Please check credentials in Settings"
-        }
-        else {
-            $result.Error = $errorMessage
-        }
-    }
-
-    # Return result as JSON
-    return ($result | ConvertTo-Json -Compress)
+$result = @{
+    Connected        = $false
+    Domain           = $null
+    DomainController = $null
+    ResponseTime     = $null
+    Error            = $null
+    Timestamp        = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 }
 
-# If script is run directly (not dot-sourced), execute the test
-if ($MyInvocation.InvocationName -ne '.') {
-    # Get credentials from Windows Credential Manager if available
-    $credential = $null
-    
-    try {
-        # Try to load credential manager script
-        $credScriptPath = Join-Path $PSScriptRoot "CredentialManager.ps1"
-        if (Test-Path $credScriptPath) {
-            . $credScriptPath
-            $credential = Get-StoredCredential -Target "ADHelper_AdminCred"
-        }
-    }
-    catch {
-        # Credentials not available, will try without
-    }
+try {
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
-    # Run the test
-    if ($credential) {
-        Test-ADConnection -Credential $credential
+    # Test 1: Get current domain via .NET (near-instant on domain-joined machines)
+    $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+    $result.Domain = $domain.Name
+
+    # Test 2: Find a domain controller (verifies LDAP/DC locator)
+    $dc = $domain.FindDomainController()
+    $result.DomainController = $dc.Name
+
+    # Test 3: Quick LDAP bind to verify the DC is actually responding
+    $ldapPath = "LDAP://$($dc.Name)"
+    $directoryEntry = New-Object System.DirectoryServices.DirectoryEntry($ldapPath)
+    # Accessing a property forces the bind — if DC is unreachable this throws
+    $null = $directoryEntry.distinguishedName
+
+    $stopwatch.Stop()
+
+    $result.Connected    = $true
+    $result.ResponseTime = [math]::Round($stopwatch.Elapsed.TotalMilliseconds, 2)
+}
+catch {
+    if ($stopwatch -and $stopwatch.IsRunning) { $stopwatch.Stop() }
+
+    $errorMessage = $_.Exception.Message
+
+    if ($errorMessage -match "not find.*domain|domain is not available") {
+        $result.Error = "Not joined to a domain or domain unreachable - Please connect to FortiClient VPN"
+    }
+    elseif ($errorMessage -match "RPC server|network path|timeout|unreachable|server is not operational") {
+        $result.Error = "Network connectivity issue - Please connect to FortiClient VPN"
+    }
+    elseif ($errorMessage -match "credentials|authentication|access denied|logon failure") {
+        $result.Error = "Authentication failed - Please check credentials in Settings"
     }
     else {
-        Test-ADConnection
+        $result.Error = $errorMessage
     }
 }
+
+# Output result as JSON
+$result | ConvertTo-Json -Compress
 

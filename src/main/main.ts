@@ -388,8 +388,8 @@ ipcMain.handle('delete-site-config', async (_event, siteId: string) => {
 });
 
 // IPC Handler for AD Connection Test
-// SECURE: Uses -File to call Test-ADConnection.ps1 which handles credential loading internally.
-// The script already has standalone execution support (lines 110-133).
+// SECURE: Uses -File to call Test-ADConnection.ps1 which uses lightweight .NET
+// DirectoryServices calls (not the heavy AD PowerShell module) for fast checks.
 ipcMain.handle('test-ad-connection', async (_event) => {
   logger.debug('IPC: test-ad-connection');
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'Test-ADConnection.ps1');

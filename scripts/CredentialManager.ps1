@@ -2,16 +2,16 @@
 # Securely stores and retrieves credentials using Windows Credential Manager
 
 param(
-    [Parameter(Mandatory=$true)]
-    [ValidateSet('Save', 'Get', 'Delete', 'List')]
-    [string]$Action,
-    
+    [Parameter(Mandatory=$false)]
+    [ValidateSet('Save', 'Get', 'Delete', 'List', '')]
+    [string]$Action = '',
+
     [Parameter(Mandatory=$false)]
     [string]$Target,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$Username,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$Password
 )
@@ -156,7 +156,8 @@ function Delete-Credential {
     }
 }
 
-# Main execution
+# Main execution — only runs when -Action is provided (not when dot-sourced)
+if (-not $Action) { return }
 switch ($Action) {
     'Save' {
         if (-not $Target -or -not $Username -or -not $Password) {
