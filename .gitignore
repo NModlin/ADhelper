@@ -1,4 +1,5 @@
 # ADHelper log files
+ADHelper-Log.txt
 ADHelper-Log-*.txt
 
 # PowerShell transcript logs
