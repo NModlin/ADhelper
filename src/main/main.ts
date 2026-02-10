@@ -296,6 +296,21 @@ ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, u
   });
 }));
 
+// IPC Handler for Contractor Account Extension Processing
+// SECURE: All user input is written to a JSON temp file, never interpolated into commands.
+ipcMain.handle('process-contractor-account', rateLimited('process-contractor-account', async (event, usernames: string[]) => {
+  logger.info('IPC: process-contractor-account', { count: usernames.length });
+
+  const scriptPath = path.join(app.getAppPath(), 'scripts', 'Process-ContractorAccount.ps1');
+
+  return executePowerShellScript({
+    scriptPath,
+    paramsFile: { usernames },
+    progressChannel: 'contractor-processing-progress',
+    sender: event.sender,
+  });
+}));
+
 // IPC Handlers for Windows Credential Manager (already safe — using -File with args)
 ipcMain.handle('save-credential', async (_event, target: string, username: string, password: string) => {
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');

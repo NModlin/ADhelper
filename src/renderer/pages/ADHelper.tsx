@@ -42,6 +42,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ClearIcon from '@mui/icons-material/Clear';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import BadgeIcon from '@mui/icons-material/Badge';
 import { electronAPI, isElectron } from '../electronAPI';
 
 const ADHelper: React.FC = () => {
@@ -77,6 +78,13 @@ const ADHelper: React.FC = () => {
     managerEmail: '',
     siteLocation: '',
   });
+
+  // Contractor Account Extension Dialog State
+  const [contractorDialogOpen, setContractorDialogOpen] = useState(false);
+  const [contractorUsernames, setContractorUsernames] = useState('');
+  const [contractorLoading, setContractorLoading] = useState(false);
+  const [contractorProgress, setContractorProgress] = useState<string[]>([]);
+  const [contractorResult, setContractorResult] = useState<any>(null);
 
   // Site configuration state
   const [siteConfigs, setSiteConfigs] = useState<any[]>([]);
@@ -276,6 +284,33 @@ const ADHelper: React.FC = () => {
     }
   };
 
+  // Contractor Account Extension Handler
+  const handleContractorProcessing = async () => {
+    const usernamesArray = contractorUsernames.split(';').map(u => u.trim()).filter(u => u);
+    if (usernamesArray.length === 0) {
+      return;
+    }
+
+    setContractorLoading(true);
+    setContractorProgress([]);
+    setContractorResult(null);
+
+    try {
+      electronAPI.onContractorProcessingProgress((data: string) => {
+        setContractorProgress(prev => [...prev, data]);
+      });
+
+      const response = await electronAPI.processContractorAccount(usernamesArray);
+      setContractorResult(response);
+      setContractorLoading(false);
+    } catch (err: any) {
+      setContractorResult({ success: false, error: err.error || 'Contractor processing failed' });
+      setContractorLoading(false);
+    } finally {
+      electronAPI.removeContractorProcessingProgressListener();
+    }
+  };
+
   const formatTerminalLine = (line: string) => {
     // Parse ANSI color codes and PowerShell formatting
     let color = 'inherit';
@@ -352,7 +387,7 @@ const ADHelper: React.FC = () => {
 
       {/* Quick Actions */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Button
             fullWidth
             variant="outlined"
@@ -376,7 +411,7 @@ const ADHelper: React.FC = () => {
             Remove from MFA Blocking Group
           </Button>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Button
             fullWidth
             variant="outlined"
@@ -409,6 +444,30 @@ const ADHelper: React.FC = () => {
             }}
           >
             Create New User Account
+          </Button>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            size="large"
+            startIcon={<BadgeIcon />}
+            sx={{
+              borderColor: '#0536B6',
+              color: '#0536B6',
+              '&:hover': {
+                borderColor: '#003063',
+                backgroundColor: 'rgba(5, 54, 182, 0.08)',
+              },
+            }}
+            onClick={() => {
+              setContractorDialogOpen(true);
+              setContractorUsernames('');
+              setContractorResult(null);
+              setContractorProgress([]);
+            }}
+          >
+            Process Contractor Accounts
           </Button>
         </Grid>
       </Grid>
@@ -930,6 +989,109 @@ const ADHelper: React.FC = () => {
           )}
           {userCreationResult && (
             <Button onClick={() => setUserDialogOpen(false)} variant="contained">
+              Close
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Contractor Account Extension Dialog */}
+      <Dialog open={contractorDialogOpen} onClose={() => !contractorLoading && setContractorDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ bgcolor: '#0536B6', color: 'white' }}>
+          Process Contractor Accounts
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {!contractorResult && (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Validates contractor users, verifies they are in the Non-Rehrig OU, updates Display Name
+                with &quot; - Contractor&quot; suffix, and extends account expiration by 1 year.
+              </Typography>
+              <TextField
+                fullWidth
+                label="Username(s)"
+                variant="outlined"
+                value={contractorUsernames}
+                onChange={(e) => setContractorUsernames(e.target.value)}
+                placeholder="e.g., jsmith ; mjohnson ; bwilson"
+                helperText="Enter one or more sAMAccountNames separated by semicolons (;). Email addresses are also accepted."
+                disabled={contractorLoading}
+                multiline
+                minRows={2}
+                maxRows={4}
+                sx={{ mb: 2 }}
+              />
+              {contractorLoading && <LinearProgress sx={{ mb: 2 }} />}
+              {contractorProgress.length > 0 && (
+                <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: '#d4d4d4', fontFamily: '"Consolas", "Courier New", monospace', fontSize: '0.8rem', maxHeight: 300, overflow: 'auto' }}>
+                  {contractorProgress.map((line, idx) => {
+                    const style = formatTerminalLine(line);
+                    return (
+                      <Box key={idx} sx={{ color: style.color, fontWeight: style.fontWeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, mb: 0.25 }}>
+                        {line}
+                      </Box>
+                    );
+                  })}
+                </Paper>
+              )}
+            </>
+          )}
+          {contractorResult && (
+            <>
+              <Alert severity={contractorResult.success ? 'success' : 'error'} sx={{ mb: 2 }}>
+                {contractorResult.success
+                  ? 'Contractor accounts processed successfully!'
+                  : contractorResult.error || 'Some errors occurred during processing.'}
+              </Alert>
+              {contractorResult.result?.Stats && (
+                <Paper sx={{ p: 2, bgcolor: '#f5f5f5', mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom><strong>Processing Summary</strong></Typography>
+                  <Typography variant="body2">Users found &amp; processed: <strong>{contractorResult.result.Stats.UsersFound}</strong></Typography>
+                  <Typography variant="body2">Users skipped: <strong>{contractorResult.result.Stats.UsersSkipped}</strong></Typography>
+                  <Typography variant="body2">In correct OU: <strong>{contractorResult.result.Stats.UsersInCorrectOU}</strong></Typography>
+                  <Typography variant="body2">Display names updated: <strong>{contractorResult.result.Stats.DisplayNamesUpdated}</strong></Typography>
+                  <Typography variant="body2">Display names already correct: <strong>{contractorResult.result.Stats.DisplayNamesAlreadyCorrect}</strong></Typography>
+                  <Typography variant="body2">Expirations extended: <strong>{contractorResult.result.Stats.ExpirationsExtended}</strong></Typography>
+                  {contractorResult.result.Stats.Errors > 0 && (
+                    <Typography variant="body2" sx={{ color: '#d32f2f', mt: 1 }}>
+                      Errors: <strong>{contractorResult.result.Stats.Errors}</strong>
+                    </Typography>
+                  )}
+                </Paper>
+              )}
+              {contractorProgress.length > 0 && (
+                <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: '#d4d4d4', fontFamily: '"Consolas", "Courier New", monospace', fontSize: '0.8rem', maxHeight: 200, overflow: 'auto' }}>
+                  {contractorProgress.map((line, idx) => {
+                    const style = formatTerminalLine(line);
+                    return (
+                      <Box key={idx} sx={{ color: style.color, fontWeight: style.fontWeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, mb: 0.25 }}>
+                        {line}
+                      </Box>
+                    );
+                  })}
+                </Paper>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {!contractorResult && (
+            <>
+              <Button onClick={() => setContractorDialogOpen(false)} disabled={contractorLoading}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleContractorProcessing}
+                variant="contained"
+                disabled={contractorLoading || !contractorUsernames.trim()}
+                sx={{ bgcolor: '#0536B6', '&:hover': { bgcolor: '#003063' } }}
+              >
+                {contractorLoading ? 'Processing...' : 'Process Contractors'}
+              </Button>
+            </>
+          )}
+          {contractorResult && (
+            <Button onClick={() => setContractorDialogOpen(false)} variant="contained">
               Close
             </Button>
           )}

@@ -41,6 +41,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('user-creation-progress');
   },
 
+  // Process Contractor Account Extension
+  processContractorAccount: (usernames: string[]) =>
+    ipcRenderer.invoke('process-contractor-account', usernames),
+
+  onContractorProcessingProgress: (callback: (data: string) => void) => {
+    ipcRenderer.on('contractor-processing-progress', (_event, data) => callback(data));
+  },
+
+  removeContractorProcessingProgressListener: () => {
+    ipcRenderer.removeAllListeners('contractor-processing-progress');
+  },
+
   // Windows Credential Manager
   saveCredential: (target: string, username: string, password: string) =>
     ipcRenderer.invoke('save-credential', target, username, password),
@@ -84,6 +96,9 @@ export interface ElectronAPI {
   createNewUser: (userInfo: any) => Promise<{ success: boolean; result?: any; error?: string }>;
   onUserCreationProgress: (callback: (data: string) => void) => void;
   removeUserCreationProgressListener: () => void;
+  processContractorAccount: (usernames: string[]) => Promise<{ success: boolean; result?: any; error?: string }>;
+  onContractorProcessingProgress: (callback: (data: string) => void) => void;
+  removeContractorProcessingProgressListener: () => void;
   saveCredential: (target: string, username: string, password: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   getCredential: (target: string) => Promise<{ success: boolean; username?: string; password?: string; error?: string }>;
   deleteCredential: (target: string) => Promise<{ success: boolean; message?: string; error?: string }>;

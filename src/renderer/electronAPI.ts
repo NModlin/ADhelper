@@ -11,6 +11,9 @@ export interface ElectronAPI {
   createNewUser: (userInfo: any) => Promise<{ success: boolean; result?: any; error?: string }>;
   onUserCreationProgress: (callback: (data: string) => void) => void;
   removeUserCreationProgressListener: () => void;
+  processContractorAccount: (usernames: string[]) => Promise<{ success: boolean; result?: any; error?: string }>;
+  onContractorProcessingProgress: (callback: (data: string) => void) => void;
+  removeContractorProcessingProgressListener: () => void;
   saveCredential: (target: string, username: string, password: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   getCredential: (target: string) => Promise<{ success: boolean; username?: string; password?: string; error?: string }>;
   deleteCredential: (target: string) => Promise<{ success: boolean; message?: string; error?: string }>;
@@ -69,6 +72,22 @@ const mockElectronAPI: ElectronAPI = {
   },
 
   removeUserCreationProgressListener: () => {
+    console.warn('Running in browser mode - no listeners to remove');
+  },
+
+  processContractorAccount: async (_usernames: string[]) => {
+    console.warn('Running in browser mode - Contractor processing not available');
+    return {
+      success: false,
+      error: 'Contractor account processing is only available in desktop mode. Please use the desktop app.'
+    };
+  },
+
+  onContractorProcessingProgress: (_callback: (data: string) => void) => {
+    console.warn('Running in browser mode - progress updates not available');
+  },
+
+  removeContractorProcessingProgressListener: () => {
     console.warn('Running in browser mode - no listeners to remove');
   },
 
