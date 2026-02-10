@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { isValidUsernameOrEmail, isValidName, isValidEmail, isValidDN } from '../utils/validation';
 import {
   Box,
   Paper,
@@ -154,35 +155,6 @@ const ADHelper: React.FC = () => {
     }
   };
 
-  // ── Input Validation Helpers ──────────────────────────────────────────────
-  // Defense-in-depth: validate before IPC even though -File execution
-  // already prevents injection.
-
-  /** Validates a sAMAccountName or email format */
-  const isValidUsernameOrEmail = (value: string): boolean => {
-    if (value.length > 256) return false;
-    // Allow sAMAccountName chars or email format
-    return /^[a-zA-Z0-9._@\-]+$/.test(value);
-  };
-
-  /** Validates a person name (letters, spaces, hyphens, apostrophes) */
-  const isValidName = (value: string): boolean => {
-    if (value.length > 128) return false;
-    return /^[a-zA-Z\s'\-]+$/.test(value);
-  };
-
-  /** Validates an email address */
-  const isValidEmail = (value: string): boolean => {
-    if (value.length > 320) return false;
-    return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(value);
-  };
-
-  /** Validates a DN (distinguished name) format */
-  const isValidDN = (value: string): boolean => {
-    if (!value || value.length > 2048) return false;
-    // Basic DN pattern: must contain at least one = sign
-    return /^[a-zA-Z]+=.+/.test(value);
-  };
 
   const handleSearch = async () => {
     if (!username.trim()) {

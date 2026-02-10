@@ -4,34 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import { spawn } from 'child_process';
 import logger from './logger';
-
-// ── Rate Limiter for AD Operations ───────────────────────────────────────────
-// Prevents duplicate concurrent requests (e.g. double-clicks, rapid retries).
-// Each channel can only have one in-flight operation at a time.
-
-const inFlightOps = new Set<string>();
-
-/**
- * Wraps an IPC handler to ensure only one call per channel runs at a time.
- * Returns a "busy" error if a duplicate request arrives while one is in-flight.
- */
-function rateLimited<T>(
-  channel: string,
-  handler: (...args: any[]) => Promise<T>,
-): (...args: any[]) => Promise<T | { success: false; error: string }> {
-  return async (...args: any[]) => {
-    if (inFlightOps.has(channel)) {
-      logger.warn(`Rate limited: ${channel} — operation already in progress`);
-      return { success: false, error: 'Operation already in progress. Please wait for it to complete.' };
-    }
-    inFlightOps.add(channel);
-    try {
-      return await handler(...args);
-    } finally {
-      inFlightOps.delete(channel);
-    }
-  };
-}
+import { rateLimited } from './rateLimiter';
 
 // ── Secure PowerShell Execution Helper ───────────────────────────────────────
 // All PowerShell execution MUST go through this helper to prevent command injection.
