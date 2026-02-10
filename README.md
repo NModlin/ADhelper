@@ -20,7 +20,21 @@ Then open: `http://127.0.0.1:5173`
 npm run dev
 ```
 
-See [HOW_TO_RUN.md](HOW_TO_RUN.md) for detailed instructions.
+See [How to Run](docs/guides/HOW_TO_RUN.md) for detailed instructions.
+
+## 📚 Documentation
+
+**Complete documentation is now organized in the [docs/](docs/) directory!**
+
+- **[📖 Documentation Index](docs/INDEX.md)** - Complete documentation catalog
+- **[🚀 Getting Started](docs/guides/GETTING_STARTED.md)** - New user guide
+- **[✨ Features](docs/features/)** - Feature documentation
+- **[📘 Guides](docs/guides/)** - Configuration and deployment guides
+- **[🔧 Technical Docs](docs/technical/)** - Implementation details
+- **[🎨 UI/UX Docs](docs/ui-ux/)** - Branding and design guidelines
+- **[📊 Status Reports](docs/status/)** - Implementation status and testing
+
+> **Tip:** Start with the [Documentation Index](docs/INDEX.md) to find what you need!
 
 ---
 
@@ -46,13 +60,17 @@ Built with React, TypeScript, Material-UI, and Electron. Works in both browser a
                            │
                            ▼
               ┌────────────────────────┐
-              │  1. Add to 6 Groups    │ ✅
+              │  1. Add to 10 Groups   │ ✅
               │     • All_Employees    │
               │     • US Employees     │
               │     • USEmployees      │
               │     • Password Policy  │
               │     • Intune Enrollment│
               │     • Help Desk Access │
+              │     • RehrigVPN        │
+              │     • RehrigVPN_Distro │
+              │     • GeneralDistrib.  │
+              │     • Selfservice      │
               └────────┬───────────────┘
                        │
                        ▼
@@ -87,7 +105,7 @@ Built with React, TypeScript, Material-UI, and Electron. Works in both browser a
 
 ### Core Functionality
 - **🔐 Secure Authentication**: Login with admin credentials (a- account) for both AD and Microsoft 365
-- **👥 Automatic Group Assignment**: Adds users to 8 standard employee groups
+- **👥 Automatic Group Assignment**: Adds users to 10 standard employee groups
 - **📋 License Management**: Assigns Microsoft 365 licenses (EMS E3 + Office 365 E3/F3)
 - **📧 Mailbox Provisioning**: Monitors Exchange Online mailbox creation
 - **✉️ Proxy Address Configuration**: Automatically configures all required email proxy addresses

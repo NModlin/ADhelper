@@ -6,9 +6,21 @@ export interface ElectronAPI {
   runADHelperScript: (username: string, operation: string) => Promise<{ success: boolean; output?: string; error?: string }>;
   onADHelperProgress: (callback: (data: string) => void) => void;
   removeADHelperProgressListener: () => void;
+  removeMFABlocking: (username: string) => Promise<{ success: boolean; result?: any; error?: string }>;
+  onMFARemovalProgress: (callback: (data: string) => void) => void;
+  removeMFARemovalProgressListener: () => void;
+  createNewUser: (userInfo: any) => Promise<{ success: boolean; result?: any; error?: string }>;
+  onUserCreationProgress: (callback: (data: string) => void) => void;
+  removeUserCreationProgressListener: () => void;
   saveCredential: (target: string, username: string, password: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   getCredential: (target: string) => Promise<{ success: boolean; username?: string; password?: string; error?: string }>;
   deleteCredential: (target: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  saveSiteConfig: (siteConfig: any) => Promise<{ success: boolean; message?: string; error?: string }>;
+  getSiteConfigs: () => Promise<{ success: boolean; sites?: any[]; error?: string }>;
+  deleteSiteConfig: (siteId: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  testADConnection: () => Promise<{ success: boolean; connected: boolean; domain?: string; domainController?: string; responseTime?: number; error?: string; timestamp: string }>;
+  saveJobProfiles: (siteId: string, jobProfiles: any[]) => Promise<{ success: boolean; message?: string; error?: string }>;
+  getJobProfiles: (siteId: string) => Promise<{ success: boolean; jobProfiles?: any[]; error?: string }>;
 }
 
 // Mock implementation for browser mode
@@ -34,6 +46,38 @@ const mockElectronAPI: ElectronAPI = {
   },
   
   removeADHelperProgressListener: () => {
+    console.warn('Running in browser mode - no listeners to remove');
+  },
+
+  removeMFABlocking: async (username: string) => {
+    console.warn('Running in browser mode - MFA removal not available');
+    return {
+      success: false,
+      error: 'MFA removal is only available in desktop mode. Please use the desktop app.'
+    };
+  },
+
+  onMFARemovalProgress: (callback: (data: string) => void) => {
+    console.warn('Running in browser mode - progress updates not available');
+  },
+
+  removeMFARemovalProgressListener: () => {
+    console.warn('Running in browser mode - no listeners to remove');
+  },
+
+  createNewUser: async (userInfo: any) => {
+    console.warn('Running in browser mode - User creation not available');
+    return {
+      success: false,
+      error: 'User creation is only available in desktop mode. Please use the desktop app.'
+    };
+  },
+
+  onUserCreationProgress: (callback: (data: string) => void) => {
+    console.warn('Running in browser mode - progress updates not available');
+  },
+
+  removeUserCreationProgressListener: () => {
     console.warn('Running in browser mode - no listeners to remove');
   },
 
@@ -74,6 +118,83 @@ const mockElectronAPI: ElectronAPI = {
       return { success: true, message: 'Credential deleted from browser storage' };
     } catch (error) {
       return { success: false, error: 'Failed to delete credential' };
+    }
+  },
+
+  // Site Configuration Management (browser mode fallback)
+  saveSiteConfig: async (siteConfig: any) => {
+    try {
+      const sites = JSON.parse(localStorage.getItem('siteConfigs') || '[]');
+      const existingIndex = sites.findIndex((s: any) => s.id === siteConfig.id);
+      if (existingIndex >= 0) {
+        sites[existingIndex] = siteConfig;
+      } else {
+        sites.push(siteConfig);
+      }
+      localStorage.setItem('siteConfigs', JSON.stringify(sites));
+      return { success: true, message: 'Site configuration saved to browser storage' };
+    } catch (error) {
+      return { success: false, error: 'Failed to save site configuration' };
+    }
+  },
+
+  getSiteConfigs: async () => {
+    try {
+      const sites = JSON.parse(localStorage.getItem('siteConfigs') || '[]');
+      return { success: true, sites };
+    } catch (error) {
+      return { success: false, error: 'Failed to retrieve site configurations' };
+    }
+  },
+
+  deleteSiteConfig: async (siteId: string) => {
+    try {
+      let sites = JSON.parse(localStorage.getItem('siteConfigs') || '[]');
+      sites = sites.filter((s: any) => s.id !== siteId);
+      localStorage.setItem('siteConfigs', JSON.stringify(sites));
+      return { success: true, message: 'Site configuration deleted from browser storage' };
+    } catch (error) {
+      return { success: false, error: 'Failed to delete site configuration' };
+    }
+  },
+
+  // AD Connection Test (browser mode - always return disconnected)
+  testADConnection: async () => {
+    return {
+      success: true,
+      connected: false,
+      error: 'AD connection test not available in browser mode',
+      timestamp: new Date().toISOString()
+    };
+  },
+
+  // Job Profile Management (browser mode - use localStorage)
+  saveJobProfiles: async (siteId: string, jobProfiles: any[]) => {
+    try {
+      let allProfiles: any = {};
+      const stored = localStorage.getItem('jobProfiles');
+      if (stored) {
+        allProfiles = JSON.parse(stored);
+      }
+      allProfiles[siteId] = jobProfiles;
+      localStorage.setItem('jobProfiles', JSON.stringify(allProfiles));
+      return { success: true, message: 'Job profiles saved to browser storage' };
+    } catch (error) {
+      return { success: false, error: 'Failed to save job profiles' };
+    }
+  },
+
+  getJobProfiles: async (siteId: string) => {
+    try {
+      const stored = localStorage.getItem('jobProfiles');
+      if (!stored) {
+        return { success: true, jobProfiles: [] };
+      }
+      const allProfiles = JSON.parse(stored);
+      const jobProfiles = allProfiles[siteId] || [];
+      return { success: true, jobProfiles };
+    } catch (error) {
+      return { success: false, error: 'Failed to load job profiles' };
     }
   }
 };

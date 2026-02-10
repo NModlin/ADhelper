@@ -1,0 +1,213 @@
+{
+  "job_profiles": [
+    {
+      "category": "ORL Standard User (Production)",
+      "groups": [
+        {
+          "name": "Password Policy - Standard User No Expiration",
+          "distinguishedName": "CN=Password%20Policy%20-%20Standard%20User%20No%20Expiration,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "AMOrlando",
+          "distinguishedName": "CN=AMOrlando,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "GeneralDistribution",
+          "distinguishedName": "CN=GeneralDistribution,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Help Desk Access",
+          "distinguishedName": "CN=Help%20Desk%20Access,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Intune User Enrollment",
+          "distinguishedName": "CN=Intune%20User%20Enrollment,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "All_employees",
+          "distinguishedName": "CN=All_employees,OU=Adaxes%20Managed,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "SelfService",
+          "distinguishedName": "CN=SelfService,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "OR PAC Unrestricted",
+          "distinguishedName": "CN=OR%20PAC%20Unrestricted,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Orlando",
+          "distinguishedName": "CN=Orlando,OU=Owner%20Approval%20Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "ProductionOrlando",
+          "distinguishedName": "CN=ProductionOrlando,OU=Owner%20Approval%20Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "US Employees",
+          "distinguishedName": "CN=US%20Employees,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        }
+      ]
+    },
+    {
+      "category": "ORL Engineering",
+      "groups": [
+        {
+          "name": "All_Employees",
+          "distinguishedName": "CN=All_Employees,OU=Adaxes%20Managed,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "AMOrlando",
+          "distinguishedName": "CN=AMOrlando,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "GeneralDistribution",
+          "distinguishedName": "CN=GeneralDistribution,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Intune User Enrollment",
+          "distinguishedName": "CN=Intune%20User%20Enrollment,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "OR PAC Unrestricted",
+          "distinguishedName": "CN=OR%20PAC%20Unrestricted,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "OR PAC MDF",
+          "distinguishedName": "CN=OR%20PAC%20MDF,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Orlando",
+          "distinguishedName": "CN=Orlando,OU=Owner%20Approval%20Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "ProductionOrlando",
+          "distinguishedName": "CN=ProductionOrlando,OU=Owner%20Approval%20Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "RehrigVPN",
+          "distinguishedName": "CN=RehrigVPN,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "RehrigVPN_Distro",
+          "distinguishedName": "CN=RehrigVPN_Distro,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        },
+        {
+          "name": "US Employees",
+          "distinguishedName": "CN=US%20Employees,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Orlando Global",
+          "distinguishedName": "CN=Orlando%20Global,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "SCPPlantAdminOrlando",
+          "distinguishedName": "CN=SCPPlantAdminOrlando,OU=Owner%20Approval%20Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "SelfService",
+          "distinguishedName": "CN=SelfService,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Help Desk Access",
+          "distinguishedName": "CN=Help%20Desk%20Access,OU=Security%20Groups,DC=RPL,DC=Local"
+        }
+      ]
+    },
+    {
+      "category": "ORL Production Supervisor",
+      "groups": [
+        {
+          "name": "All_Employees",
+          "distinguishedName": "CN=All_Employees,OU=Adaxes%20Managed,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "AMOrlando",
+          "distinguishedName": "CN=AMOrlando,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "GeneralDistribution",
+          "distinguishedName": "CN=GeneralDistribution,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Intune User Enrollment",
+          "distinguishedName": "CN=Intune%20User%20Enrollment,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "OR PAC Unrestricted",
+          "distinguishedName": "CN=OR%20PAC%20Unrestricted,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "OR PAC MDF",
+          "distinguishedName": "CN=OR%20PAC%20MDF,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Orlando",
+          "distinguishedName": "CN=Orlando,OU=Owner%20Approval%20Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "ProductionOrlando",
+          "distinguishedName": "CN=ProductionOrlando,OU=Owner%20Approval%20Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "RehrigVPN",
+          "distinguishedName": "CN=RehrigVPN,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "RehrigVPN_Distro",
+          "distinguishedName": "CN=RehrigVPN_Distro,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        },
+        {
+          "name": "US Employees",
+          "distinguishedName": "CN=US%20Employees,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Orlando Global",
+          "distinguishedName": "CN=Orlando%20Global,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "SCPSupervisorOrlando",
+          "distinguishedName": "CN=SCPSupervisorOrlando,OU=Owner%20Approval%20Required,OU=Self%20Service%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "OPSMFG Reports",
+          "distinguishedName": "CN=OPSMFG%20Reports,OU=Owner%20Approval%20Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Orlando Data",
+          "distinguishedName": "CN=Orlando%20Data,OU=Security%20Groups,DC=RPL,DC=Local"
+        }
+      ]
+    },
+    {
+      "category": "Shipping (Supervisor/Manager)",
+      "groups": [
+        {
+          "name": "AMOrlando",
+          "distinguishedName": "CN=AMOrlando,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "Help Desk Access",
+          "distinguishedName": "CN=Help%20Desk%20Access,OU=Security%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "NVR OR Cameras Read",
+          "distinguishedName": "CN=NVR%20OR%20Cameras%20Read,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "orlando_supplies",
+          "distinguishedName": "CN=orlando_supplies,OU=Owner%20Approval%20Required,OU=Self%20Service%20Groups,DC=RPL,DC=Local"
+        },
+        {
+          "name": "RehrigVPN",
+          "distinguishedName": "CN=RehrigVPN,OU=Mgr-Owner-Approval-Required,OU=Self%20Service,DC=RPL,DC=Local"
+        },
+        {
+          "name": "RehrigVPN_Distro",
+          "distinguishedName": "CN=RehrigVPN_Distro,OU=Distribution%20Lists,DC=RPL,DC=Local"
+        }
+      ]
+    }
+  ]
+}
+

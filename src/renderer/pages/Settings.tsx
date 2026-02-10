@@ -18,6 +18,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import { electronAPI, isElectron } from '../electronAPI';
+import SiteManagement from '../components/SiteManagement';
 
 const Settings: React.FC = () => {
   // Jira Credentials
@@ -358,6 +359,17 @@ const Settings: React.FC = () => {
                 </Button>
               )}
             </Box>
+          </Paper>
+        </Grid>
+
+        {/* Site Location Management */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Site Location Management
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <SiteManagement />
           </Paper>
         </Grid>
 

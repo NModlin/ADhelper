@@ -16,7 +16,9 @@ $standardGroups = @(
     "CN=Intune%20User%20Enrollment,OU=Security%20Groups,DC=RPL,DC=Local",
     "CN=Help%20Desk%20Access,OU=Security%20Groups,DC=RPL,DC=Local",
     "CN=RehrigVPN,OU=Mgr-Owner-Approval-Required,OU=Self%20Service%20Groups,DC=RPL,DC=Local",
-    "CN=RehrigVPN_Distro,OU=Distribution%20Lists,DC=RPL,DC=Local"
+    "CN=RehrigVPN_Distro,OU=Distribution%20Lists,DC=RPL,DC=Local",
+    "CN=GeneralDistribution,OU=Distribution%20Lists,DC=RPL,DC=Local",
+    "CN=Selfservice,OU=Security%20Groups,DC=RPL,DC=Local"
 )
 
 # MFA Registration Blocking Group - users in this group are blocked from MFA registration
@@ -2317,16 +2319,53 @@ function Fix-UserProxyAddresses {
 function Add-UserToStandardGroups {
     <#
     .SYNOPSIS
-        Adds a user to all standard employee groups.
+        Adds a user to all standard employee groups, optional site-specific groups, and job profile groups.
+    .DESCRIPTION
+        Merges standard groups, site-specific groups, and job profile groups with deduplication
+        based on Distinguished Name (case-insensitive, URL-decoded comparison).
     #>
     param (
         [Parameter(Mandatory=$true)]
         [string]$SamAccountName,
         [Parameter(Mandatory=$true)]
-        [System.Management.Automation.PSCredential]$Credential
+        [System.Management.Automation.PSCredential]$Credential,
+        [Parameter(Mandatory=$false)]
+        [string[]]$AdditionalGroups = @(),
+        [Parameter(Mandatory=$false)]
+        [string[]]$JobProfileGroups = @()
     )
 
-    Write-Host "`n=== Adding to Standard Groups ===" -ForegroundColor Cyan
+    # Merge all groups
+    $allGroupsRaw = $standardGroups + $AdditionalGroups + $JobProfileGroups
+
+    # Deduplicate groups by comparing URL-decoded Distinguished Names (case-insensitive)
+    $uniqueGroups = @{}
+    foreach ($groupDN in $allGroupsRaw) {
+        $decodedDN = [System.Web.HttpUtility]::UrlDecode($groupDN).ToLower()
+        if (-not $uniqueGroups.ContainsKey($decodedDN)) {
+            $uniqueGroups[$decodedDN] = $groupDN  # Store original (possibly encoded) DN
+        }
+    }
+    $allGroups = $uniqueGroups.Values
+
+    # Display group summary
+    $beforeDedup = $allGroupsRaw.Count
+    $afterDedup = $allGroups.Count
+    $duplicatesRemoved = $beforeDedup - $afterDedup
+
+    Write-Host "`n=== Adding to Groups ===" -ForegroundColor Cyan
+    Write-Host "  Standard groups: $($standardGroups.Count)" -ForegroundColor Gray
+    if ($AdditionalGroups.Count -gt 0) {
+        Write-Host "  Site-specific groups: $($AdditionalGroups.Count)" -ForegroundColor Gray
+    }
+    if ($JobProfileGroups.Count -gt 0) {
+        Write-Host "  Job profile groups: $($JobProfileGroups.Count)" -ForegroundColor Gray
+    }
+    Write-Host "  Total before deduplication: $beforeDedup" -ForegroundColor Yellow
+    if ($duplicatesRemoved -gt 0) {
+        Write-Host "  Duplicates removed: $duplicatesRemoved" -ForegroundColor Magenta
+    }
+    Write-Host "  Total unique groups: $afterDedup" -ForegroundColor Cyan
 
     try {
         $user = Get-ADUser -Identity $SamAccountName -Properties MemberOf -Credential $Credential -ErrorAction Stop
@@ -2335,7 +2374,7 @@ function Add-UserToStandardGroups {
         $alreadyMemberCount = 0
         $failureCount = 0
 
-        foreach ($groupDN in $standardGroups) {
+        foreach ($groupDN in $allGroups) {
             # Decode URL-encoded characters in the DN
             $decodedGroupDN = [System.Web.HttpUtility]::UrlDecode($groupDN)
 

@@ -25,6 +25,12 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 // Import Rehrig theme
 import { getRehrigTheme } from './theme/rehrigTheme';
 
+// Import context
+import { ADConnectionProvider } from './context/ADConnectionContext';
+
+// Import components
+import ADConnectionStatus from './components/ADConnectionStatus';
+
 // Import pages
 import Dashboard from './pages/Dashboard';
 import ADHelper from './pages/ADHelper';
@@ -119,33 +125,40 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ display: 'flex', height: '100vh' }}>
-        <AppBar
-          position="fixed"
-          sx={{
-            width: { sm: `calc(100% - ${drawerWidth}px)` },
-            ml: { sm: `${drawerWidth}px` },
-          }}
-        >
-          <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: 'none' } }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-              {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
-            </Typography>
-            <IconButton onClick={() => setDarkMode(!darkMode)} color="inherit">
-              {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
-          </Toolbar>
-        </AppBar>
+      <ADConnectionProvider>
+        <CssBaseline />
+        <Box sx={{ display: 'flex', height: '100vh' }}>
+          <AppBar
+            position="fixed"
+            sx={{
+              width: { sm: `calc(100% - ${drawerWidth}px)` },
+              ml: { sm: `${drawerWidth}px` },
+            }}
+          >
+            <Toolbar>
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ mr: 2, display: { sm: 'none' } }}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+                {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
+              </Typography>
+
+              {/* AD Connection Status Indicator */}
+              <Box sx={{ mr: 2 }}>
+                <ADConnectionStatus variant="chip" showRefresh={true} />
+              </Box>
+
+              <IconButton onClick={() => setDarkMode(!darkMode)} color="inherit">
+                {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+              </IconButton>
+            </Toolbar>
+          </AppBar>
         <Box
           component="nav"
           sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -208,6 +221,7 @@ function App() {
           </Box>
         </Box>
       </Box>
+      </ADConnectionProvider>
     </ThemeProvider>
   );
 }
