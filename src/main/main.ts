@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, session } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -145,8 +145,25 @@ function createWindow() {
     title: 'ADHelper - Active Directory & Jira Manager',
   });
 
+  // ── Content Security Policy ──────────────────────────────────────────────
+  // Restrict script sources to prevent XSS. In dev mode we allow the Vite
+  // dev server; in production only same-origin scripts are permitted.
+  const isDev = process.env.NODE_ENV === 'development';
+  const cspPolicy = isDev
+    ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data:"
+    : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:";
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [cspPolicy],
+      },
+    });
+  });
+
   // Load the app
-  if (process.env.NODE_ENV === 'development') {
+  if (isDev) {
     // Try to load from Vite dev server - try multiple ports
     const tryPorts = async () => {
       const ports = [5173, 5174, 5175, 5176, 5177, 5178, 5179, 5180];
