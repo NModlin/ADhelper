@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
@@ -30,6 +30,7 @@ import { ADConnectionProvider } from './context/ADConnectionContext';
 
 // Import components
 import ADConnectionStatus from './components/ADConnectionStatus';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Import pages
 import Dashboard from './pages/Dashboard';
@@ -198,7 +199,9 @@ function App() {
           }}
         >
           <Box sx={{ flexGrow: 1, p: 3 }}>
-            {renderPage()}
+            <ErrorBoundary sectionName={menuItems.find(i => i.id === currentPage)?.label || 'Page'}>
+              {renderPage()}
+            </ErrorBoundary>
           </Box>
 
           {/* Footer */}

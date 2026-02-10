@@ -1,19 +1,29 @@
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 
 console.log('========================================');
 console.log('  ADHelper Desktop App - Dev Mode');
 console.log('========================================\n');
 
-console.log('Starting Vite dev server...');
+// Step 1: Rebuild main process + preload to prevent stale dist/
+console.log('[1/3] Building main process & preload (npm run build:main)...');
+try {
+  execSync('npm run build:main', { stdio: 'inherit' });
+  console.log('      Build complete.\n');
+} catch (err) {
+  console.error('Main process build failed — aborting dev start.');
+  process.exit(1);
+}
 
-// Start Vite
+// Step 2: Start Vite dev server
+console.log('[2/3] Starting Vite dev server...');
+
 const vite = spawn('npm', ['run', 'dev:vite'], {
   shell: true,
   stdio: 'inherit'
 });
 
-// Simple delay-based startup - wait 3 seconds for Vite to start
-console.log('Waiting 3 seconds for Vite to start...\n');
+// Step 3: Wait for Vite then start Electron
+console.log('[3/3] Waiting 3 seconds for Vite to start...\n');
 
 setTimeout(() => {
   console.log('========================================');

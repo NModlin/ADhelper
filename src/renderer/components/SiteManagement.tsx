@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Button,
   List,
@@ -15,7 +14,6 @@ import {
   DialogActions,
   TextField,
   Chip,
-  Divider,
   Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';

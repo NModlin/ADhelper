@@ -204,7 +204,7 @@ const Settings: React.FC = () => {
 
       <Grid container spacing={3}>
         {/* Jira Credentials */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="h6">
@@ -289,7 +289,7 @@ const Settings: React.FC = () => {
         </Grid>
 
         {/* AD Credentials */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="h6">
@@ -363,7 +363,7 @@ const Settings: React.FC = () => {
         </Grid>
 
         {/* Site Location Management */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Site Location Management
@@ -374,7 +374,7 @@ const Settings: React.FC = () => {
         </Grid>
 
         {/* About */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               About

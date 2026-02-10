@@ -351,7 +351,7 @@ const ADHelper: React.FC = () => {
 
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <TextField
               fullWidth
               label="Username or Email"
@@ -363,7 +363,7 @@ const ADHelper: React.FC = () => {
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Button
               fullWidth
               variant="contained"
@@ -380,7 +380,7 @@ const ADHelper: React.FC = () => {
 
       {/* Quick Actions */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Button
             fullWidth
             variant="outlined"
@@ -404,7 +404,7 @@ const ADHelper: React.FC = () => {
             Remove from MFA Blocking Group
           </Button>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Button
             fullWidth
             variant="outlined"
@@ -567,7 +567,7 @@ const ADHelper: React.FC = () => {
       )}
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -585,7 +585,7 @@ const ADHelper: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           {result && !loading && (
             <Paper sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -679,7 +679,7 @@ const ADHelper: React.FC = () => {
           {!userCreationResult && (
             <>
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label="First Name *"
@@ -689,7 +689,7 @@ const ADHelper: React.FC = () => {
                     disabled={userCreationLoading}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label="Last Name *"
@@ -699,7 +699,7 @@ const ADHelper: React.FC = () => {
                     disabled={userCreationLoading}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label="Username *"
@@ -709,7 +709,7 @@ const ADHelper: React.FC = () => {
                     disabled={userCreationLoading}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label="Email *"
@@ -719,7 +719,7 @@ const ADHelper: React.FC = () => {
                     disabled={userCreationLoading}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <TextField
                     fullWidth
                     label="Organizational Unit *"
@@ -729,7 +729,7 @@ const ADHelper: React.FC = () => {
                     disabled={userCreationLoading}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label="Title (Optional)"
@@ -739,7 +739,7 @@ const ADHelper: React.FC = () => {
                     disabled={userCreationLoading}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label="Department (Optional)"
@@ -749,7 +749,7 @@ const ADHelper: React.FC = () => {
                     disabled={userCreationLoading}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <TextField
                     fullWidth
                     label="Manager DN (Optional)"
@@ -760,7 +760,7 @@ const ADHelper: React.FC = () => {
                     placeholder="e.g., CN=John Doe,OU=Users,DC=RPL,DC=Local"
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <TextField
                     fullWidth
                     label="Manager Email (Optional)"
@@ -773,7 +773,7 @@ const ADHelper: React.FC = () => {
                     helperText="If no Manager DN is provided, enter the manager's email to receive credentials"
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel>Site Location (Optional)</InputLabel>
                     <Select
@@ -796,7 +796,7 @@ const ADHelper: React.FC = () => {
 
                 {/* Job Category Selection (only for sites with job profiles) */}
                 {jobProfiles.length > 0 && (
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel>Job Category (Optional)</InputLabel>
                       <Select
@@ -819,7 +819,7 @@ const ADHelper: React.FC = () => {
                 )}
 
                 {selectedSiteGroups.length > 0 && (
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Alert severity="info" icon="📍">
                       <Typography variant="subtitle2" gutterBottom>
                         <strong>Site Groups for {siteConfigs.find(s => s.id === newUserInfo.siteLocation)?.name}:</strong>
@@ -843,7 +843,7 @@ const ADHelper: React.FC = () => {
                 )}
 
                 {selectedJobProfileGroups.length > 0 && (
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Alert severity="success" icon="💼">
                       <Typography variant="subtitle2" gutterBottom>
                         <strong>Job Profile Groups for {selectedJobProfile}:</strong>
@@ -867,7 +867,7 @@ const ADHelper: React.FC = () => {
                 )}
 
                 {(selectedSiteGroups.length > 0 || selectedJobProfileGroups.length > 0) && (
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Alert severity="warning" icon="📊">
                       <Typography variant="subtitle2" gutterBottom>
                         <strong>Total Groups Summary:</strong>

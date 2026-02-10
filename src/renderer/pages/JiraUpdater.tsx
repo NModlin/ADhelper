@@ -102,7 +102,7 @@ const JiraUpdater: React.FC = () => {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -161,7 +161,7 @@ const JiraUpdater: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}

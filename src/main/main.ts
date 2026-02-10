@@ -3,6 +3,35 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import { spawn } from 'child_process';
+import logger from './logger';
+
+// ── Rate Limiter for AD Operations ───────────────────────────────────────────
+// Prevents duplicate concurrent requests (e.g. double-clicks, rapid retries).
+// Each channel can only have one in-flight operation at a time.
+
+const inFlightOps = new Set<string>();
+
+/**
+ * Wraps an IPC handler to ensure only one call per channel runs at a time.
+ * Returns a "busy" error if a duplicate request arrives while one is in-flight.
+ */
+function rateLimited<T>(
+  channel: string,
+  handler: (...args: any[]) => Promise<T>,
+): (...args: any[]) => Promise<T | { success: false; error: string }> {
+  return async (...args: any[]) => {
+    if (inFlightOps.has(channel)) {
+      logger.warn(`Rate limited: ${channel} — operation already in progress`);
+      return { success: false, error: 'Operation already in progress. Please wait for it to complete.' };
+    }
+    inFlightOps.add(channel);
+    try {
+      return await handler(...args);
+    } finally {
+      inFlightOps.delete(channel);
+    }
+  };
+}
 
 // ── Secure PowerShell Execution Helper ───────────────────────────────────────
 // All PowerShell execution MUST go through this helper to prevent command injection.
@@ -151,14 +180,14 @@ function createWindow() {
       for (const port of ports) {
         try {
           await mainWindow?.loadURL(`http://localhost:${port}`);
-          console.log(`Successfully loaded from port ${port}`);
+          logger.info(`Dev server connected on port ${port}`);
           mainWindow?.webContents.openDevTools();
           return;
         } catch (err) {
-          console.log(`Port ${port} failed, trying next...`);
+          logger.debug(`Port ${port} failed, trying next...`);
         }
       }
-      console.error('Could not connect to Vite dev server on any port');
+      logger.error('Could not connect to Vite dev server on any port');
     };
     tryPorts();
   } else {
@@ -171,6 +200,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  logger.init(process.env.NODE_ENV === 'development' ? 'debug' : 'info');
+  logger.info('App starting', { version: app.getVersion(), env: process.env.NODE_ENV || 'production' });
+
   createWindow();
 
   app.on('activate', () => {
@@ -192,7 +224,8 @@ app.on('window-all-closed', () => {
 // All PowerShell execution now goes through executePowerShellScript() with -File.
 
 // IPC Handler for running the main ADHelper script
-ipcMain.handle('run-adhelper-script', async (event, username: string, operation: string) => {
+ipcMain.handle('run-adhelper-script', rateLimited('run-adhelper-script', async (event, username: string, operation: string) => {
+  logger.info('IPC: run-adhelper-script', { username, operation });
   const scriptPath = path.join(app.getAppPath(), 'ADhelper.ps1');
 
   return executePowerShellScript({
@@ -201,11 +234,12 @@ ipcMain.handle('run-adhelper-script', async (event, username: string, operation:
     progressChannel: 'adhelper-progress',
     sender: event.sender,
   });
-});
+}));
 
 // IPC Handler for MFA Blocking Group Removal
 // SECURE: Uses -File with separate -Username argument (no string interpolation)
-ipcMain.handle('remove-mfa-blocking', async (event, username: string) => {
+ipcMain.handle('remove-mfa-blocking', rateLimited('remove-mfa-blocking', async (event, username: string) => {
+  logger.info('IPC: remove-mfa-blocking', { username });
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'Remove-MFABlocking.ps1');
 
   return executePowerShellScript({
@@ -214,12 +248,13 @@ ipcMain.handle('remove-mfa-blocking', async (event, username: string) => {
     progressChannel: 'mfa-removal-progress',
     sender: event.sender,
   });
-});
+}));
 
 // IPC Handler for Creating New User
 // SECURE: All user input is written to a JSON temp file, never interpolated into commands.
 // The PS bridge script reads the JSON file and deletes it after parsing.
-ipcMain.handle('create-new-user', async (event, userInfo: any) => {
+ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, userInfo: any) => {
+  logger.info('IPC: create-new-user', { username: userInfo.username, firstName: userInfo.firstName, lastName: userInfo.lastName });
   // Load site-specific groups if site location is selected
   let siteGroups: string[] = [];
   if (userInfo.siteLocation) {
@@ -231,11 +266,11 @@ ipcMain.handle('create-new-user', async (event, userInfo: any) => {
         const selectedSite = sites.find((s: any) => s.id === userInfo.siteLocation);
         if (selectedSite) {
           siteGroups = selectedSite.groups;
-          console.log(`Loading ${siteGroups.length} site-specific groups for ${selectedSite.name}`);
+          logger.info('Loaded site-specific groups', { count: siteGroups.length, site: selectedSite.name });
         }
       }
     } catch (error) {
-      console.error('Failed to load site groups:', error);
+      logger.error('Failed to load site groups', { error: String(error) });
     }
   }
 
@@ -243,7 +278,7 @@ ipcMain.handle('create-new-user', async (event, userInfo: any) => {
   let jobProfileGroups: string[] = [];
   if (userInfo.jobProfileGroups && Array.isArray(userInfo.jobProfileGroups)) {
     jobProfileGroups = userInfo.jobProfileGroups;
-    console.log(`Loading ${jobProfileGroups.length} job profile groups`);
+    logger.info('Loaded job profile groups', { count: jobProfileGroups.length });
   }
 
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'Create-NewUser.ps1');
@@ -270,7 +305,7 @@ ipcMain.handle('create-new-user', async (event, userInfo: any) => {
     progressChannel: 'user-creation-progress',
     sender: event.sender,
   });
-});
+}));
 
 // IPC Handlers for Windows Credential Manager (already safe — using -File with args)
 ipcMain.handle('save-credential', async (_event, target: string, username: string, password: string) => {
@@ -367,6 +402,7 @@ ipcMain.handle('delete-site-config', async (_event, siteId: string) => {
 // SECURE: Uses -File to call Test-ADConnection.ps1 which handles credential loading internally.
 // The script already has standalone execution support (lines 110-133).
 ipcMain.handle('test-ad-connection', async (_event) => {
+  logger.debug('IPC: test-ad-connection');
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'Test-ADConnection.ps1');
 
   try {

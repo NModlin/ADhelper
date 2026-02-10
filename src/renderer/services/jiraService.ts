@@ -17,10 +17,8 @@ export interface JiraTicket {
 
 class JiraService {
   private client: AxiosInstance | null = null;
-  private config: JiraConfig | null = null;
 
   configure(config: JiraConfig) {
-    this.config = config;
     const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
     
     this.client = axios.create({

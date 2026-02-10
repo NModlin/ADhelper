@@ -1,4 +1,4 @@
-import { createTheme, alpha, ThemeOptions } from '@mui/material/styles';
+import { createTheme, ThemeOptions } from '@mui/material/styles';
 
 /**
  * Official Rehrig Pacific Company Theme
