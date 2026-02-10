@@ -190,9 +190,15 @@ const mockElectronAPI: ElectronAPI = {
   }
 };
 
-// Export the electronAPI - use real one if available, otherwise use mock
-export const electronAPI: ElectronAPI = (window as any).electronAPI || mockElectronAPI;
+// Export the electronAPI - use real one if available, otherwise use mock.
+// Spread the mock first so any methods missing from the preload (e.g. after
+// a partial rebuild) gracefully fall back to the mock implementation instead
+// of being undefined.
+const realAPI = (window as any).electronAPI;
+export const electronAPI: ElectronAPI = realAPI
+  ? { ...mockElectronAPI, ...realAPI }
+  : mockElectronAPI;
 
 // Check if running in Electron
-export const isElectron = !!(window as any).electronAPI;
+export const isElectron = !!realAPI;
 
