@@ -5,6 +5,7 @@ import os from 'os';
 import { spawn } from 'child_process';
 import logger from './logger';
 import { rateLimited } from './rateLimiter';
+import config from './config';
 
 // ── Secure PowerShell Execution Helper ───────────────────────────────────────
 // All PowerShell execution MUST go through this helper to prevent command injection.
@@ -148,8 +149,7 @@ function createWindow() {
   // ── Content Security Policy ──────────────────────────────────────────────
   // Restrict script sources to prevent XSS. In dev mode we allow the Vite
   // dev server; in production only same-origin scripts are permitted.
-  const isDev = process.env.NODE_ENV === 'development';
-  const cspPolicy = isDev
+  const cspPolicy = config.isDev
     ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data:"
     : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:";
 
@@ -163,13 +163,12 @@ function createWindow() {
   });
 
   // Load the app
-  if (isDev) {
+  if (config.isDev) {
     // Try to load from Vite dev server - try multiple ports
     const tryPorts = async () => {
-      const ports = [5173, 5174, 5175, 5176, 5177, 5178, 5179, 5180];
-      for (const port of ports) {
+      for (const port of config.devServerPorts) {
         try {
-          await mainWindow?.loadURL(`http://localhost:${port}`);
+          await mainWindow?.loadURL(`http://${config.devServerHost}:${port}`);
           logger.info(`Dev server connected on port ${port}`);
           mainWindow?.webContents.openDevTools();
           return;
@@ -190,8 +189,8 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  logger.init(process.env.NODE_ENV === 'development' ? 'debug' : 'info');
-  logger.info('App starting', { version: app.getVersion(), env: process.env.NODE_ENV || 'production' });
+  logger.init(config.logLevel);
+  logger.info('App starting', { version: app.getVersion(), env: config.isDev ? 'development' : 'production' });
 
   createWindow();
 
@@ -398,7 +397,7 @@ ipcMain.handle('test-ad-connection', async (_event) => {
   try {
     const psResult = await executePowerShellScript({
       scriptPath,
-      timeoutMs: 15000,
+      timeoutMs: config.adConnectionTimeoutMs,
     });
 
     // Parse the AD connection result
