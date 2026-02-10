@@ -154,9 +154,44 @@ const ADHelper: React.FC = () => {
     }
   };
 
+  // ── Input Validation Helpers ──────────────────────────────────────────────
+  // Defense-in-depth: validate before IPC even though -File execution
+  // already prevents injection.
+
+  /** Validates a sAMAccountName or email format */
+  const isValidUsernameOrEmail = (value: string): boolean => {
+    if (value.length > 256) return false;
+    // Allow sAMAccountName chars or email format
+    return /^[a-zA-Z0-9._@\-]+$/.test(value);
+  };
+
+  /** Validates a person name (letters, spaces, hyphens, apostrophes) */
+  const isValidName = (value: string): boolean => {
+    if (value.length > 128) return false;
+    return /^[a-zA-Z\s'\-]+$/.test(value);
+  };
+
+  /** Validates an email address */
+  const isValidEmail = (value: string): boolean => {
+    if (value.length > 320) return false;
+    return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(value);
+  };
+
+  /** Validates a DN (distinguished name) format */
+  const isValidDN = (value: string): boolean => {
+    if (!value || value.length > 2048) return false;
+    // Basic DN pattern: must contain at least one = sign
+    return /^[a-zA-Z]+=.+/.test(value);
+  };
+
   const handleSearch = async () => {
     if (!username.trim()) {
       setError('Please enter a username or email');
+      return;
+    }
+
+    if (!isValidUsernameOrEmail(username.trim())) {
+      setError('Invalid username or email format. Use only letters, numbers, dots, hyphens, underscores, and @.');
       return;
     }
 
@@ -172,7 +207,7 @@ const ADHelper: React.FC = () => {
         setProgress(prev => [...prev, data]);
       });
 
-      const response = await electronAPI.runADHelperScript(username, 'process');
+      const response = await electronAPI.runADHelperScript(username.trim(), 'process');
 
       setResult(response);
       setLoading(false);
@@ -194,6 +229,11 @@ const ADHelper: React.FC = () => {
       return;
     }
 
+    if (!isValidUsernameOrEmail(mfaUsername.trim())) {
+      setMfaResult({ success: false, error: 'Invalid username format. Use only letters, numbers, dots, hyphens, underscores, and @.' });
+      return;
+    }
+
     setMfaLoading(true);
     setMfaProgress([]);
     setMfaResult(null);
@@ -204,7 +244,7 @@ const ADHelper: React.FC = () => {
         setMfaProgress(prev => [...prev, data]);
       });
 
-      const response = await electronAPI.removeMFABlocking(mfaUsername);
+      const response = await electronAPI.removeMFABlocking(mfaUsername.trim());
       setMfaResult(response);
       setMfaLoading(false);
     } catch (err: any) {
@@ -219,6 +259,21 @@ const ADHelper: React.FC = () => {
   const handleUserCreation = async () => {
     // Validate required fields
     if (!newUserInfo.firstName || !newUserInfo.lastName || !newUserInfo.username || !newUserInfo.email) {
+      return;
+    }
+
+    // Validate field formats (defense-in-depth)
+    const validationErrors: string[] = [];
+    if (!isValidName(newUserInfo.firstName)) validationErrors.push('First name contains invalid characters');
+    if (!isValidName(newUserInfo.lastName)) validationErrors.push('Last name contains invalid characters');
+    if (!isValidUsernameOrEmail(newUserInfo.username)) validationErrors.push('Username contains invalid characters');
+    if (!isValidEmail(newUserInfo.email)) validationErrors.push('Email address is not valid');
+    if (newUserInfo.ou && !isValidDN(newUserInfo.ou)) validationErrors.push('OU path is not a valid distinguished name');
+    if (newUserInfo.manager && !isValidDN(newUserInfo.manager)) validationErrors.push('Manager DN is not valid');
+    if (newUserInfo.managerEmail && !isValidEmail(newUserInfo.managerEmail)) validationErrors.push('Manager email is not valid');
+
+    if (validationErrors.length > 0) {
+      setUserCreationResult({ success: false, error: validationErrors.join('. ') });
       return;
     }
 

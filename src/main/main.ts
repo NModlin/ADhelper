@@ -1,7 +1,130 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { spawn } from 'child_process';
+
+// ── Secure PowerShell Execution Helper ───────────────────────────────────────
+// All PowerShell execution MUST go through this helper to prevent command injection.
+// It uses -File (never -Command with user input) and passes arguments safely.
+
+interface PSExecutionOptions {
+  /** Absolute path to the .ps1 script to execute */
+  scriptPath: string;
+  /** Simple key-value arguments passed as -Key Value pairs to the script */
+  args?: Record<string, string>;
+  /** Complex parameters written to a JSON temp file; the path is passed as -ParamsFile */
+  paramsFile?: Record<string, unknown>;
+  /** IPC channel name for streaming progress to the renderer */
+  progressChannel?: string;
+  /** WebContents to send progress events to */
+  sender?: Electron.WebContents;
+  /** Timeout in milliseconds (0 = no timeout) */
+  timeoutMs?: number;
+}
+
+interface PSExecutionResult {
+  success: boolean;
+  output?: string;
+  result?: unknown;
+  error?: string;
+}
+
+function executePowerShellScript(options: PSExecutionOptions): Promise<PSExecutionResult> {
+  return new Promise((resolve, reject) => {
+    const spawnArgs: string[] = [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-File', options.scriptPath,
+    ];
+
+    let tempFilePath: string | null = null;
+
+    // If complex params are provided, write them to a JSON temp file
+    if (options.paramsFile) {
+      tempFilePath = path.join(os.tmpdir(), `adhelper-params-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
+      fs.writeFileSync(tempFilePath, JSON.stringify(options.paramsFile), 'utf8');
+      spawnArgs.push('-ParamsFile', tempFilePath);
+    }
+
+    // Add simple key-value arguments
+    if (options.args) {
+      for (const [key, value] of Object.entries(options.args)) {
+        spawnArgs.push(`-${key}`, value);
+      }
+    }
+
+    const ps = spawn('powershell.exe', spawnArgs);
+
+    let stdout = '';
+    let stderr = '';
+    let timedOut = false;
+    let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+
+    if (options.timeoutMs && options.timeoutMs > 0) {
+      timeoutHandle = setTimeout(() => {
+        timedOut = true;
+        ps.kill();
+        // Clean up temp file on timeout
+        if (tempFilePath && fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        resolve({
+          success: false,
+          error: 'PowerShell script execution timed out',
+        });
+      }, options.timeoutMs);
+    }
+
+    ps.stdout.on('data', (data: Buffer) => {
+      const output = data.toString();
+      stdout += output;
+      if (options.progressChannel && options.sender) {
+        options.sender.send(options.progressChannel, output);
+      }
+    });
+
+    ps.stderr.on('data', (data: Buffer) => {
+      stderr += data.toString();
+    });
+
+    ps.on('close', (code: number | null) => {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+      if (timedOut) return;
+
+      // Clean up temp file (PS script should have already deleted it, but be safe)
+      if (tempFilePath && fs.existsSync(tempFilePath)) {
+        try { fs.unlinkSync(tempFilePath); } catch { /* ignore */ }
+      }
+
+      if (code === 0 && stdout.trim()) {
+        try {
+          const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const result = JSON.parse(jsonMatch[0]);
+            resolve({ success: true, result, output: stdout });
+          } else {
+            resolve({ success: true, output: stdout });
+          }
+        } catch {
+          resolve({ success: true, output: stdout });
+        }
+      } else if (code === 0) {
+        resolve({ success: true, output: stdout });
+      } else {
+        reject({ success: false, error: stderr || stdout || 'PowerShell script failed' });
+      }
+    });
+
+    ps.on('error', (error: Error) => {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+      if (tempFilePath && fs.existsSync(tempFilePath)) {
+        try { fs.unlinkSync(tempFilePath); } catch { /* ignore */ }
+      }
+      reject({ success: false, error: error.message });
+    });
+  });
+}
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -63,149 +186,40 @@ app.on('window-all-closed', () => {
   }
 });
 
-// IPC Handlers for PowerShell execution
-ipcMain.handle('execute-powershell', async (event, script: string, args: string[] = []) => {
-  return new Promise((resolve, reject) => {
-    const ps = spawn('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-Command', script,
-      ...args
-    ]);
-
-    let stdout = '';
-    let stderr = '';
-
-    ps.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    ps.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ps.on('close', (code) => {
-      if (code === 0) {
-        resolve({ success: true, output: stdout });
-      } else {
-        reject({ success: false, error: stderr || stdout });
-      }
-    });
-
-    ps.on('error', (error) => {
-      reject({ success: false, error: error.message });
-    });
-  });
-});
+// NOTE: The 'execute-powershell' handler has been REMOVED.
+// It allowed arbitrary PowerShell code execution via -Command, which is a
+// command injection risk. It was not used by any renderer code.
+// All PowerShell execution now goes through executePowerShellScript() with -File.
 
 // IPC Handler for running the main ADHelper script
 ipcMain.handle('run-adhelper-script', async (event, username: string, operation: string) => {
   const scriptPath = path.join(app.getAppPath(), 'ADhelper.ps1');
-  
-  return new Promise((resolve, reject) => {
-    const ps = spawn('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-File', scriptPath,
-      '-Username', username,
-      '-Operation', operation
-    ]);
 
-    let stdout = '';
-    let stderr = '';
-
-    ps.stdout.on('data', (data) => {
-      stdout += data.toString();
-      // Send progress updates to renderer
-      event.sender.send('adhelper-progress', data.toString());
-    });
-
-    ps.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ps.on('close', (code) => {
-      if (code === 0) {
-        resolve({ success: true, output: stdout });
-      } else {
-        reject({ success: false, error: stderr || stdout });
-      }
-    });
-
-    ps.on('error', (error) => {
-      reject({ success: false, error: error.message });
-    });
+  return executePowerShellScript({
+    scriptPath,
+    args: { Username: username, Operation: operation },
+    progressChannel: 'adhelper-progress',
+    sender: event.sender,
   });
 });
 
 // IPC Handler for MFA Blocking Group Removal
+// SECURE: Uses -File with separate -Username argument (no string interpolation)
 ipcMain.handle('remove-mfa-blocking', async (event, username: string) => {
-  const scriptPath = path.join(app.getAppPath(), 'ADhelper.ps1');
+  const scriptPath = path.join(app.getAppPath(), 'scripts', 'Remove-MFABlocking.ps1');
 
-  return new Promise((resolve, reject) => {
-    // Create a PowerShell command that calls the MFA removal function
-    const psCommand = `
-      $ErrorActionPreference = "Continue"
-      . "${scriptPath}"
-
-      # Get stored credentials
-      $credential = Get-StoredCredential -Target "ADHelper_AdminCred"
-      if (-not $credential) {
-        Write-Error "No stored credentials found. Please configure credentials in Settings."
-        exit 1
-      }
-
-      # Remove from MFA blocking group
-      $result = Remove-UserFromMFABlocking -SamAccountName "${username}" -Credential $credential
-
-      # Output result as JSON
-      $result | ConvertTo-Json -Depth 10
-    `;
-
-    const ps = spawn('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-Command', psCommand
-    ]);
-
-    let stdout = '';
-    let stderr = '';
-
-    ps.stdout.on('data', (data) => {
-      const output = data.toString();
-      stdout += output;
-      // Send progress updates to renderer
-      event.sender.send('mfa-removal-progress', output);
-    });
-
-    ps.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ps.on('close', (code) => {
-      if (code === 0 && stdout.trim()) {
-        try {
-          const result = JSON.parse(stdout.trim());
-          resolve({ success: true, result });
-        } catch (e) {
-          resolve({ success: true, output: stdout });
-        }
-      } else {
-        reject({ success: false, error: stderr || stdout || 'MFA removal failed' });
-      }
-    });
-
-    ps.on('error', (error) => {
-      reject({ success: false, error: error.message });
-    });
+  return executePowerShellScript({
+    scriptPath,
+    args: { Username: username },
+    progressChannel: 'mfa-removal-progress',
+    sender: event.sender,
   });
 });
 
 // IPC Handler for Creating New User
+// SECURE: All user input is written to a JSON temp file, never interpolated into commands.
+// The PS bridge script reads the JSON file and deletes it after parsing.
 ipcMain.handle('create-new-user', async (event, userInfo: any) => {
-  const scriptPath = path.join(app.getAppPath(), 'ADhelper.ps1');
-  const emailScriptPath = path.join(app.getAppPath(), 'scripts', 'Send-NewUserEmail.ps1');
-
   // Load site-specific groups if site location is selected
   let siteGroups: string[] = [];
   if (userInfo.siteLocation) {
@@ -232,273 +246,56 @@ ipcMain.handle('create-new-user', async (event, userInfo: any) => {
     console.log(`Loading ${jobProfileGroups.length} job profile groups`);
   }
 
-  return new Promise((resolve, reject) => {
-    // Create a PowerShell command that calls the user creation function
-    const psCommand = `
-      $ErrorActionPreference = "Continue"
-      . "${scriptPath}"
-      . "${emailScriptPath}"
+  const scriptPath = path.join(app.getAppPath(), 'scripts', 'Create-NewUser.ps1');
 
-      # Get stored credentials
-      $credential = Get-StoredCredential -Target "ADHelper_AdminCred"
-      if (-not $credential) {
-        Write-Error "No stored credentials found. Please configure credentials in Settings."
-        exit 1
-      }
+  // Build the parameters object — all user input goes into this JSON,
+  // never into a PowerShell command string
+  const userParams: Record<string, unknown> = {
+    firstName: userInfo.firstName,
+    lastName: userInfo.lastName,
+    username: userInfo.username,
+    email: userInfo.email,
+    ou: userInfo.ou,
+    title: userInfo.title || '',
+    department: userInfo.department || '',
+    manager: userInfo.manager || '',
+    managerEmail: userInfo.managerEmail || '',
+    siteGroups,
+    jobProfileGroups,
+  };
 
-      # Prepare user info
-      $userParams = @{
-        FirstName = "${userInfo.firstName}"
-        LastName = "${userInfo.lastName}"
-        SamAccountName = "${userInfo.username}"
-        UserPrincipalName = "${userInfo.email}"
-        Path = "${userInfo.ou}"
-      }
-
-      ${userInfo.title ? `$userParams.Title = "${userInfo.title}"` : ''}
-      ${userInfo.department ? `$userParams.Department = "${userInfo.department}"` : ''}
-      ${userInfo.manager ? `$userParams.Manager = "${userInfo.manager}"` : ''}
-
-      # Site-specific groups
-      $siteGroups = @(${siteGroups.map(g => `"${g.replace(/"/g, '`"')}"`).join(', ')})
-
-      # Job profile groups
-      $jobProfileGroups = @(${jobProfileGroups.map(g => `"${g.replace(/"/g, '`"')}"`).join(', ')})
-
-      # Create user
-      try {
-        # Generate secure password
-        $passwordLength = 12
-        $allowedChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*"
-        $password = -join ((1..$passwordLength) | ForEach-Object { Get-Random -InputObject $allowedChars.ToCharArray() })
-        $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
-
-        # Create the user
-        Write-Host "Creating user account..." -ForegroundColor Cyan
-        New-ADUser -Name "$($userParams.FirstName) $($userParams.LastName)" \`
-          -GivenName $userParams.FirstName \`
-          -Surname $userParams.LastName \`
-          -SamAccountName $userParams.SamAccountName \`
-          -UserPrincipalName $userParams.UserPrincipalName \`
-          -Path $userParams.Path \`
-          -AccountPassword $securePassword \`
-          -Enabled $true \`
-          -ChangePasswordAtLogon $true \`
-          -Credential $credential \`
-          -ErrorAction Stop
-
-        Write-Host "✅ User account created successfully!" -ForegroundColor Green
-
-        # Add user to groups (standard + site-specific + job profile)
-        Write-Host "\`n📋 Adding user to groups..." -ForegroundColor Cyan
-        ${siteGroups.length > 0 || jobProfileGroups.length > 0 ? `
-        $groupSuccess = Add-UserToStandardGroups -SamAccountName $userParams.SamAccountName -Credential $credential -AdditionalGroups $siteGroups -JobProfileGroups $jobProfileGroups
-        ` : `
-        $groupSuccess = Add-UserToStandardGroups -SamAccountName $userParams.SamAccountName -Credential $credential
-        `}
-
-        if (-not $groupSuccess) {
-          Write-Warning "⚠️ Some groups failed to be added, but user was created successfully."
-        }
-
-        # Send email to manager
-        $emailSent = $false
-        $managerEmail = $null
-
-        # Priority 1: If Manager DN is provided, retrieve email from AD
-        ${userInfo.manager ? `
-        if (-not [string]::IsNullOrWhiteSpace($userParams.Manager)) {
-          Write-Host "📧 Retrieving manager email address from AD..." -ForegroundColor Cyan
-          $managerEmail = Get-ManagerEmailFromDN -ManagerDN $userParams.Manager -Credential $credential
-
-          if ($managerEmail) {
-            Write-Host "Sending credentials to manager: $managerEmail" -ForegroundColor Cyan
-            $emailParams = @{
-              EmployeeName = "$($userParams.FirstName) $($userParams.LastName)"
-              EmailAddress = $userParams.UserPrincipalName
-              TempPassword = $password
-              ManagerEmail = $managerEmail
-              CreationDate = (Get-Date -Format "MMMM dd, yyyy 'at' hh:mm tt")
-            }
-
-            $emailSent = Send-NewUserCredentialEmail @emailParams
-          }
-          else {
-            Write-Warning "Could not retrieve manager email from AD."
-          }
-        }
-        ` : ''}
-
-        # Priority 2: If no Manager DN or AD lookup failed, use manual manager email
-        ${userInfo.managerEmail ? `
-        if (-not $emailSent -and -not [string]::IsNullOrWhiteSpace("${userInfo.managerEmail}")) {
-          $managerEmail = "${userInfo.managerEmail}"
-          Write-Host "📧 Using manually entered manager email: $managerEmail" -ForegroundColor Cyan
-
-          $emailParams = @{
-            EmployeeName = "$($userParams.FirstName) $($userParams.LastName)"
-            EmailAddress = $userParams.UserPrincipalName
-            TempPassword = $password
-            ManagerEmail = $managerEmail
-            CreationDate = (Get-Date -Format "MMMM dd, yyyy 'at' hh:mm tt")
-          }
-
-          $emailSent = Send-NewUserCredentialEmail @emailParams
-        }
-        ` : ''}
-
-        # Return success with password and email status
-        @{
-          Success = $true
-          Username = $userParams.SamAccountName
-          Email = $userParams.UserPrincipalName
-          Password = $password
-          EmailSent = $emailSent
-          ManagerEmail = $managerEmail
-          Message = "User created successfully"
-        } | ConvertTo-Json
-      }
-      catch {
-        @{
-          Success = $false
-          Error = $_.Exception.Message
-        } | ConvertTo-Json
-      }
-    `;
-
-    const ps = spawn('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-Command', psCommand
-    ]);
-
-    let stdout = '';
-    let stderr = '';
-
-    ps.stdout.on('data', (data) => {
-      const output = data.toString();
-      stdout += output;
-      // Send progress updates to renderer
-      event.sender.send('user-creation-progress', output);
-    });
-
-    ps.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ps.on('close', (code) => {
-      if (code === 0 && stdout.trim()) {
-        try {
-          const result = JSON.parse(stdout.trim());
-          if (result.Success) {
-            resolve({ success: true, result });
-          } else {
-            reject({ success: false, error: result.Error || 'User creation failed' });
-          }
-        } catch (e) {
-          resolve({ success: true, output: stdout });
-        }
-      } else {
-        reject({ success: false, error: stderr || stdout || 'User creation failed' });
-      }
-    });
-
-    ps.on('error', (error) => {
-      reject({ success: false, error: error.message });
-    });
+  return executePowerShellScript({
+    scriptPath,
+    paramsFile: userParams,
+    progressChannel: 'user-creation-progress',
+    sender: event.sender,
   });
 });
 
-// IPC Handlers for Windows Credential Manager
-ipcMain.handle('save-credential', async (event, target: string, username: string, password: string) => {
+// IPC Handlers for Windows Credential Manager (already safe — using -File with args)
+ipcMain.handle('save-credential', async (_event, target: string, username: string, password: string) => {
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
-
-  return new Promise((resolve, reject) => {
-    const ps = spawn('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-File', scriptPath,
-      '-Action', 'Save',
-      '-Target', target,
-      '-Username', username,
-      '-Password', password
-    ]);
-
-    let stdout = '';
-    let stderr = '';
-
-    ps.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    ps.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ps.on('close', (code) => {
-      try {
-        const result = JSON.parse(stdout);
-        if (result.success) {
-          resolve(result);
-        } else {
-          reject(result);
-        }
-      } catch (error) {
-        reject({ success: false, error: stderr || stdout || 'Failed to parse response' });
-      }
-    });
-
-    ps.on('error', (error) => {
-      reject({ success: false, error: error.message });
-    });
+  return executePowerShellScript({
+    scriptPath,
+    args: { Action: 'Save', Target: target, Username: username, Password: password },
   });
 });
 
-ipcMain.handle('get-credential', async (event, target: string) => {
+ipcMain.handle('get-credential', async (_event, target: string) => {
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
-
-  return new Promise((resolve, reject) => {
-    const ps = spawn('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-File', scriptPath,
-      '-Action', 'Get',
-      '-Target', target
-    ]);
-
-    let stdout = '';
-    let stderr = '';
-
-    ps.stdout.on('data', (data) => {
-      stdout += data.toString();
+  try {
+    return await executePowerShellScript({
+      scriptPath,
+      args: { Action: 'Get', Target: target },
     });
-
-    ps.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ps.on('close', (code) => {
-      try {
-        const result = JSON.parse(stdout);
-        if (result.success) {
-          resolve(result);
-        } else {
-          // Return null if credential not found (not an error)
-          resolve({ success: true, username: null, password: null });
-        }
-      } catch (error) {
-        reject({ success: false, error: stderr || stdout || 'Failed to parse response' });
-      }
-    });
-
-    ps.on('error', (error) => {
-      reject({ success: false, error: error.message });
-    });
-  });
+  } catch {
+    // Return null if credential not found (not an error)
+    return { success: true, username: null, password: null };
+  }
 });
 
 // IPC Handlers for Site Configuration Management
-ipcMain.handle('save-site-config', async (event, siteConfig: any) => {
+ipcMain.handle('save-site-config', async (_event, siteConfig: any) => {
   try {
     const configPath = path.join(app.getPath('userData'), 'site-config.json');
     let sites: any[] = [];
@@ -526,7 +323,7 @@ ipcMain.handle('save-site-config', async (event, siteConfig: any) => {
   }
 });
 
-ipcMain.handle('get-site-configs', async (event) => {
+ipcMain.handle('get-site-configs', async (_event) => {
   try {
     const configPath = path.join(app.getPath('userData'), 'site-config.json');
 
@@ -543,7 +340,7 @@ ipcMain.handle('get-site-configs', async (event) => {
   }
 });
 
-ipcMain.handle('delete-site-config', async (event, siteId: string) => {
+ipcMain.handle('delete-site-config', async (_event, siteId: string) => {
   try {
     const configPath = path.join(app.getPath('userData'), 'site-config.json');
 
@@ -567,109 +364,52 @@ ipcMain.handle('delete-site-config', async (event, siteId: string) => {
 });
 
 // IPC Handler for AD Connection Test
-ipcMain.handle('test-ad-connection', async (event) => {
+// SECURE: Uses -File to call Test-ADConnection.ps1 which handles credential loading internally.
+// The script already has standalone execution support (lines 110-133).
+ipcMain.handle('test-ad-connection', async (_event) => {
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'Test-ADConnection.ps1');
 
-  return new Promise((resolve) => {
-    const psCommand = `
-      $ErrorActionPreference = "Stop"
-      . "${scriptPath}"
-
-      # Get stored credentials
-      $credential = Get-StoredCredential -Target "ADHelper_AdminCred"
-
-      # Run connection test with timeout
-      if ($credential) {
-        Test-ADConnection -Credential $credential -TimeoutSeconds 10
-      } else {
-        Test-ADConnection -TimeoutSeconds 10
-      }
-    `;
-
-    const ps = spawn('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-Command', psCommand
-    ]);
-
-    let stdout = '';
-    let stderr = '';
-    let timedOut = false;
-
-    // Set a timeout for the entire operation (15 seconds)
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      ps.kill();
-      resolve({
-        success: false,
-        connected: false,
-        error: 'Connection test timed out - Please check VPN connection',
-        timestamp: new Date().toISOString()
-      });
-    }, 15000);
-
-    ps.stdout.on('data', (data) => {
-      stdout += data.toString();
+  try {
+    const psResult = await executePowerShellScript({
+      scriptPath,
+      timeoutMs: 15000,
     });
 
-    ps.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
+    // Parse the AD connection result
+    if (psResult.result && typeof psResult.result === 'object') {
+      const result = psResult.result as Record<string, unknown>;
+      return {
+        success: true,
+        connected: result.Connected,
+        domain: result.Domain,
+        domainController: result.DomainController,
+        responseTime: result.ResponseTime,
+        error: result.Error,
+        timestamp: result.Timestamp,
+      };
+    }
 
-    ps.on('close', (code) => {
-      clearTimeout(timeout);
-
-      if (timedOut) {
-        return; // Already resolved with timeout error
-      }
-
-      try {
-        // Try to parse JSON result from PowerShell
-        const jsonMatch = stdout.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const result = JSON.parse(jsonMatch[0]);
-          resolve({
-            success: true,
-            connected: result.Connected,
-            domain: result.Domain,
-            domainController: result.DomainController,
-            responseTime: result.ResponseTime,
-            error: result.Error,
-            timestamp: result.Timestamp
-          });
-        } else {
-          // No JSON found, connection failed
-          resolve({
-            success: false,
-            connected: false,
-            error: stderr || 'Failed to test AD connection',
-            timestamp: new Date().toISOString()
-          });
-        }
-      } catch (error: any) {
-        resolve({
-          success: false,
-          connected: false,
-          error: error.message || 'Failed to parse connection test result',
-          timestamp: new Date().toISOString()
-        });
-      }
-    });
-
-    ps.on('error', (error) => {
-      clearTimeout(timeout);
-      resolve({
-        success: false,
-        connected: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    });
-  });
+    return {
+      success: false,
+      connected: false,
+      error: 'Failed to parse AD connection test result',
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error: any) {
+    const errorMsg = error?.error || error?.message || 'AD connection test failed';
+    return {
+      success: false,
+      connected: false,
+      error: errorMsg.includes('timed out')
+        ? 'Connection test timed out - Please check VPN connection'
+        : errorMsg,
+      timestamp: new Date().toISOString(),
+    };
+  }
 });
 
 // IPC Handler for Job Profile Management
-ipcMain.handle('save-job-profiles', async (event, siteId: string, jobProfiles: any[]) => {
+ipcMain.handle('save-job-profiles', async (_event, siteId: string, jobProfiles: any[]) => {
   try {
     const configPath = path.join(app.getPath('userData'), 'job-profiles.json');
 
@@ -693,7 +433,7 @@ ipcMain.handle('save-job-profiles', async (event, siteId: string, jobProfiles: a
   }
 });
 
-ipcMain.handle('get-job-profiles', async (event, siteId: string) => {
+ipcMain.handle('get-job-profiles', async (_event, siteId: string) => {
   try {
     const configPath = path.join(app.getPath('userData'), 'job-profiles.json');
 
@@ -712,41 +452,11 @@ ipcMain.handle('get-job-profiles', async (event, siteId: string) => {
   }
 });
 
-ipcMain.handle('delete-credential', async (event, target: string) => {
+ipcMain.handle('delete-credential', async (_event, target: string) => {
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
-
-  return new Promise((resolve, reject) => {
-    const ps = spawn('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-File', scriptPath,
-      '-Action', 'Delete',
-      '-Target', target
-    ]);
-
-    let stdout = '';
-    let stderr = '';
-
-    ps.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    ps.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ps.on('close', (code) => {
-      try {
-        const result = JSON.parse(stdout);
-        resolve(result);
-      } catch (error) {
-        reject({ success: false, error: stderr || stdout || 'Failed to parse response' });
-      }
-    });
-
-    ps.on('error', (error) => {
-      reject({ success: false, error: error.message });
-    });
+  return executePowerShellScript({
+    scriptPath,
+    args: { Action: 'Delete', Target: target },
   });
 });
 
