@@ -44,6 +44,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import BadgeIcon from '@mui/icons-material/Badge';
 import PeopleIcon from '@mui/icons-material/People';
+import SecurityIcon from '@mui/icons-material/Security';
 import { electronAPI, isElectron } from '../electronAPI';
 
 /** Extract a percentage (0–100) from a PowerShell progress line, or return null */
@@ -123,9 +124,15 @@ const ADHelper: React.FC = () => {
   const [selectedJobProfile, setSelectedJobProfile] = useState<string>('');
   const [selectedJobProfileGroups, setSelectedJobProfileGroups] = useState<any[]>([]);
 
-  // Load site configurations on mount
+  // RBAC state
+  const [userRole, setUserRole] = useState<string>('admin');
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const isAdmin = userRole === 'admin';
+
+  // Load site configurations and user role on mount
   useEffect(() => {
     loadSiteConfigs();
+    loadUserRole();
   }, []);
 
   // Load job profiles when site location changes
@@ -191,6 +198,29 @@ const ADHelper: React.FC = () => {
     }
   };
 
+  const loadUserRole = async () => {
+    try {
+      const result = await electronAPI.getUserRole();
+      if (result.success && result.role) {
+        setUserRole(result.role);
+      }
+    } catch (err) {
+      console.error('Failed to load user role:', err);
+    }
+  };
+
+  const handleRoleChange = async (newRole: string) => {
+    try {
+      const result = await electronAPI.setUserRole(newRole);
+      if (result.success) {
+        setUserRole(newRole);
+      } else {
+        setError(result.error || 'Failed to change role');
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to change role');
+    }
+  };
 
   const handleSearch = async () => {
     if (!username.trim()) {
@@ -415,12 +445,27 @@ const ADHelper: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Active Directory Helper
-      </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Manage user groups and proxy addresses
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+        <Box>
+          <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+            Active Directory Helper
+          </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            Manage user groups and proxy addresses
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Chip
+            icon={<SecurityIcon />}
+            label={userRole === 'admin' ? 'Admin' : 'Operator'}
+            color={userRole === 'admin' ? 'primary' : 'default'}
+            variant="outlined"
+            size="small"
+            onClick={() => isAdmin && setRoleDialogOpen(true)}
+            sx={{ cursor: isAdmin ? 'pointer' : 'default' }}
+          />
+        </Box>
+      </Box>
 
       {!isElectron && (
         <Alert severity="warning" sx={{ mb: 3 }}>
@@ -484,88 +529,103 @@ const ADHelper: React.FC = () => {
           </Button>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            size="large"
-            startIcon={<PersonAddIcon />}
-            sx={{
-              borderColor: '#0536B6',
-              color: '#0536B6',
-              '&:hover': {
-                borderColor: '#003063',
-                backgroundColor: 'rgba(5, 54, 182, 0.08)',
-              },
-            }}
-            onClick={() => {
-              setUserDialogOpen(true);
-              setNewUserInfo({
-                firstName: '',
-                lastName: '',
-                username: '',
-                email: '',
-                ou: 'OU=Rehrig,OU=Accounts,DC=RPL,DC=Local',
-                title: '',
-                department: '',
-                manager: '',
-                managerEmail: '',
-                siteLocation: '',
-              });
-              setUserCreationResult(null);
-              setUserCreationProgress([]);
-            }}
-          >
-            Create New User Account
-          </Button>
+          <Tooltip title={!isAdmin ? 'Admin role required' : ''}>
+            <span>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                disabled={!isAdmin}
+                startIcon={<PersonAddIcon />}
+                sx={{
+                  borderColor: '#0536B6',
+                  color: '#0536B6',
+                  '&:hover': {
+                    borderColor: '#003063',
+                    backgroundColor: 'rgba(5, 54, 182, 0.08)',
+                  },
+                }}
+                onClick={() => {
+                  setUserDialogOpen(true);
+                  setNewUserInfo({
+                    firstName: '',
+                    lastName: '',
+                    username: '',
+                    email: '',
+                    ou: 'OU=Rehrig,OU=Accounts,DC=RPL,DC=Local',
+                    title: '',
+                    department: '',
+                    manager: '',
+                    managerEmail: '',
+                    siteLocation: '',
+                  });
+                  setUserCreationResult(null);
+                  setUserCreationProgress([]);
+                }}
+              >
+                Create New User Account
+              </Button>
+            </span>
+          </Tooltip>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            size="large"
-            startIcon={<BadgeIcon />}
-            sx={{
-              borderColor: '#0536B6',
-              color: '#0536B6',
-              '&:hover': {
-                borderColor: '#003063',
-                backgroundColor: 'rgba(5, 54, 182, 0.08)',
-              },
-            }}
-            onClick={() => {
-              setContractorDialogOpen(true);
-              setContractorUsernames('');
-              setContractorResult(null);
-              setContractorProgress([]);
-            }}
-          >
-            Process Contractor Accounts
-          </Button>
+          <Tooltip title={!isAdmin ? 'Admin role required' : ''}>
+            <span>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                disabled={!isAdmin}
+                startIcon={<BadgeIcon />}
+                sx={{
+                  borderColor: '#0536B6',
+                  color: '#0536B6',
+                  '&:hover': {
+                    borderColor: '#003063',
+                    backgroundColor: 'rgba(5, 54, 182, 0.08)',
+                  },
+                }}
+                onClick={() => {
+                  setContractorDialogOpen(true);
+                  setContractorUsernames('');
+                  setContractorResult(null);
+                  setContractorProgress([]);
+                }}
+              >
+                Process Contractor Accounts
+              </Button>
+            </span>
+          </Tooltip>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            size="large"
-            startIcon={<PeopleIcon />}
-            sx={{
-              borderColor: '#0536B6',
-              color: '#0536B6',
-              '&:hover': {
-                borderColor: '#003063',
-                backgroundColor: 'rgba(5, 54, 182, 0.08)',
-              },
-            }}
-            onClick={() => {
-              setBulkDialogOpen(true);
-              setBulkUsernames('');
-              setBulkMode('all');
-              setBulkResult(null);
-              setBulkProgress([]);
-            }}
-          >
-            Bulk User Processing
-          </Button>
+          <Tooltip title={!isAdmin ? 'Admin role required' : ''}>
+            <span>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                disabled={!isAdmin}
+                startIcon={<PeopleIcon />}
+                sx={{
+                  borderColor: '#0536B6',
+                  color: '#0536B6',
+                  '&:hover': {
+                    borderColor: '#003063',
+                    backgroundColor: 'rgba(5, 54, 182, 0.08)',
+                  },
+                }}
+                onClick={() => {
+                  setBulkDialogOpen(true);
+                  setBulkUsernames('');
+                  setBulkMode('all');
+                  setBulkResult(null);
+                  setBulkProgress([]);
+                }}
+              >
+                Bulk User Processing
+              </Button>
+            </span>
+          </Tooltip>
         </Grid>
       </Grid>
 
@@ -1360,6 +1420,42 @@ const ADHelper: React.FC = () => {
               Close
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Role Management Dialog (Admin only) */}
+      <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ bgcolor: '#0536B6', color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SecurityIcon />
+            Role Management
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Set the permission level for this workstation. <strong>Operators</strong> can process existing users and remove MFA blocking.
+            <strong> Admins</strong> can additionally create users, process contractors, and run bulk operations.
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel id="role-select-label">Role</InputLabel>
+            <Select
+              labelId="role-select-label"
+              value={userRole}
+              label="Role"
+              onChange={(e) => handleRoleChange(e.target.value)}
+            >
+              <MenuItem value="admin">Admin — Full Access</MenuItem>
+              <MenuItem value="operator">Operator — Standard Operations Only</MenuItem>
+            </Select>
+          </FormControl>
+          <Alert severity="info" sx={{ mt: 2 }}>
+            Current role: <strong>{userRole === 'admin' ? 'Admin' : 'Operator'}</strong>
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRoleDialogOpen(false)} variant="contained">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

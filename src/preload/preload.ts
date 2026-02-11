@@ -95,6 +95,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   getJobProfiles: (siteId: string) =>
     ipcRenderer.invoke('get-job-profiles', siteId),
+
+  // RBAC (Role-Based Access Control)
+  getUserRole: () =>
+    ipcRenderer.invoke('get-user-role'),
+
+  setUserRole: (role: string) =>
+    ipcRenderer.invoke('set-user-role', role),
 });
 
 // Type definitions for TypeScript
@@ -123,6 +130,8 @@ export interface ElectronAPI {
   testADConnection: () => Promise<{ success: boolean; connected: boolean; domain?: string; domainController?: string; responseTime?: number; error?: string; timestamp: string }>;
   saveJobProfiles: (siteId: string, jobProfiles: any[]) => Promise<{ success: boolean; message?: string; error?: string }>;
   getJobProfiles: (siteId: string) => Promise<{ success: boolean; jobProfiles?: any[]; error?: string }>;
+  getUserRole: () => Promise<{ success: boolean; role: string; config: any; adminOnlyOperations: string[] }>;
+  setUserRole: (role: string) => Promise<{ success: boolean; config?: any; error?: string }>;
 }
 
 declare global {

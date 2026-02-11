@@ -5,6 +5,7 @@ import os from 'os';
 import { spawn } from 'child_process';
 import logger from './logger';
 import auditLogger from './auditLogger';
+import roleManager from './roleManager';
 import { rateLimited } from './rateLimiter';
 import config from './config';
 
@@ -277,6 +278,7 @@ function createTray() {
 app.whenReady().then(() => {
   logger.init(config.logLevel);
   auditLogger.init();
+  roleManager.init();
   logger.info('App starting', { version: app.getVersion(), env: config.isDev ? 'development' : 'production' });
 
   createWindow();
@@ -350,6 +352,9 @@ ipcMain.handle('remove-mfa-blocking', rateLimited('remove-mfa-blocking', async (
 // SECURE: All user input is written to a JSON temp file, never interpolated into commands.
 // The PS bridge script reads the JSON file and deletes it after parsing.
 ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, userInfo: any) => {
+  if (!roleManager.hasPermission('create-new-user')) {
+    return { success: false, error: 'Permission denied. Admin role required to create new users.' };
+  }
   logger.info('IPC: create-new-user', { username: userInfo.username, firstName: userInfo.firstName, lastName: userInfo.lastName });
   auditLogger.logStart('create-new-user', userInfo.username, { firstName: userInfo.firstName, lastName: userInfo.lastName, email: userInfo.email });
   // Load site-specific groups if site location is selected
@@ -414,6 +419,9 @@ ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, u
 // IPC Handler for Contractor Account Extension Processing
 // SECURE: All user input is written to a JSON temp file, never interpolated into commands.
 ipcMain.handle('process-contractor-account', rateLimited('process-contractor-account', async (event, usernames: string[]) => {
+  if (!roleManager.hasPermission('process-contractor-account')) {
+    return { success: false, error: 'Permission denied. Admin role required to process contractor accounts.' };
+  }
   logger.info('IPC: process-contractor-account', { count: usernames.length });
   auditLogger.logStart('process-contractor-account', usernames.join(', '), { count: usernames.length });
 
@@ -437,6 +445,9 @@ ipcMain.handle('process-contractor-account', rateLimited('process-contractor-acc
 // IPC Handler for Bulk User Processing (groups + proxy addresses)
 // SECURE: All user input is written to a JSON temp file, never interpolated into commands.
 ipcMain.handle('process-bulk-users', rateLimited('process-bulk-users', async (event, usernames: string[], mode: string) => {
+  if (!roleManager.hasPermission('process-bulk-users')) {
+    return { success: false, error: 'Permission denied. Admin role required for bulk user processing.' };
+  }
   logger.info('IPC: process-bulk-users', { count: usernames.length, mode });
   auditLogger.logStart('process-bulk-users', usernames.join(', '), { count: usernames.length, mode });
 
@@ -659,6 +670,37 @@ ipcMain.handle('delete-credential', async (_event, target: string) => {
   } catch (err: any) {
     auditLogger.logFailure('delete-credential', target, err.error || err.message || String(err));
     throw err;
+  }
+});
+
+// ── RBAC (Role-Based Access Control) IPC Handlers ──────────────────────────
+ipcMain.handle('get-user-role', async () => {
+  return {
+    success: true,
+    role: roleManager.getRole(),
+    config: roleManager.getConfig(),
+    adminOnlyOperations: roleManager.getAdminOnlyOperations(),
+  };
+});
+
+ipcMain.handle('set-user-role', async (_event, role: string) => {
+  if (!roleManager.hasPermission('set-user-role')) {
+    return { success: false, error: 'Permission denied. Only admins can change roles.' };
+  }
+  if (role !== 'admin' && role !== 'operator') {
+    return { success: false, error: 'Invalid role. Must be "admin" or "operator".' };
+  }
+
+  auditLogger.logStart('set-user-role', role, { previousRole: roleManager.getRole() });
+
+  try {
+    const config = roleManager.setRole(role);
+    auditLogger.logSuccess('set-user-role', role, { previousRole: roleManager.getRole() });
+    logger.info('User role changed', { role, configuredBy: config.configuredBy });
+    return { success: true, config };
+  } catch (err: any) {
+    auditLogger.logFailure('set-user-role', role, err.message || String(err));
+    return { success: false, error: err.message || 'Failed to set role' };
   }
 });
 

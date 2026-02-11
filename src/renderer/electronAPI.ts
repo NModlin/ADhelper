@@ -26,6 +26,8 @@ export interface ElectronAPI {
   testADConnection: () => Promise<{ success: boolean; connected: boolean; domain?: string; domainController?: string; responseTime?: number; error?: string; timestamp: string }>;
   saveJobProfiles: (siteId: string, jobProfiles: any[]) => Promise<{ success: boolean; message?: string; error?: string }>;
   getJobProfiles: (siteId: string) => Promise<{ success: boolean; jobProfiles?: any[]; error?: string }>;
+  getUserRole: () => Promise<{ success: boolean; role: string; config: any; adminOnlyOperations: string[] }>;
+  setUserRole: (role: string) => Promise<{ success: boolean; config?: any; error?: string }>;
 }
 
 // Mock implementation for browser mode
@@ -225,7 +227,17 @@ const mockElectronAPI: ElectronAPI = {
     } catch (error) {
       return { success: false, error: 'Failed to load job profiles' };
     }
-  }
+  },
+
+  getUserRole: async () => {
+    console.warn('Running in browser mode - RBAC not available');
+    return { success: true, role: 'admin', config: { role: 'admin', configuredBy: 'browser', configuredAt: new Date().toISOString() }, adminOnlyOperations: [] };
+  },
+
+  setUserRole: async (_role: string) => {
+    console.warn('Running in browser mode - RBAC not available');
+    return { success: false, error: 'Role management is only available in desktop mode.' };
+  },
 };
 
 // Export the electronAPI - use real one if available, otherwise use mock.
