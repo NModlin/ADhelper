@@ -67,9 +67,26 @@
       "output": "release"
     },
     "files": [
-      "dist/**/*",
-      "scripts/**/*",
-      "ADhelper_fixed.ps1"
+      "dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "scripts",
+        "to": "scripts",
+        "filter": [
+          "**/*.ps1"
+        ]
+      },
+      {
+        "from": "public",
+        "to": "public",
+        "filter": [
+          "*.ico",
+          "*.png",
+          "*.svg"
+        ]
+      },
+      "ADhelper.ps1"
     ],
     "win": {
       "target": [

@@ -7,6 +7,15 @@ import logger from './logger';
 import { rateLimited } from './rateLimiter';
 import config from './config';
 
+// ── Resource Path Resolution ────────────────────────────────────────────────
+// In development, resources (scripts, icons) live at the project root.
+// In production (packaged), they are copied to the resources/ directory
+// via electron-builder's extraResources config.
+function getResourcePath(...segments: string[]): string {
+  const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+  return path.join(basePath, ...segments);
+}
+
 // ── Secure PowerShell Execution Helper ───────────────────────────────────────
 // All PowerShell execution MUST go through this helper to prevent command injection.
 // It uses -File (never -Command with user input) and passes arguments safely.
@@ -155,7 +164,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    icon: path.join(__dirname, '../../public/icon.ico'),
+    icon: getResourcePath('public', 'icon.ico'),
     title: 'ADHelper - Active Directory & Jira Manager',
   });
 
@@ -204,7 +213,7 @@ function createWindow() {
 let tray: Tray | null = null;
 
 function createTray() {
-  const trayIconPath = path.join(__dirname, '../../public/tray-icon.png');
+  const trayIconPath = getResourcePath('public', 'tray-icon.png');
   const icon = nativeImage.createFromPath(trayIconPath);
   tray = new Tray(icon);
   tray.setToolTip('ADHelper - Rehrig IT Tools');
@@ -265,7 +274,7 @@ app.on('window-all-closed', () => {
 // IPC Handler for running the main ADHelper script
 ipcMain.handle('run-adhelper-script', rateLimited('run-adhelper-script', async (event, username: string, operation: string) => {
   logger.info('IPC: run-adhelper-script', { username, operation });
-  const scriptPath = path.join(app.getAppPath(), 'ADhelper.ps1');
+  const scriptPath = getResourcePath('ADhelper.ps1');
 
   return executePowerShellScript({
     scriptPath,
@@ -286,7 +295,7 @@ ipcMain.handle('remove-mfa-blocking', rateLimited('remove-mfa-blocking', async (
   }
   logger.info('IPC: remove-mfa-blocking', { username: samAccountName });
 
-  const scriptPath = path.join(app.getAppPath(), 'scripts', 'Remove-MFABlocking.ps1');
+  const scriptPath = getResourcePath('scripts', 'Remove-MFABlocking.ps1');
 
   try {
     const result = await executePowerShellScript({
@@ -335,7 +344,7 @@ ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, u
     logger.info('Loaded job profile groups', { count: jobProfileGroups.length });
   }
 
-  const scriptPath = path.join(app.getAppPath(), 'scripts', 'Create-NewUser.ps1');
+  const scriptPath = getResourcePath('scripts', 'Create-NewUser.ps1');
 
   // Build the parameters object — all user input goes into this JSON,
   // never into a PowerShell command string
@@ -366,7 +375,7 @@ ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, u
 ipcMain.handle('process-contractor-account', rateLimited('process-contractor-account', async (event, usernames: string[]) => {
   logger.info('IPC: process-contractor-account', { count: usernames.length });
 
-  const scriptPath = path.join(app.getAppPath(), 'scripts', 'Process-ContractorAccount.ps1');
+  const scriptPath = getResourcePath('scripts', 'Process-ContractorAccount.ps1');
 
   return executePowerShellScript({
     scriptPath,
@@ -378,7 +387,7 @@ ipcMain.handle('process-contractor-account', rateLimited('process-contractor-acc
 
 // IPC Handlers for Windows Credential Manager (already safe — using -File with args)
 ipcMain.handle('save-credential', async (_event, target: string, username: string, password: string) => {
-  const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
+  const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
   return executePowerShellScript({
     scriptPath,
     args: { Action: 'Save', Target: target, Username: username, Password: password },
@@ -386,7 +395,7 @@ ipcMain.handle('save-credential', async (_event, target: string, username: strin
 });
 
 ipcMain.handle('get-credential', async (_event, target: string) => {
-  const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
+  const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
   try {
     return await executePowerShellScript({
       scriptPath,
@@ -472,7 +481,7 @@ ipcMain.handle('delete-site-config', async (_event, siteId: string) => {
 // DirectoryServices calls (not the heavy AD PowerShell module) for fast checks.
 ipcMain.handle('test-ad-connection', async (_event) => {
   logger.debug('IPC: test-ad-connection');
-  const scriptPath = path.join(app.getAppPath(), 'scripts', 'Test-ADConnection.ps1');
+  const scriptPath = getResourcePath('scripts', 'Test-ADConnection.ps1');
 
   try {
     const psResult = await executePowerShellScript({
@@ -558,7 +567,7 @@ ipcMain.handle('get-job-profiles', async (_event, siteId: string) => {
 });
 
 ipcMain.handle('delete-credential', async (_event, target: string) => {
-  const scriptPath = path.join(app.getAppPath(), 'scripts', 'CredentialManager.ps1');
+  const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
   return executePowerShellScript({
     scriptPath,
     args: { Action: 'Delete', Target: target },
