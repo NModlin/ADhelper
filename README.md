@@ -75,20 +75,7 @@ Built with React, TypeScript, Material-UI, and Electron. Works in both browser a
                        │
                        ▼
               ┌────────────────────────┐
-              │  2. Assign Licenses    │ 📋
-              │     • EMS E3           │
-              │     • Office 365 E3/F3 │
-              └────────┬───────────────┘
-                       │
-                       ▼
-              ┌────────────────────────┐
-              │  3. Wait for Mailbox   │ ⏳
-              │     (up to 60 seconds) │
-              └────────┬───────────────┘
-                       │
-                       ▼
-              ┌────────────────────────┐
-              │  4. Configure Proxies  │ ✉️
+              │  2. Configure Proxies  │ ✉️
               │     • 6 email addresses│
               │     • SIP address      │
               └────────┬───────────────┘
@@ -104,12 +91,11 @@ Built with React, TypeScript, Material-UI, and Electron. Works in both browser a
 ## 🚀 Features
 
 ### Core Functionality
-- **🔐 Secure Authentication**: Login with admin credentials (a- account) for both AD and Microsoft 365
+- **🔐 Secure Authentication**: Login with admin credentials (a- account) for Active Directory
 - **👥 Automatic Group Assignment**: Adds users to 10 standard employee groups
-- **📋 License Management**: Assigns Microsoft 365 licenses (EMS E3 + Office 365 E3/F3)
-- **📧 Mailbox Provisioning**: Monitors Exchange Online mailbox creation
 - **✉️ Proxy Address Configuration**: Automatically configures all required email proxy addresses
-- **🔄 Automatic Module Installation**: Installs required PowerShell modules on first run
+- **🔓 Account Management**: Password reset, account unlock, MFA group removal, and user creation
+- **📦 Contractor Account Processing**: Extend contractor accounts with proper group and proxy setup
 - **📊 Detailed Reporting**: Comprehensive logging and status summaries
 - **⚠️ Smart Error Handling**: Graceful error recovery with helpful troubleshooting tips
 
@@ -135,11 +121,7 @@ Built with React, TypeScript, Material-UI, and Electron. Works in both browser a
 - **Windows 10/11** or **Windows Server 2016+**
 - **PowerShell 5.1** or higher
 - **RSAT: Active Directory Tools** (installed via Windows Features)
-- **Admin credentials** for Active Directory and Microsoft 365
-
-### Auto-Installed (if missing)
-- **MSOnline PowerShell Module** (for Microsoft 365 license management)
-- **NuGet Package Provider**
+- **Admin credentials** for Active Directory (a- account)
 
 ## 🛠️ Installation
 
@@ -159,14 +141,11 @@ Built with React, TypeScript, Material-UI, and Electron. Works in both browser a
 
 3. **Follow the prompts** - the script will automatically install any missing modules!
 
-### Option 2: Manual Module Installation
+### Option 2: Manual RSAT Installation
 
-If you prefer to install modules manually before running:
+If RSAT is not installed:
 
 ```powershell
-# Install MSOnline module
-Install-Module MSOnline -Scope CurrentUser
-
 # Install RSAT (Windows 10/11)
 # Settings → Apps → Optional Features → Add a feature → "RSAT: Active Directory Domain Services and Lightweight Directory Services Tools"
 
@@ -188,10 +167,8 @@ Install-WindowsFeature RSAT-AD-PowerShell
    ╔════════════════════════════════════════════════════════════╗
    ║  Checking and Installing Required Modules...              ║
    ╚════════════════════════════════════════════════════════════╝
-   [1/2] Checking Active Directory module...
+   Checking Active Directory module...
    ✅ Active Directory module is already installed and loaded.
-   [2/2] Checking MSOnline module...
-   ✅ MSOnline module is already installed.
    ```
 
 3. **Login**: Enter your admin credentials (e.g., `a-nmodlin`)
@@ -199,11 +176,15 @@ Install-WindowsFeature RSAT-AD-PowerShell
 4. **Main Menu**:
    ```
    ╔════════════════════════════════════════════════════════════╗
-   ║      AD HELPER - Group, License & Proxy Manager           ║
+   ║      AD HELPER - Group & Proxy Manager                    ║
    ╚════════════════════════════════════════════════════════════╝
-     [1] Process User (Groups → Licenses → Proxies)
-     [2] View License Availability
-     [3] Exit
+     [1] Process User (Groups → Proxies)
+     [2] Process Bulk Users
+     [3] Reset User Password
+     [4] Unlock User Account
+     [5] Create New User Account
+     [6] Settings & Configuration
+     [7] Exit
    ```
 
 5. **Process a User**: Select option 1 and enter the user's sAMAccountName or email
@@ -212,25 +193,19 @@ Install-WindowsFeature RSAT-AD-PowerShell
 
 The script performs operations in this order:
 
-1. ✅ **Adds to 6 Standard Groups**:
+1. ✅ **Adds to 10 Standard Groups**:
    - All_Employees
    - US Employees (Distribution List)
    - USEmployees (Security Group)
    - Password Policy - Standard User No Expiration
    - Intune User Enrollment
    - Help Desk Access
+   - RehrigVPN
+   - RehrigVPN_Distro
+   - GeneralDistribution
+   - Selfservice
 
-2. ✅ **Assigns Microsoft 365 Licenses**:
-   - Shows available license counts
-   - Prompts for E3 or F3 selection
-   - Assigns Enterprise Mobility + Security E3
-   - Assigns selected Office 365 license (E3 or F3)
-
-3. ✅ **Monitors Mailbox Creation**:
-   - Waits up to 60 seconds for Exchange Online provisioning
-   - Provides status updates
-
-4. ✅ **Configures Proxy Addresses**:
+2. ✅ **Configures Proxy Addresses**:
    - smtp:user@rehrigpenn.com
    - smtp:user@Rehrigpacific.com
    - smtp:user@Rehrig.onmicrosoft.com
@@ -260,34 +235,6 @@ Group Membership Summary:
   Already member: 1
   Failed: 0
 
-=== Available Licenses ===
-  Enterprise Mobility + Security E3: 25 available
-  Office 365 E3: 50 available
-  Office 365 F3: 100 available
-
---- License Selection ---
-  [1] Office 365 E3
-  [2] Office 365 F3
-  [3] Skip license assignment
-Select Office license type (1-3): 1
-
-=== Assigning Microsoft 365 Licenses ===
-Found M365 user: John Smith
-ℹ️  UsageLocation: US
-  ✅ Assigned: Enterprise Mobility + Security E3
-  ✅ Assigned: Office 365 E3
-
-License Assignment Summary:
-  Licenses assigned: 2
-  Already assigned: 0
-  Failed: 0
-
-=== Checking for Exchange Online Mailbox ===
-Waiting for mailbox to be created (this may take a moment)...
-   Still waiting... (10 seconds elapsed)
-✅ Exchange Online license is active.
-   Mailbox should be available within a few minutes.
-
 === Fixing Proxy Addresses ===
   ✅ Added: smtp:jsmith@rehrigpenn.com
   ✅ Added: smtp:Jsmith@Rehrigpacific.com
@@ -307,8 +254,6 @@ Proxy Address Summary:
 
 Operation Results:
   Groups:   ✅ Success
-  Licenses: ✅ Success
-  Mailbox:  ✅ Provisioned
   Proxies:  ✅ Success
 
 🎉 All operations completed successfully!
@@ -331,13 +276,6 @@ $standardGroups = @(
 ### Customizing Proxy Addresses
 
 Edit the `Get-ExpectedProxyAddresses` function to modify the proxy address list.
-
-### Customizing License SKUs
-
-The script automatically detects licenses by SKU part number:
-- **EMS E3**: `EMSPREMIUM`
-- **Office 365 E3**: `ENTERPRISEPACK`
-- **Office 365 F3**: `DESKLESSPACK` or `SPE_F1`
 
 ## 📊 Logging
 
@@ -371,41 +309,14 @@ The script includes comprehensive error handling for common scenarios:
 Do you want to continue anyway? (Y/N)
 ```
 
-### No Licenses Available
-```
-❌ No Office 365 E3 licenses available. Cannot proceed with E3 assignment.
-```
-
-### User Not Synced to Azure AD
-```
-❌ User not found in Microsoft 365: jsmith@rehrig.com
-⚠️ The user may not be synced to Azure AD yet. This can take up to 30 minutes after AD creation.
-⚠️ You can skip license assignment for now and run this again later.
-```
-
-### Missing UsageLocation
-```
-⚠️ User does not have a UsageLocation set. Setting to 'US'...
-✅ UsageLocation set to 'US'
-```
-
-### Microsoft 365 Connection Failure
-```
-⚠️ Failed to connect to Microsoft 365: Authentication failed
-💡 Tips:
-   - Verify your admin account has Microsoft 365 admin rights
-   - Check if MFA is enabled (may require app password)
-   - Ensure the account is not locked or expired
-⚠️ License assignment features will not be available.
-⚠️ You can still use proxy and group management features.
-```
-
 ## 🔒 Security Considerations
 
-- **Credentials**: Admin credentials are only stored in memory during script execution
+- **Credentials**: Admin credentials stored securely via Windows Credential Manager
 - **Logging**: Logs do not contain passwords or sensitive credential information
-- **Permissions**: Requires appropriate AD and M365 admin rights
+- **Permissions**: Requires appropriate AD admin rights (a- account)
 - **Scope**: Only modifies specified users - no bulk operations without confirmation
+- **Input Validation**: All user inputs are validated before processing
+- **PowerShell Security**: Scripts executed via `-File` (never `-Command`) to prevent injection
 
 ## 🤝 Contributing
 

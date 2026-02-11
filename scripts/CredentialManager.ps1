@@ -16,6 +16,10 @@ param(
     [string]$Password
 )
 
+# ── 0. Structured logging ──────────────────────────────────────────────────
+Import-Module "$PSScriptRoot\PSLogger.psm1" -Force
+Initialize-PSLogger -ScriptName "CredentialManager"
+
 # Function to save credentials to Windows Credential Manager
 function Save-Credential {
     param(
@@ -29,18 +33,21 @@ function Save-Credential {
         $result = cmdkey /generic:$Target /user:$Username /pass:$Password 2>&1
         
         if ($LASTEXITCODE -eq 0) {
+            Write-PSLog -Level "INFO" -Message "Credential saved" -Data @{ target = $Target; username = $Username }
             Write-Output @{
                 success = $true
                 message = "Credential saved successfully"
                 target = $Target
             } | ConvertTo-Json -Compress
         } else {
+            Write-PSLog -Level "ERROR" -Message "Failed to save credential" -Data @{ target = $Target; result = "$result" }
             Write-Output @{
                 success = $false
                 error = "Failed to save credential: $result"
             } | ConvertTo-Json -Compress
         }
     } catch {
+        Write-PSLog -Level "ERROR" -Message "Save credential exception" -Data @{ target = $Target; error = $_.Exception.Message }
         Write-Output @{
             success = $false
             error = $_.Exception.Message
@@ -136,19 +143,22 @@ function Delete-Credential {
     
     try {
         $result = cmdkey /delete:$Target 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
+            Write-PSLog -Level "INFO" -Message "Credential deleted" -Data @{ target = $Target }
             Write-Output @{
                 success = $true
                 message = "Credential deleted successfully"
             } | ConvertTo-Json -Compress
         } else {
+            Write-PSLog -Level "ERROR" -Message "Failed to delete credential" -Data @{ target = $Target; result = "$result" }
             Write-Output @{
                 success = $false
                 error = "Failed to delete credential: $result"
             } | ConvertTo-Json -Compress
         }
     } catch {
+        Write-PSLog -Level "ERROR" -Message "Delete credential exception" -Data @{ target = $Target; error = $_.Exception.Message }
         Write-Output @{
             success = $false
             error = $_.Exception.Message

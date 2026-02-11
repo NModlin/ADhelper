@@ -7,25 +7,49 @@
 # Set the script to continue on non-terminating errors, allowing for custom handling.
 $ErrorActionPreference = "Continue"
 
-# Define the standard groups that users should be added to
-$standardGroups = @(
-    "CN=All_Employees,OU=Adaxes%20Managed,OU=Security%20Groups,DC=RPL,DC=Local",
-    "CN=US%20Employees,OU=Distribution%20Lists,DC=RPL,DC=Local",
-    "CN=USEmployees,OU=Adaxes%20Managed,OU=Security%20Groups,DC=RPL,DC=Local",
-    "CN=Password%20Policy%20-%20Standard%20User%20No%20Expiration,OU=Security%20Groups,DC=RPL,DC=Local",
-    "CN=Intune%20User%20Enrollment,OU=Security%20Groups,DC=RPL,DC=Local",
-    "CN=Help%20Desk%20Access,OU=Security%20Groups,DC=RPL,DC=Local",
-    "CN=RehrigVPN,OU=Mgr-Owner-Approval-Required,OU=Self%20Service%20Groups,DC=RPL,DC=Local",
-    "CN=RehrigVPN_Distro,OU=Distribution%20Lists,DC=RPL,DC=Local",
-    "CN=GeneralDistribution,OU=Distribution%20Lists,DC=RPL,DC=Local",
-    "CN=Selfservice,OU=Security%20Groups,DC=RPL,DC=Local"
-)
+# Load externalized configuration (groups, proxies, domains)
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+$configModulePath = Join-Path $scriptDir "scripts\ADConfig.psm1"
+if (-not (Test-Path $configModulePath)) {
+    # When dot-sourced from a bridge script, $scriptDir is already the scripts folder
+    $configModulePath = Join-Path $scriptDir "ADConfig.psm1"
+}
+if (Test-Path $configModulePath) {
+    Import-Module $configModulePath -Force
+    $adConfig = Get-ADHelperConfig
+}
 
-# MFA Registration Blocking Group - users in this group are blocked from MFA registration
-$mfaBlockingGroup = "CN=MFA_registration_blocking,OU=Security%20Groups,DC=RPL,DC=Local"
+# Standard groups — loaded from config, with hardcoded fallback
+if ($adConfig -and $adConfig.standardGroups) {
+    $standardGroups = @($adConfig.standardGroups)
+} else {
+    $standardGroups = @(
+        "CN=All_Employees,OU=Adaxes%20Managed,OU=Security%20Groups,DC=RPL,DC=Local",
+        "CN=US%20Employees,OU=Distribution%20Lists,DC=RPL,DC=Local",
+        "CN=USEmployees,OU=Adaxes%20Managed,OU=Security%20Groups,DC=RPL,DC=Local",
+        "CN=Password%20Policy%20-%20Standard%20User%20No%20Expiration,OU=Security%20Groups,DC=RPL,DC=Local",
+        "CN=Intune%20User%20Enrollment,OU=Security%20Groups,DC=RPL,DC=Local",
+        "CN=Help%20Desk%20Access,OU=Security%20Groups,DC=RPL,DC=Local",
+        "CN=RehrigVPN,OU=Mgr-Owner-Approval-Required,OU=Self%20Service%20Groups,DC=RPL,DC=Local",
+        "CN=RehrigVPN_Distro,OU=Distribution%20Lists,DC=RPL,DC=Local",
+        "CN=GeneralDistribution,OU=Distribution%20Lists,DC=RPL,DC=Local",
+        "CN=Selfservice,OU=Security%20Groups,DC=RPL,DC=Local"
+    )
+}
+
+# MFA Registration Blocking Group
+if ($adConfig -and $adConfig.mfaBlockingGroup) {
+    $mfaBlockingGroup = $adConfig.mfaBlockingGroup
+} else {
+    $mfaBlockingGroup = "CN=MFA_registration_blocking,OU=Security%20Groups,DC=RPL,DC=Local"
+}
 
 # Credential target name for Windows Credential Manager
-$script:CredentialTarget = "ADHelper_AdminCred"
+if ($adConfig -and $adConfig.credentialTarget) {
+    $script:CredentialTarget = $adConfig.credentialTarget
+} else {
+    $script:CredentialTarget = "ADHelper_AdminCred"
+}
 
 # --- 2. Helper Functions ---
 
@@ -2099,12 +2123,22 @@ function Get-RequiredProxyAddresses {
     <#
     .SYNOPSIS
         Generates the standard list of required proxy addresses for a given username.
+        Uses externalized config templates if available, otherwise falls back to hardcoded values.
     #>
     param (
         [Parameter(Mandatory=$true)]
         [string]$samAccountName
     )
-    
+
+    # Try config-driven proxy generation first
+    if (Get-Command -Name Get-ProxyAddresses -ErrorAction SilentlyContinue) {
+        $configProxies = Get-ProxyAddresses -SamAccountName $samAccountName
+        if ($configProxies -and $configProxies.Count -gt 0) {
+            return $configProxies
+        }
+    }
+
+    # Fallback to hardcoded
     $usernameLower = $samAccountName.ToLower()
     $usernameCapitalized = (Get-Culture).TextInfo.ToTitleCase($usernameLower)
 

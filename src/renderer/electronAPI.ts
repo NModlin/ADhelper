@@ -14,6 +14,9 @@ export interface ElectronAPI {
   processContractorAccount: (usernames: string[]) => Promise<{ success: boolean; result?: any; error?: string }>;
   onContractorProcessingProgress: (callback: (data: string) => void) => void;
   removeContractorProcessingProgressListener: () => void;
+  processBulkUsers: (usernames: string[], mode: string) => Promise<{ success: boolean; result?: any; error?: string }>;
+  onBulkProcessingProgress: (callback: (data: string) => void) => void;
+  removeBulkProcessingProgressListener: () => void;
   saveCredential: (target: string, username: string, password: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   getCredential: (target: string) => Promise<{ success: boolean; username?: string; password?: string; error?: string }>;
   deleteCredential: (target: string) => Promise<{ success: boolean; message?: string; error?: string }>;
@@ -88,6 +91,22 @@ const mockElectronAPI: ElectronAPI = {
   },
 
   removeContractorProcessingProgressListener: () => {
+    console.warn('Running in browser mode - no listeners to remove');
+  },
+
+  processBulkUsers: async (_usernames: string[], _mode: string) => {
+    console.warn('Running in browser mode - Bulk processing not available');
+    return {
+      success: false,
+      error: 'Bulk user processing is only available in desktop mode. Please use the desktop app.'
+    };
+  },
+
+  onBulkProcessingProgress: (_callback: (data: string) => void) => {
+    console.warn('Running in browser mode - progress updates not available');
+  },
+
+  removeBulkProcessingProgressListener: () => {
     console.warn('Running in browser mode - no listeners to remove');
   },
 

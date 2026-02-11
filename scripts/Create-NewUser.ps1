@@ -10,6 +10,11 @@ param (
 
 $ErrorActionPreference = "Continue"
 
+# ── 0. Structured logging ──────────────────────────────────────────────────
+Import-Module "$PSScriptRoot\PSLogger.psm1" -Force
+Initialize-PSLogger -ScriptName "Create-NewUser"
+Write-PSLog -Level "INFO" -Message "Script started" -Data @{ paramsFile = $ParamsFile }
+
 # ── 1. Read and validate params file ──────────────────────────────────────────
 if (-not (Test-Path $ParamsFile)) {
     @{ Success = $false; Error = "Parameters file not found: $ParamsFile" } | ConvertTo-Json
@@ -92,6 +97,7 @@ try {
     $password = -join ((1..$passwordLength) | ForEach-Object { Get-Random -InputObject $allowedChars.ToCharArray() })
     $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
 
+    Write-PSLog -Level "INFO" -Message "Creating user account" -Data @{ sam = $userParams.SamAccountName; upn = $userParams.UserPrincipalName; ou = $userParams.Path }
     Write-Host "Creating user account..." -ForegroundColor Cyan
     New-ADUser -Name "$($userParams.FirstName) $($userParams.LastName)" `
         -GivenName $userParams.FirstName `
@@ -116,6 +122,7 @@ try {
         Set-ADUser -Identity $userParams.SamAccountName -Manager $userParams.Manager -Credential $credential -ErrorAction SilentlyContinue
     }
 
+    Write-PSLog -Level "INFO" -Message "User account created" -Data @{ sam = $userParams.SamAccountName }
     Write-Host "User account created successfully!" -ForegroundColor Green
 
     # ── 6. Add user to groups ────────────────────────────────────────────────
@@ -173,6 +180,7 @@ try {
     }
 
     # ── 8. Return result ─────────────────────────────────────────────────────
+    Write-PSLog -Level "INFO" -Message "User creation complete" -Data @{ sam = $userParams.SamAccountName; emailSent = $emailSent }
     @{
         Success      = $true
         Username     = $userParams.SamAccountName
@@ -184,6 +192,7 @@ try {
     } | ConvertTo-Json
 }
 catch {
+    Write-PSLog -Level "ERROR" -Message "User creation failed" -Data @{ sam = $userParams.SamAccountName; error = $_.Exception.Message }
     @{
         Success = $false
         Error   = $_.Exception.Message

@@ -4,6 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import { spawn } from 'child_process';
 import logger from './logger';
+import auditLogger from './auditLogger';
 import { rateLimited } from './rateLimiter';
 import config from './config';
 
@@ -33,6 +34,8 @@ interface PSExecutionOptions {
   sender?: Electron.WebContents;
   /** Timeout in milliseconds (0 = no timeout) */
   timeoutMs?: number;
+  /** Max retries on transient failure (default: config.maxPSRetries) */
+  maxRetries?: number;
 }
 
 interface PSExecutionResult {
@@ -42,7 +45,32 @@ interface PSExecutionResult {
   error?: string;
 }
 
-function executePowerShellScript(options: PSExecutionOptions): Promise<PSExecutionResult> {
+async function executePowerShellScript(options: PSExecutionOptions): Promise<PSExecutionResult> {
+  const maxRetries = options.maxRetries ?? config.maxPSRetries;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await executePowerShellScriptOnce(options);
+    } catch (err: any) {
+      const isLast = attempt === maxRetries;
+      if (isLast) throw err;
+
+      const delay = config.baseRetryDelayMs * Math.pow(2, attempt);
+      logger.warn('PS script failed, retrying', {
+        script: path.basename(options.scriptPath),
+        attempt: attempt + 1,
+        maxRetries,
+        delayMs: delay,
+        error: err?.error || err?.message || String(err),
+      });
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  // Unreachable — satisfies TS return type
+  throw new Error('Retry loop exited unexpectedly');
+}
+
+function executePowerShellScriptOnce(options: PSExecutionOptions): Promise<PSExecutionResult> {
   return new Promise((resolve, reject) => {
     const spawnArgs: string[] = [
       '-NoProfile',
@@ -248,6 +276,7 @@ function createTray() {
 
 app.whenReady().then(() => {
   logger.init(config.logLevel);
+  auditLogger.init();
   logger.info('App starting', { version: app.getVersion(), env: config.isDev ? 'development' : 'production' });
 
   createWindow();
@@ -297,6 +326,8 @@ ipcMain.handle('remove-mfa-blocking', rateLimited('remove-mfa-blocking', async (
 
   const scriptPath = getResourcePath('scripts', 'Remove-MFABlocking.ps1');
 
+  auditLogger.logStart('remove-mfa-blocking', samAccountName);
+
   try {
     const result = await executePowerShellScript({
       scriptPath,
@@ -306,9 +337,11 @@ ipcMain.handle('remove-mfa-blocking', rateLimited('remove-mfa-blocking', async (
       timeoutMs: 30000, // 30-second timeout to prevent hangs
     });
     logger.info('IPC: remove-mfa-blocking completed', { success: result.success, result: result.result });
+    auditLogger.logSuccess('remove-mfa-blocking', samAccountName, { result: result.result });
     return result;
   } catch (err: any) {
     logger.error('IPC: remove-mfa-blocking failed', { error: err.error || err.message || String(err) });
+    auditLogger.logFailure('remove-mfa-blocking', samAccountName, err.error || err.message || String(err));
     throw err;
   }
 }));
@@ -318,6 +351,7 @@ ipcMain.handle('remove-mfa-blocking', rateLimited('remove-mfa-blocking', async (
 // The PS bridge script reads the JSON file and deletes it after parsing.
 ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, userInfo: any) => {
   logger.info('IPC: create-new-user', { username: userInfo.username, firstName: userInfo.firstName, lastName: userInfo.lastName });
+  auditLogger.logStart('create-new-user', userInfo.username, { firstName: userInfo.firstName, lastName: userInfo.lastName, email: userInfo.email });
   // Load site-specific groups if site location is selected
   let siteGroups: string[] = [];
   if (userInfo.siteLocation) {
@@ -362,36 +396,82 @@ ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, u
     jobProfileGroups,
   };
 
-  return executePowerShellScript({
-    scriptPath,
-    paramsFile: userParams,
-    progressChannel: 'user-creation-progress',
-    sender: event.sender,
-  });
+  try {
+    const result = await executePowerShellScript({
+      scriptPath,
+      paramsFile: userParams,
+      progressChannel: 'user-creation-progress',
+      sender: event.sender,
+    });
+    auditLogger.logSuccess('create-new-user', userInfo.username, { firstName: userInfo.firstName, lastName: userInfo.lastName });
+    return result;
+  } catch (err: any) {
+    auditLogger.logFailure('create-new-user', userInfo.username, err.error || err.message || String(err));
+    throw err;
+  }
 }));
 
 // IPC Handler for Contractor Account Extension Processing
 // SECURE: All user input is written to a JSON temp file, never interpolated into commands.
 ipcMain.handle('process-contractor-account', rateLimited('process-contractor-account', async (event, usernames: string[]) => {
   logger.info('IPC: process-contractor-account', { count: usernames.length });
+  auditLogger.logStart('process-contractor-account', usernames.join(', '), { count: usernames.length });
 
   const scriptPath = getResourcePath('scripts', 'Process-ContractorAccount.ps1');
 
-  return executePowerShellScript({
-    scriptPath,
-    paramsFile: { usernames },
-    progressChannel: 'contractor-processing-progress',
-    sender: event.sender,
-  });
+  try {
+    const result = await executePowerShellScript({
+      scriptPath,
+      paramsFile: { usernames },
+      progressChannel: 'contractor-processing-progress',
+      sender: event.sender,
+    });
+    auditLogger.logSuccess('process-contractor-account', usernames.join(', '), { count: usernames.length });
+    return result;
+  } catch (err: any) {
+    auditLogger.logFailure('process-contractor-account', usernames.join(', '), err.error || err.message || String(err));
+    throw err;
+  }
+}));
+
+// IPC Handler for Bulk User Processing (groups + proxy addresses)
+// SECURE: All user input is written to a JSON temp file, never interpolated into commands.
+ipcMain.handle('process-bulk-users', rateLimited('process-bulk-users', async (event, usernames: string[], mode: string) => {
+  logger.info('IPC: process-bulk-users', { count: usernames.length, mode });
+  auditLogger.logStart('process-bulk-users', usernames.join(', '), { count: usernames.length, mode });
+
+  const scriptPath = getResourcePath('scripts', 'Process-BulkUsers.ps1');
+
+  try {
+    const result = await executePowerShellScript({
+      scriptPath,
+      paramsFile: { usernames, mode },
+      progressChannel: 'bulk-processing-progress',
+      sender: event.sender,
+    });
+    auditLogger.logSuccess('process-bulk-users', usernames.join(', '), { count: usernames.length, mode });
+    return result;
+  } catch (err: any) {
+    auditLogger.logFailure('process-bulk-users', usernames.join(', '), err.error || err.message || String(err));
+    throw err;
+  }
 }));
 
 // IPC Handlers for Windows Credential Manager (already safe — using -File with args)
 ipcMain.handle('save-credential', async (_event, target: string, username: string, password: string) => {
+  auditLogger.logStart('save-credential', target, { username });
   const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
-  return executePowerShellScript({
-    scriptPath,
-    args: { Action: 'Save', Target: target, Username: username, Password: password },
-  });
+  try {
+    const result = await executePowerShellScript({
+      scriptPath,
+      args: { Action: 'Save', Target: target, Username: username, Password: password },
+    });
+    auditLogger.logSuccess('save-credential', target, { username });
+    return result;
+  } catch (err: any) {
+    auditLogger.logFailure('save-credential', target, err.error || err.message || String(err));
+    throw err;
+  }
 });
 
 ipcMain.handle('get-credential', async (_event, target: string) => {
@@ -567,10 +647,18 @@ ipcMain.handle('get-job-profiles', async (_event, siteId: string) => {
 });
 
 ipcMain.handle('delete-credential', async (_event, target: string) => {
+  auditLogger.logStart('delete-credential', target);
   const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
-  return executePowerShellScript({
-    scriptPath,
-    args: { Action: 'Delete', Target: target },
-  });
+  try {
+    const result = await executePowerShellScript({
+      scriptPath,
+      args: { Action: 'Delete', Target: target },
+    });
+    auditLogger.logSuccess('delete-credential', target);
+    return result;
+  } catch (err: any) {
+    auditLogger.logFailure('delete-credential', target, err.error || err.message || String(err));
+    throw err;
+  }
 });
 

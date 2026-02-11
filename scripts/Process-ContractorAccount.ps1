@@ -16,6 +16,11 @@ param (
 
 $ErrorActionPreference = "Continue"
 
+# ── 0. Structured logging ──────────────────────────────────────────────────
+Import-Module "$PSScriptRoot\PSLogger.psm1" -Force
+Initialize-PSLogger -ScriptName "Process-ContractorAccount"
+Write-PSLog -Level "INFO" -Message "Script started" -Data @{ paramsFile = $ParamsFile }
+
 # ── 1. Read and validate params file ──────────────────────────────────────────
 if (-not (Test-Path $ParamsFile)) {
     @{ Success = $false; Error = "Parameters file not found: $ParamsFile" } | ConvertTo-Json
@@ -70,8 +75,13 @@ if ($usernames.Count -eq 0) {
     exit 1
 }
 
-$targetOU = "OU=Non-Rehrig,OU=Accounts,DC=RPL,DC=Local"
-$contractorSuffix = " - Contractor"
+# Load externalized config
+Import-Module "$PSScriptRoot\ADConfig.psm1" -Force -ErrorAction SilentlyContinue
+$adConfig = Get-ADHelperConfig -ErrorAction SilentlyContinue
+
+$targetOU = if ($adConfig -and $adConfig.contractor -and $adConfig.contractor.targetOU) { $adConfig.contractor.targetOU } else { "OU=Non-Rehrig,OU=Accounts,DC=RPL,DC=Local" }
+$contractorSuffix = if ($adConfig -and $adConfig.contractor -and $adConfig.contractor.displayNameSuffix) { $adConfig.contractor.displayNameSuffix } else { " - Contractor" }
+$extensionYears = if ($adConfig -and $adConfig.contractor -and $adConfig.contractor.extensionYears) { $adConfig.contractor.extensionYears } else { 1 }
 $totalUsers = $usernames.Count
 
 # Statistics tracking
@@ -95,6 +105,7 @@ Write-Host "========================================================" -Foregroun
 Write-Host "  Contractor Account Processing" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
+Write-PSLog -Level "INFO" -Message "Processing contractors" -Data @{ count = $totalUsers; targetOU = $targetOU }
 Write-Host "  Users to process: $totalUsers" -ForegroundColor White
 Write-Host "  Target OU: $targetOU" -ForegroundColor Gray
 Write-Host "  Display Name Suffix: '$contractorSuffix'" -ForegroundColor Gray
@@ -134,12 +145,14 @@ for ($i = 0; $i -lt $usernames.Count; $i++) {
         $user = Get-ADUser -Identity $samAccountName `
             -Properties AccountExpirationDate, DisplayName, Enabled, DistinguishedName `
             -Credential $credential -ErrorAction Stop
+        Write-PSLog -Level "INFO" -Message "User found" -Data @{ user = $samAccountName; displayName = $user.DisplayName }
         Write-Host "  Found user: $($user.DisplayName) ($samAccountName)" -ForegroundColor Green
         $enabled = if ($user.Enabled) { "Yes" } else { "No" }
         Write-Host "  Account Enabled: $enabled" -ForegroundColor $(if ($user.Enabled) { 'Green' } else { 'Yellow' })
         $stats.UsersFound++
     }
     catch {
+        Write-PSLog -Level "ERROR" -Message "User not found" -Data @{ user = $samAccountName; error = $_.Exception.Message }
         Write-Host "  ERROR: User '$samAccountName' not found or error: $($_.Exception.Message)" -ForegroundColor Red
         $stats.Errors++
         $userResult.Status = "Error"
@@ -213,10 +226,11 @@ for ($i = 0; $i -lt $usernames.Count; $i++) {
             Write-Host "    Current Expiration: None (never expires)" -ForegroundColor Gray
         }
 
-        $newExpiration = (Get-Date).AddYears(1)
+        $newExpiration = (Get-Date).AddYears($extensionYears)
         Write-Host "    New Expiration: $($newExpiration.ToString('yyyy-MM-dd'))" -ForegroundColor Green
 
         Set-ADAccountExpiration -Identity $samAccountName -DateTime $newExpiration -Credential $credential -ErrorAction Stop
+        Write-PSLog -Level "INFO" -Message "Expiration extended" -Data @{ user = $samAccountName; newExpiration = $newExpiration.ToString('yyyy-MM-dd') }
         Write-Host "  Account expiration extended successfully!" -ForegroundColor Green
         $stats.ExpirationsExtended++
         $userResult.ExpirationExtended = $true
@@ -260,6 +274,7 @@ if ($stats.Errors -gt 0) {
 Write-Host ""
 
 # ── 8. Output JSON result ────────────────────────────────────────────────────
+Write-PSLog -Level "INFO" -Message "Processing complete" -Data @{ errors = $stats.Errors; processed = $stats.TotalProcessed; extended = $stats.ExpirationsExtended }
 @{
     Success = ($stats.Errors -eq 0)
     Stats = $stats

@@ -5,6 +5,11 @@
 # PowerShell module (Import-Module + Get-ADDomain can take 15-20 seconds).
 # The .NET approach completes in < 200ms on a domain-joined machine.
 
+# ── 0. Structured logging ──────────────────────────────────────────────────
+Import-Module "$PSScriptRoot\PSLogger.psm1" -Force
+Initialize-PSLogger -ScriptName "Test-ADConnection"
+Write-PSLog -Level "DEBUG" -Message "AD connection test started"
+
 $result = @{
     Connected        = $false
     Domain           = $null
@@ -35,6 +40,7 @@ try {
 
     $result.Connected    = $true
     $result.ResponseTime = [math]::Round($stopwatch.Elapsed.TotalMilliseconds, 2)
+    Write-PSLog -Level "INFO" -Message "AD connection successful" -Data @{ domain = $result.Domain; dc = $result.DomainController; ms = $result.ResponseTime }
 }
 catch {
     if ($stopwatch -and $stopwatch.IsRunning) { $stopwatch.Stop() }
@@ -53,6 +59,7 @@ catch {
     else {
         $result.Error = $errorMessage
     }
+    Write-PSLog -Level "WARN" -Message "AD connection failed" -Data @{ error = $result.Error }
 }
 
 # Output result as JSON

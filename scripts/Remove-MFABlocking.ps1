@@ -13,15 +13,23 @@ param (
 
 $ErrorActionPreference = "Stop"
 
+# ── 0. Structured logging ──────────────────────────────────────────────────
+Import-Module "$PSScriptRoot\PSLogger.psm1" -Force
+Initialize-PSLogger -ScriptName "Remove-MFABlocking"
+Write-PSLog -Level "INFO" -Message "Script started" -Data @{ username = $Username }
+
 # ── 1. Configuration ────────────────────────────────────────────────────────
-# MFA Registration Blocking Group (same as in ADhelper.ps1 line 25)
-$mfaBlockingGroupEncoded = "CN=MFA_registration_blocking,OU=Security%20Groups,DC=RPL,DC=Local"
+# Load externalized config for MFA blocking group
+Import-Module "$PSScriptRoot\ADConfig.psm1" -Force -ErrorAction SilentlyContinue
+$adConfig = Get-ADHelperConfig -ErrorAction SilentlyContinue
+$mfaBlockingGroupEncoded = if ($adConfig -and $adConfig.mfaBlockingGroup) { $adConfig.mfaBlockingGroup } else { "CN=MFA_registration_blocking,OU=Security%20Groups,DC=RPL,DC=Local" }
 
 # ── 2. Load System.Web for URL decoding ─────────────────────────────────────
 try {
     Add-Type -AssemblyName System.Web -ErrorAction Stop
 }
 catch {
+    Write-PSLog -Level "ERROR" -Message "Failed to load System.Web assembly" -Data @{ error = $_.Exception.Message }
     @{ Success = $false; Error = "Failed to load System.Web assembly: $($_.Exception.Message)" } | ConvertTo-Json
     exit 0
 }
@@ -40,21 +48,25 @@ if (Test-Path $credManagerPath) {
     . $credManagerPath
 }
 else {
+    Write-PSLog -Level "ERROR" -Message "CredentialManager.ps1 not found" -Data @{ path = $credManagerPath }
     @{ Success = $false; Error = "CredentialManager.ps1 not found at: $credManagerPath" } | ConvertTo-Json
     exit 0
 }
 
 $credential = Get-StoredCredential -Target "ADHelper_AdminCred"
 if (-not $credential) {
+    Write-PSLog -Level "ERROR" -Message "No stored credentials found"
     @{ Success = $false; Error = "No stored credentials found. Please configure credentials in Settings." } | ConvertTo-Json
     exit 0
 }
+Write-PSLog -Level "DEBUG" -Message "Credentials loaded successfully"
 
 # ── 4. Import Active Directory module ───────────────────────────────────────
 try {
     Import-Module ActiveDirectory -ErrorAction Stop
 }
 catch {
+    Write-PSLog -Level "ERROR" -Message "ActiveDirectory module not available" -Data @{ error = $_.Exception.Message }
     @{ Success = $false; Error = "ActiveDirectory module not available: $($_.Exception.Message)" } | ConvertTo-Json
     exit 0
 }
@@ -62,7 +74,9 @@ catch {
 # ── 5. Perform MFA Blocking Group Removal ───────────────────────────────────
 # Strip @domain.com if email format was passed (defense-in-depth; main.ts also strips)
 if ($targetUsername -match '@') {
+    $original = $targetUsername
     $targetUsername = ($targetUsername -split '@')[0]
+    Write-PSLog -Level "INFO" -Message "Stripped email domain" -Data @{ original = $original; resolved = $targetUsername }
     Write-Host "Stripped email domain, using sAMAccountName: $targetUsername" -ForegroundColor Yellow
 }
 
@@ -84,6 +98,7 @@ try {
 
         # Remove from group
         Remove-ADGroupMember -Identity $mfaBlockingGroup -Members $targetUsername -Credential $credential -Confirm:$false -ErrorAction Stop
+        Write-PSLog -Level "INFO" -Message "User removed from MFA Blocking group" -Data @{ user = $targetUsername; displayName = $user.DisplayName }
         Write-Host "  SUCCESS User successfully removed from MFA Blocking group" -ForegroundColor Green
 
         @{
@@ -96,6 +111,7 @@ try {
         } | ConvertTo-Json -Depth 5
     }
     else {
+        Write-PSLog -Level "INFO" -Message "User not in MFA Blocking group, no action needed" -Data @{ user = $targetUsername }
         Write-Host "  INFO User is NOT in MFA Blocking group - no action needed" -ForegroundColor Green
 
         @{
@@ -109,6 +125,7 @@ try {
     }
 }
 catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
+    Write-PSLog -Level "ERROR" -Message "User not found in AD" -Data @{ user = $targetUsername }
     Write-Host "  ERROR User '$targetUsername' not found in Active Directory." -ForegroundColor Red
     @{
         Success        = $false
@@ -122,6 +139,7 @@ catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
 catch {
     $errorMessage = $_.Exception.Message
     $errorType = "Unknown"
+    Write-PSLog -Level "ERROR" -Message "MFA removal failed" -Data @{ user = $targetUsername; error = $errorMessage }
 
     # Detect credential/authentication errors
     if ($errorMessage -match "Access is denied|password|credential|authentication|logon|unauthorized|permission" -or

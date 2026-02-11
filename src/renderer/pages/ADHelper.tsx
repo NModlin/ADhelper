@@ -34,7 +34,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
 import EmailIcon from '@mui/icons-material/Email';
-import LicenseIcon from '@mui/icons-material/CardMembership';
+
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -43,7 +43,26 @@ import ClearIcon from '@mui/icons-material/Clear';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import BadgeIcon from '@mui/icons-material/Badge';
+import PeopleIcon from '@mui/icons-material/People';
 import { electronAPI, isElectron } from '../electronAPI';
+
+/** Extract a percentage (0–100) from a PowerShell progress line, or return null */
+function parseProgressPercent(line: string): number | null {
+  // Match "XX% complete", "Progress: XX%", "[XX%]", "XX %" patterns
+  const m = line.match(/(\d{1,3})\s*%/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (n >= 0 && n <= 100) return n;
+  }
+  // Match "Step X of Y" / "Processing X/Y" patterns
+  const stepMatch = line.match(/(?:step|processing|item)\s+(\d+)\s*(?:of|\/)\s*(\d+)/i);
+  if (stepMatch) {
+    const current = parseInt(stepMatch[1], 10);
+    const total = parseInt(stepMatch[2], 10);
+    if (total > 0) return Math.round((current / total) * 100);
+  }
+  return null;
+}
 
 const ADHelper: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -51,6 +70,7 @@ const ADHelper: React.FC = () => {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string[]>([]);
+  const [progressPercent, setProgressPercent] = useState<number | null>(null);
   const [showTerminal, setShowTerminal] = useState(true);
   const terminalRef = useRef<HTMLDivElement>(null);
 
@@ -85,6 +105,14 @@ const ADHelper: React.FC = () => {
   const [contractorLoading, setContractorLoading] = useState(false);
   const [contractorProgress, setContractorProgress] = useState<string[]>([]);
   const [contractorResult, setContractorResult] = useState<any>(null);
+
+  // Bulk User Processing Dialog State
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkUsernames, setBulkUsernames] = useState('');
+  const [bulkMode, setBulkMode] = useState<string>('all');
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<string[]>([]);
+  const [bulkResult, setBulkResult] = useState<any>(null);
 
   // Site configuration state
   const [siteConfigs, setSiteConfigs] = useState<any[]>([]);
@@ -179,12 +207,15 @@ const ADHelper: React.FC = () => {
     setError(null);
     setResult(null);
     setProgress([]);
+    setProgressPercent(null);
     setShowTerminal(true); // Auto-show terminal when processing starts
 
     try {
       // Listen for progress updates
       electronAPI.onADHelperProgress((data: string) => {
         setProgress(prev => [...prev, data]);
+        const pct = parseProgressPercent(data);
+        if (pct !== null) setProgressPercent(pct);
       });
 
       const response = await electronAPI.runADHelperScript(username.trim(), 'process');
@@ -201,6 +232,7 @@ const ADHelper: React.FC = () => {
 
   const clearTerminal = () => {
     setProgress([]);
+    setProgressPercent(null);
   };
 
   // MFA Removal Handler
@@ -325,6 +357,33 @@ const ADHelper: React.FC = () => {
     }
   };
 
+  // Bulk User Processing Handler
+  const handleBulkProcessing = async () => {
+    const usernamesArray = bulkUsernames.split(/[;\n,]/).map(u => u.trim()).filter(u => u);
+    if (usernamesArray.length === 0) {
+      return;
+    }
+
+    setBulkLoading(true);
+    setBulkProgress([]);
+    setBulkResult(null);
+
+    try {
+      electronAPI.onBulkProcessingProgress((data: string) => {
+        setBulkProgress(prev => [...prev, data]);
+      });
+
+      const response = await electronAPI.processBulkUsers(usernamesArray, bulkMode);
+      setBulkResult(response);
+      setBulkLoading(false);
+    } catch (err: any) {
+      setBulkResult({ success: false, error: err.error || 'Bulk processing failed' });
+      setBulkLoading(false);
+    } finally {
+      electronAPI.removeBulkProcessingProgressListener();
+    }
+  };
+
   const formatTerminalLine = (line: string) => {
     // Parse ANSI color codes and PowerShell formatting
     let color = 'inherit';
@@ -351,7 +410,6 @@ const ADHelper: React.FC = () => {
 
   const operations = [
     { id: 'groups', label: 'Add to Standard Groups', icon: <GroupIcon />, color: '#0536B6' },
-    { id: 'licenses', label: 'Assign M365 Licenses', icon: <LicenseIcon />, color: '#FFC20E' },
     { id: 'proxies', label: 'Configure Proxy Addresses', icon: <EmailIcon />, color: '#3283FE' },
   ];
 
@@ -361,7 +419,7 @@ const ADHelper: React.FC = () => {
         Active Directory Helper
       </Typography>
       <Typography variant="body1" color="text.secondary" paragraph>
-        Manage user groups, licenses, and proxy addresses
+        Manage user groups and proxy addresses
       </Typography>
 
       {!isElectron && (
@@ -484,6 +542,31 @@ const ADHelper: React.FC = () => {
             Process Contractor Accounts
           </Button>
         </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            size="large"
+            startIcon={<PeopleIcon />}
+            sx={{
+              borderColor: '#0536B6',
+              color: '#0536B6',
+              '&:hover': {
+                borderColor: '#003063',
+                backgroundColor: 'rgba(5, 54, 182, 0.08)',
+              },
+            }}
+            onClick={() => {
+              setBulkDialogOpen(true);
+              setBulkUsernames('');
+              setBulkMode('all');
+              setBulkResult(null);
+              setBulkProgress([]);
+            }}
+          >
+            Bulk User Processing
+          </Button>
+        </Grid>
       </Grid>
 
       {error && (
@@ -545,6 +628,21 @@ const ADHelper: React.FC = () => {
               </Tooltip>
             </Box>
           </Box>
+          {/* Native progress bar — parsed from PowerShell Write-Progress output */}
+          {loading && progressPercent !== null && (
+            <Box sx={{ px: 2, py: 1, bgcolor: '#1e1e1e' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={progressPercent}
+                  sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
+                />
+                <Typography variant="caption" sx={{ color: '#d4d4d4', minWidth: 40, textAlign: 'right' }}>
+                  {progressPercent}%
+                </Typography>
+              </Box>
+            </Box>
+          )}
           <Collapse in={showTerminal}>
             <Box
               ref={terminalRef}
@@ -1131,6 +1229,134 @@ const ADHelper: React.FC = () => {
           )}
           {contractorResult && (
             <Button onClick={() => setContractorDialogOpen(false)} variant="contained">
+              Close
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk User Processing Dialog */}
+      <Dialog open={bulkDialogOpen} onClose={() => !bulkLoading && setBulkDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ bgcolor: '#0536B6', color: 'white' }}>
+          Bulk User Processing
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {!bulkResult && (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Process multiple users at once: add them to standard AD groups and/or fix their proxy (email) addresses.
+              </Typography>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id="bulk-mode-label">Processing Mode</InputLabel>
+                <Select
+                  labelId="bulk-mode-label"
+                  value={bulkMode}
+                  label="Processing Mode"
+                  onChange={(e) => setBulkMode(e.target.value)}
+                  disabled={bulkLoading}
+                >
+                  <MenuItem value="all">All — Groups + Proxy Addresses</MenuItem>
+                  <MenuItem value="groupsOnly">Groups Only</MenuItem>
+                  <MenuItem value="proxiesOnly">Proxy Addresses Only</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                label="Usernames (one per line, or separated by commas/semicolons)"
+                placeholder={"jsmith\njdoe\nmbrown"}
+                value={bulkUsernames}
+                onChange={(e) => setBulkUsernames(e.target.value)}
+                disabled={bulkLoading}
+                sx={{ mb: 2 }}
+              />
+            </>
+          )}
+
+          {/* Progress display */}
+          {bulkLoading && (
+            <Box sx={{ mb: 2 }}>
+              <LinearProgress sx={{ mb: 1 }} />
+              <Typography variant="body2" color="text.secondary">Processing users...</Typography>
+            </Box>
+          )}
+
+          {bulkProgress.length > 0 && (
+            <Box sx={{
+              bgcolor: '#1e1e1e', color: '#d4d4d4', p: 2, borderRadius: 1,
+              maxHeight: 300, overflow: 'auto', fontFamily: 'monospace', fontSize: '0.8rem',
+              mb: 2,
+            }}>
+              {bulkProgress.map((line, idx) => {
+                const style = formatTerminalLine(line);
+                return (
+                  <Box key={idx} sx={{ color: style.color, fontWeight: style.fontWeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, mb: 0.25 }}>
+                    {line}
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+
+          {/* Results summary */}
+          {bulkResult && (
+            <Box>
+              <Alert severity={bulkResult.success ? 'success' : bulkResult.Stats?.Errors > 0 ? 'warning' : 'error'} sx={{ mb: 2 }}>
+                {bulkResult.success
+                  ? 'Bulk processing completed successfully!'
+                  : bulkResult.error || 'Bulk processing completed with errors.'}
+              </Alert>
+              {bulkResult.Stats && (
+                <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1 }}>
+                  <Typography variant="subtitle2" gutterBottom>Summary</Typography>
+                  <Grid container spacing={1}>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2">Users Processed:</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2" fontWeight="bold">{bulkResult.Stats.TotalProcessed}</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2">Groups Added:</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2" fontWeight="bold" color="success.main">{bulkResult.Stats.GroupsAdded}</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2">Already Member:</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2">{bulkResult.Stats.GroupsAlreadyMember}</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2">Proxies Added:</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2" fontWeight="bold" color="success.main">{bulkResult.Stats.ProxiesAdded}</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2">Proxies Already OK:</Typography></Grid>
+                    <Grid size={{ xs: 6 }}><Typography variant="body2">{bulkResult.Stats.ProxiesAlreadyOk}</Typography></Grid>
+                    {bulkResult.Stats.Errors > 0 && (
+                      <>
+                        <Grid size={{ xs: 6 }}><Typography variant="body2">Errors:</Typography></Grid>
+                        <Grid size={{ xs: 6 }}><Typography variant="body2" fontWeight="bold" color="error.main">{bulkResult.Stats.Errors}</Typography></Grid>
+                      </>
+                    )}
+                    {bulkResult.Stats.UsersNotFound > 0 && (
+                      <>
+                        <Grid size={{ xs: 6 }}><Typography variant="body2">Users Not Found:</Typography></Grid>
+                        <Grid size={{ xs: 6 }}><Typography variant="body2" fontWeight="bold" color="error.main">{bulkResult.Stats.UsersNotFound}</Typography></Grid>
+                      </>
+                    )}
+                  </Grid>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {!bulkResult && (
+            <>
+              <Button onClick={() => setBulkDialogOpen(false)} disabled={bulkLoading}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBulkProcessing}
+                variant="contained"
+                disabled={bulkLoading || !bulkUsernames.trim()}
+                sx={{ bgcolor: '#0536B6', '&:hover': { bgcolor: '#003063' } }}
+              >
+                {bulkLoading ? 'Processing...' : 'Process Users'}
+              </Button>
+            </>
+          )}
+          {bulkResult && (
+            <Button onClick={() => setBulkDialogOpen(false)} variant="contained">
               Close
             </Button>
           )}

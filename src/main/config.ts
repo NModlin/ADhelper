@@ -38,6 +38,12 @@ const config = {
   /** Default timeout for PowerShell scripts (ms, 0 = no timeout) — override with ADHELPER_PS_TIMEOUT_MS */
   psDefaultTimeoutMs: envInt('ADHELPER_PS_TIMEOUT_MS', 0),
 
+  /** Maximum number of retries for transient PS failures — override with ADHELPER_MAX_RETRIES */
+  maxPSRetries: envInt('ADHELPER_MAX_RETRIES', 2),
+
+  /** Base delay between retries in ms (doubles each attempt) — override with ADHELPER_RETRY_DELAY_MS */
+  baseRetryDelayMs: envInt('ADHELPER_RETRY_DELAY_MS', 1000),
+
   /** Vite dev server host */
   devServerHost: envString('ADHELPER_DEV_HOST', 'localhost'),
 } as const;

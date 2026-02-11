@@ -53,6 +53,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('contractor-processing-progress');
   },
 
+  // Bulk User Processing (groups + proxies)
+  processBulkUsers: (usernames: string[], mode: string) =>
+    ipcRenderer.invoke('process-bulk-users', usernames, mode),
+
+  onBulkProcessingProgress: (callback: (data: string) => void) => {
+    ipcRenderer.on('bulk-processing-progress', (_event, data) => callback(data));
+  },
+
+  removeBulkProcessingProgressListener: () => {
+    ipcRenderer.removeAllListeners('bulk-processing-progress');
+  },
+
   // Windows Credential Manager
   saveCredential: (target: string, username: string, password: string) =>
     ipcRenderer.invoke('save-credential', target, username, password),
@@ -99,6 +111,9 @@ export interface ElectronAPI {
   processContractorAccount: (usernames: string[]) => Promise<{ success: boolean; result?: any; error?: string }>;
   onContractorProcessingProgress: (callback: (data: string) => void) => void;
   removeContractorProcessingProgressListener: () => void;
+  processBulkUsers: (usernames: string[], mode: string) => Promise<{ success: boolean; result?: any; error?: string }>;
+  onBulkProcessingProgress: (callback: (data: string) => void) => void;
+  removeBulkProcessingProgressListener: () => void;
   saveCredential: (target: string, username: string, password: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   getCredential: (target: string) => Promise<{ success: boolean; username?: string; password?: string; error?: string }>;
   deleteCredential: (target: string) => Promise<{ success: boolean; message?: string; error?: string }>;
