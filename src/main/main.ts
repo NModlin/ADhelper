@@ -100,21 +100,33 @@ function executePowerShellScript(options: PSExecutionOptions): Promise<PSExecuti
         try { fs.unlinkSync(tempFilePath); } catch { /* ignore */ }
       }
 
+      logger.debug('PS script closed', {
+        script: path.basename(options.scriptPath),
+        code,
+        stdoutLen: stdout.length,
+        stderrLen: stderr.length,
+        stderrPreview: stderr.slice(0, 500) || undefined,
+      });
+
       if (code === 0 && stdout.trim()) {
         try {
           const jsonMatch = stdout.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const result = JSON.parse(jsonMatch[0]);
+            logger.debug('PS script result (JSON)', { script: path.basename(options.scriptPath), result });
             resolve({ success: true, result, output: stdout });
           } else {
+            logger.debug('PS script result (no JSON)', { script: path.basename(options.scriptPath), outputPreview: stdout.slice(0, 300) });
             resolve({ success: true, output: stdout });
           }
         } catch {
+          logger.warn('PS script JSON parse failed', { script: path.basename(options.scriptPath), outputPreview: stdout.slice(0, 300) });
           resolve({ success: true, output: stdout });
         }
       } else if (code === 0) {
         resolve({ success: true, output: stdout });
       } else {
+        logger.error('PS script failed', { script: path.basename(options.scriptPath), code, stderr: stderr.slice(0, 500), stdout: stdout.slice(0, 500) });
         reject({ success: false, error: stderr || stdout || 'PowerShell script failed' });
       }
     });
@@ -124,6 +136,7 @@ function executePowerShellScript(options: PSExecutionOptions): Promise<PSExecuti
       if (tempFilePath && fs.existsSync(tempFilePath)) {
         try { fs.unlinkSync(tempFilePath); } catch { /* ignore */ }
       }
+      logger.error('PS script spawn error', { script: path.basename(options.scriptPath), error: error.message });
       reject({ success: false, error: error.message });
     });
   });
@@ -265,15 +278,30 @@ ipcMain.handle('run-adhelper-script', rateLimited('run-adhelper-script', async (
 // IPC Handler for MFA Blocking Group Removal
 // SECURE: Uses -File with separate -Username argument (no string interpolation)
 ipcMain.handle('remove-mfa-blocking', rateLimited('remove-mfa-blocking', async (event, username: string) => {
-  logger.info('IPC: remove-mfa-blocking', { username });
+  // Strip @domain.com if user entered email — Get-ADUser -Identity needs sAMAccountName, not UPN
+  let samAccountName = username;
+  if (username.includes('@')) {
+    samAccountName = username.split('@')[0];
+    logger.info('IPC: remove-mfa-blocking — stripped email to sAMAccountName', { original: username, samAccountName });
+  }
+  logger.info('IPC: remove-mfa-blocking', { username: samAccountName });
+
   const scriptPath = path.join(app.getAppPath(), 'scripts', 'Remove-MFABlocking.ps1');
 
-  return executePowerShellScript({
-    scriptPath,
-    args: { Username: username },
-    progressChannel: 'mfa-removal-progress',
-    sender: event.sender,
-  });
+  try {
+    const result = await executePowerShellScript({
+      scriptPath,
+      args: { Username: samAccountName },
+      progressChannel: 'mfa-removal-progress',
+      sender: event.sender,
+      timeoutMs: 30000, // 30-second timeout to prevent hangs
+    });
+    logger.info('IPC: remove-mfa-blocking completed', { success: result.success, result: result.result });
+    return result;
+  } catch (err: any) {
+    logger.error('IPC: remove-mfa-blocking failed', { error: err.error || err.message || String(err) });
+    throw err;
+  }
 }));
 
 // IPC Handler for Creating New User

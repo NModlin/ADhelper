@@ -60,6 +60,12 @@ catch {
 }
 
 # ── 5. Perform MFA Blocking Group Removal ───────────────────────────────────
+# Strip @domain.com if email format was passed (defense-in-depth; main.ts also strips)
+if ($targetUsername -match '@') {
+    $targetUsername = ($targetUsername -split '@')[0]
+    Write-Host "Stripped email domain, using sAMAccountName: $targetUsername" -ForegroundColor Yellow
+}
+
 Write-Host "`n=== MFA Blocking Group Removal ===" -ForegroundColor Cyan
 Write-Host "Target Group: $mfaBlockingGroup" -ForegroundColor Gray
 Write-Host "Username: $targetUsername" -ForegroundColor Cyan

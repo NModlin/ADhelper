@@ -241,7 +241,8 @@ const ADHelper: React.FC = () => {
       }
       setMfaLoading(false);
     } catch (err: any) {
-      setMfaResult({ success: false, error: err.error || 'MFA removal failed' });
+      const errorMsg = err?.error || err?.message || (typeof err === 'string' ? err : 'MFA removal failed — check Settings to ensure admin credentials are configured.');
+      setMfaResult({ success: false, error: errorMsg });
       setMfaLoading(false);
     } finally {
       electronAPI.removeMFARemovalProgressListener();
