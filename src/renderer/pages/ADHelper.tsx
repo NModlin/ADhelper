@@ -225,7 +225,20 @@ const ADHelper: React.FC = () => {
       });
 
       const response = await electronAPI.removeMFABlocking(mfaUsername.trim());
-      setMfaResult(response);
+      // The response is { success: true, result: { Success, WasInGroup, Message, ... } }
+      // Map the inner result to a flat structure for the UI
+      if (response.result) {
+        setMfaResult({
+          success: response.result.Success === true,
+          wasInGroup: response.result.WasInGroup,
+          message: response.result.Message,
+          errorType: response.result.ErrorType,
+          displayName: response.result.DisplayName,
+          error: response.result.Error || response.result.Message,
+        });
+      } else {
+        setMfaResult(response);
+      }
       setMfaLoading(false);
     } catch (err: any) {
       setMfaResult({ success: false, error: err.error || 'MFA removal failed' });
@@ -672,9 +685,34 @@ const ADHelper: React.FC = () => {
             </>
           )}
           {mfaResult && (
-            <Alert severity={mfaResult.success ? 'success' : 'error'} sx={{ mb: 2 }}>
-              {mfaResult.success ? 'User successfully removed from MFA Blocking Group!' : mfaResult.error}
-            </Alert>
+            <>
+              <Alert severity={mfaResult.success ? 'success' : 'error'} sx={{ mb: 2 }}>
+                {mfaResult.success && mfaResult.wasInGroup && (
+                  <>User <strong>{mfaResult.displayName || mfaUsername}</strong> successfully removed from MFA Blocking Group!</>
+                )}
+                {mfaResult.success && !mfaResult.wasInGroup && (
+                  <>User <strong>{mfaResult.displayName || mfaUsername}</strong> is not in the MFA Blocking Group — no action needed.</>
+                )}
+                {!mfaResult.success && (mfaResult.error || 'MFA removal failed')}
+              </Alert>
+              {mfaResult.success && mfaResult.wasInGroup && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Due to AD replication, this change may take up to 35 minutes to propagate across all domain controllers.
+                </Alert>
+              )}
+              {mfaProgress.length > 0 && (
+                <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: '#d4d4d4', fontFamily: '"Consolas", "Courier New", monospace', fontSize: '0.8rem', maxHeight: 200, overflow: 'auto' }}>
+                  {mfaProgress.map((line, idx) => {
+                    const style = formatTerminalLine(line);
+                    return (
+                      <Box key={idx} sx={{ color: style.color, fontWeight: style.fontWeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, mb: 0.25 }}>
+                        {line}
+                      </Box>
+                    );
+                  })}
+                </Paper>
+              )}
+            </>
           )}
         </DialogContent>
         <DialogActions>
