@@ -71,14 +71,14 @@ function App() {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <Avatar
             sx={{
-              bgcolor: '#FFC20E',  // Rehrig Yellow
-              color: '#003063',    // Rehrig Navy text
+              bgcolor: 'white',
               width: 56,
               height: 56,
-              fontSize: '1.5rem',
-              fontWeight: 700,
               border: '3px solid rgba(255, 255, 255, 0.3)',
+              p: 0.5,
             }}
+            src="/logo.png"
+            alt="Rehrig Pacific"
           >
             ADH
           </Avatar>

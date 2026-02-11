@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session } from 'electron';
+import { app, BrowserWindow, ipcMain, session, Tray, Menu, nativeImage } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -188,11 +188,48 @@ function createWindow() {
   });
 }
 
+let tray: Tray | null = null;
+
+function createTray() {
+  const trayIconPath = path.join(__dirname, '../../public/tray-icon.png');
+  const icon = nativeImage.createFromPath(trayIconPath);
+  tray = new Tray(icon);
+  tray.setToolTip('ADHelper - Rehrig IT Tools');
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show ADHelper',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+  tray.on('click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
 app.whenReady().then(() => {
   logger.init(config.logLevel);
   logger.info('App starting', { version: app.getVersion(), env: config.isDev ? 'development' : 'production' });
 
   createWindow();
+  createTray();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
