@@ -99,15 +99,17 @@ Built with React, TypeScript, Material-UI, and Electron. Works in both browser a
 - **📊 Detailed Reporting**: Comprehensive logging and status summaries
 - **⚠️ Smart Error Handling**: Graceful error recovery with helpful troubleshooting tips
 
-### 🚀 Advanced Features (NEW)
+### 🚀 Advanced Features
 - **⚡ Parallel Processing**: 60-80% faster processing with configurable concurrent jobs (1-20)
-- **📦 Bulk User Processing**: Process multiple users from CSV files or comma-separated lists
-- **🎯 Flexible Processing Options**: Full processing, groups-only, or proxies-only modes
-- **📊 Real-time Progress Tracking**: Visual progress bars for all parallel operations
-- **🔧 Configurable Performance**: Adjust parallel job limits via settings menu
-- **🎤 Voice Commands**: Optional voice-controlled interface for hands-free operation
+- **📦 Bulk User Processing**: Process multiple users via CSV, comma-separated, or multiline input with mode selection (All/Groups Only/Proxies Only)
+- **📅 Contractor Account Processing**: Move users to Non-Rehrig OU, set expiration, apply groups and proxies
+- **🔓 MFA Blocking Removal**: Remove users from MFA blocking group with email-format support
+- **🛡️ Role-Based Access Control**: Admin/Operator roles with permission-gated operations
+- **📝 Audit Logging**: All sensitive operations logged to structured audit trail
+- **⚙️ Externalized Configuration**: Groups, proxies, and contractor settings in `config/adhelper-config.json`
+- **📊 Real-time Progress Tracking**: Native Electron progress bars for all operations
+- **🎤 Voice Commands**: Optional voice-controlled interface for hands-free operation (PowerShell)
 - **🔐 Secure Credential Storage**: Windows Credential Manager integration
-- **🔓 Account Management**: Password reset, account unlock, and user creation features
 
 ### Performance Improvements
 - **Single User**: 45-60s → 12-20s (70-75% faster with parallel processing)
@@ -178,13 +180,18 @@ Install-WindowsFeature RSAT-AD-PowerShell
    ╔════════════════════════════════════════════════════════════╗
    ║      AD HELPER - Group & Proxy Manager                    ║
    ╚════════════════════════════════════════════════════════════╝
-     [1] Process User (Groups → Proxies)
-     [2] Process Bulk Users
-     [3] Reset User Password
-     [4] Unlock User Account
-     [5] Create New User Account
-     [6] Settings & Configuration
-     [7] Exit
+     [1]  Process User (Validation → Groups → Proxies)
+     [2]  Process Bulk Users (CSV or Array) 🚀
+     [3]  Reset User Password
+     [4]  Unlock User Account
+     [5]  Create New User Account
+     [6]  Voice Commands Mode 🎤
+     [7]  Toggle Parallel Processing
+     [8]  Settings & Configuration
+     [9]  Remove from MFA Blocking Group 🔓
+     [10] Voice Commands Test & Diagnostics 🔧
+     [11] Process Contractor Accounts 📅
+     [12] Exit
    ```
 
 5. **Process a User**: Select option 1 and enter the user's sAMAccountName or email
@@ -261,34 +268,52 @@ Operation Results:
 
 ## 🔧 Configuration
 
+### Externalized Configuration
+
+Groups, proxy templates, and contractor settings are now in `config/adhelper-config.json`:
+
+```json
+{
+  "standardGroups": [ "CN=All_Employees,..." ],
+  "proxyAddressTemplates": [
+    { "prefix": "smtp", "domain": "rehrigpenn.com", "casing": "lower" },
+    { "prefix": "SMTP", "domain": "Rehrig.com", "casing": "titleCase" }
+  ],
+  "contractor": {
+    "targetOU": "OU=Non-Rehrig,OU=Accounts,DC=RPL,DC=Local",
+    "displayNameSuffix": " - Contractor",
+    "extensionYears": 1
+  }
+}
+```
+
+The config module (`scripts/ADConfig.psm1`) searches: user override → dev repo → installed app → hardcoded fallback.
+
 ### Customizing Standard Groups
 
-Edit the `$standardGroups` array at the top of `ADhelper.ps1`:
-
-```powershell
-$standardGroups = @(
-    "CN=All_Employees,OU=Adaxes%20Managed,OU=Security%20Groups,DC=RPL,DC=Local",
-    "CN=US%20Employees,OU=Distribution%20Lists,DC=RPL,DC=Local",
-    # Add or remove groups as needed
-)
-```
+Edit the `standardGroups` array in `config/adhelper-config.json`, or the `$standardGroups` array in `ADhelper.ps1` (fallback).
 
 ### Customizing Proxy Addresses
 
-Edit the `Get-ExpectedProxyAddresses` function to modify the proxy address list.
+Edit `proxyAddressTemplates` in `config/adhelper-config.json`, or the `Get-ExpectedProxyAddresses` function in `ADhelper.ps1` (fallback).
 
 ## 📊 Logging
 
-All operations are logged to timestamped files:
+**PowerShell logs** — timestamped files per session:
 ```
 ADHelper-Log-2025-11-19_12-36-52.txt
 ```
 
+**Electron logs** (in `%APPDATA%/adhelper-app/logs/`):
+- `adhelper-main.log` — Main process log (5MB rotation)
+- `adhelper-audit.log` — Sensitive operation audit trail (10MB rotation)
+- `adhelper-ps.log` — PowerShell structured JSON log (5MB rotation)
+
 Logs include:
-- All operations performed
-- Success/failure status
-- Error messages and warnings
+- All operations performed with structured JSON metadata
+- Success/failure status and error details
 - Timestamps for each action
+- Audit trail for user creation, role changes, and credential access
 
 ## ⚠️ Error Handling
 
@@ -312,11 +337,15 @@ Do you want to continue anyway? (Y/N)
 ## 🔒 Security Considerations
 
 - **Credentials**: Admin credentials stored securely via Windows Credential Manager
-- **Logging**: Logs do not contain passwords or sensitive credential information
+- **RBAC**: Role-based access control with Admin/Operator tiers restricts sensitive operations
+- **Audit Logging**: All sensitive operations logged to structured audit trail with timestamps
+- **Logging**: Main and PowerShell structured JSON logs; no passwords in logs
 - **Permissions**: Requires appropriate AD admin rights (a- account)
 - **Scope**: Only modifies specified users - no bulk operations without confirmation
 - **Input Validation**: All user inputs are validated before processing
 - **PowerShell Security**: Scripts executed via `-File` (never `-Command`) to prevent injection
+- **Electron Security**: Context isolation enabled, node integration disabled, CSP headers enforced
+- **Rate Limiting**: IPC handlers protected against rapid repeated invocations
 
 ## 🤝 Contributing
 

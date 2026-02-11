@@ -1,9 +1,9 @@
 # AD Helper - Advanced Features Implementation Summary
 
-**Version:** 1.0.0
-**Last Updated:** 2026-02-09
+**Version:** 1.1.0
+**Last Updated:** 2026-02-11
 **Status:** Current
-**Related Docs:** [README.md](../README.md), [Getting Started](../guides/GETTING_STARTED.md)
+**Related Docs:** [README.md](../../README.md), [Getting Started](../guides/GETTING_STARTED.md)
 
 ## 🎉 Successfully Implemented Features
 
@@ -65,19 +65,78 @@
 - 📋 Form validation and user-friendly prompts
 - ✅ Immediate feedback and status reporting
 
+### 5. 🔓 **MFA Blocking Group Removal**
+**Implementation:**
+- Menu option [9] for removing users from the MFA blocking group
+- Electron UI dialog with progress tracking
+- Supports email-format input (strips @domain to get sAMAccountName)
+- Audit-logged operation
+
+### 6. 📅 **Contractor Account Processing**
+**Implementation:**
+- Menu option [11] for processing contractor accounts
+- Moves user to Non-Rehrig OU, appends " - Contractor" to display name
+- Sets account expiration date (default: 1 year from now)
+- Applies standard groups and proxy addresses
+- Electron UI with multi-username input and progress terminal
+
+### 7. 📊 **Bulk User Processing (Electron UI)**
+**Implementation:**
+- Electron dialog with mode selector: All / Groups Only / Proxies Only
+- Multi-line username input (semicolon, comma, or newline separated)
+- Live progress terminal and results summary with statistics
+- Rate-limited and audit-logged
+
+### 8. 🛡️ **Role-Based Access Control (RBAC)**
+**Implementation:**
+- Two roles: **Admin** (full access) and **Operator** (standard ops only)
+- Admin-only operations: Create User, Contractor Processing, Bulk Processing
+- Role config stored in `%APPDATA%/adhelper-app/rbac-config.json`
+- UI role indicator chip and role management dialog
+- Permission checks enforced at IPC handler level
+
+### 9. 📝 **Audit Logging & Structured Logging**
+**Implementation:**
+- Audit log at `%APPDATA%/adhelper-app/logs/adhelper-audit.log` (10MB rotation)
+- Main process log at `%APPDATA%/adhelper-app/logs/adhelper-main.log` (5MB rotation)
+- PowerShell structured JSON logger (`scripts/PSLogger.psm1`)
+- All sensitive operations (user creation, role changes, credential access) are logged
+
+### 10. ⚙️ **Externalized Configuration**
+**Implementation:**
+- Config file at `config/adhelper-config.json`
+- PowerShell config module `scripts/ADConfig.psm1`
+- Configurable: standard groups, proxy address templates, contractor settings
+- Search order: user override → dev repo → installed app → hardcoded fallback
+
 ## 🆕 Enhanced Main Menu
 
-**New Advanced Options:**
+**PowerShell Main Menu (12 options):**
 ```
-[1] Process User (Validation → Groups → Proxies)    # Original with parallel processing
-[2] Reset User Password                            # NEW: Secure password reset
-[3] Unlock User Account                            # NEW: Account unlocking
-[4] Create New User Account                        # NEW: Complete user creation
-[5] Voice Commands Mode                            # NEW: Voice interface
-[6] Toggle Parallel Processing                     # NEW: Performance toggle
-[7] Settings & Configuration                       # NEW: Advanced settings
-[8] Exit                                           # Exit
+[1]  Process User (Validation → Groups → Proxies)
+[2]  Process Bulk Users (CSV or Array) 🚀
+[3]  Reset User Password
+[4]  Unlock User Account
+[5]  Create New User Account
+[6]  Voice Commands Mode 🎤
+[7]  Toggle Parallel Processing
+[8]  Settings & Configuration
+[9]  Remove from MFA Blocking Group 🔓
+[10] Voice Commands Test & Diagnostics 🔧
+[11] Process Contractor Accounts (OU/Name/Expiration) 📅
+[12] Exit
 ```
+
+**Electron Desktop UI Operations:**
+- Process User (groups + proxies)
+- Remove MFA Blocking
+- Create New User Account (admin only)
+- Process Contractor Accounts (admin only)
+- Bulk User Processing (admin only)
+- AD Connection Test
+- Role Management (admin only)
+- Site Configuration & Job Profiles
+- Credential Management (Windows Credential Manager)
 
 ## 🛠 Technical Enhancements
 
