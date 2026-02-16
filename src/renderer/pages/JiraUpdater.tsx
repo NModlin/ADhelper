@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -25,7 +25,16 @@ import {
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import jiraService, { JiraTicket } from '../services/jiraService';
+import { electronAPI } from '../electronAPI';
+
+interface JiraTicket {
+  key: string;
+  summary: string;
+  status: string;
+  lastUpdated: string;
+  assignee: string;
+  updated: string;
+}
 
 const JiraUpdater: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -36,6 +45,33 @@ const JiraUpdater: React.FC = () => {
   const [jiraEmail, setJiraEmail] = useState('');
   const [jiraToken, setJiraToken] = useState('');
   const [updateAction, setUpdateAction] = useState('comment');
+  const [commentText, setCommentText] = useState(
+    'This ticket has been automatically updated by ADHelper due to inactivity.'
+  );
+  const [transitionId, setTransitionId] = useState('');
+  const [assigneeAccountId, setAssigneeAccountId] = useState('');
+  const [credentialsLoaded, setCredentialsLoaded] = useState(false);
+
+  // C2 Fix: Load saved Jira credentials from Windows Credential Manager on mount
+  useEffect(() => {
+    const loadCredentials = async () => {
+      try {
+        const result = await electronAPI.getCredential('ADHelper_Jira');
+        if (result.success && result.username && result.password) {
+          const [url, email] = result.username.split('|');
+          setJiraUrl(url || '');
+          setJiraEmail(email || '');
+          setJiraToken(result.password || '');
+          setCredentialsLoaded(true);
+        }
+      } catch (err) {
+        console.error('Failed to load Jira credentials:', err);
+      }
+    };
+    loadCredentials();
+  }, []);
+
+  const getJiraConfig = () => ({ url: jiraUrl, email: jiraEmail, apiToken: jiraToken });
 
   const handleFindTickets = async () => {
     setLoading(true);
@@ -43,15 +79,14 @@ const JiraUpdater: React.FC = () => {
     setSuccess(null);
 
     try {
-      // Configure Jira service
-      jiraService.configure({
-        url: jiraUrl,
-        email: jiraEmail,
-        apiToken: jiraToken,
-      });
+      const result = await electronAPI.findStaleJiraTickets(getJiraConfig(), 48);
+      if (!result.success) {
+        setError(result.error || 'Failed to fetch Jira tickets');
+        setLoading(false);
+        return;
+      }
 
-      // Find stale tickets (48 hours)
-      const staleTickets = await jiraService.findStaleTickets(48);
+      const staleTickets = result.tickets || [];
       setTickets(staleTickets);
       setLoading(false);
 
@@ -64,20 +99,41 @@ const JiraUpdater: React.FC = () => {
     }
   };
 
+  const getActionValue = (): string => {
+    switch (updateAction) {
+      case 'comment': return commentText;
+      case 'status': return transitionId;
+      case 'assignee': return assigneeAccountId;
+      default: return '';
+    }
+  };
+
   const handleUpdateTickets = async () => {
+    const value = getActionValue();
+    if (!value) {
+      setError(`Please provide a value for the "${updateAction}" action.`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const defaultComment = 'This ticket has been automatically updated by ADHelper due to inactivity.';
-
-      const results = await jiraService.bulkUpdateTickets(
+      const result = await electronAPI.bulkUpdateJiraTickets(
+        getJiraConfig(),
         tickets,
-        updateAction as 'comment' | 'status' | 'assignee',
-        updateAction === 'comment' ? defaultComment : ''
+        updateAction,
+        value
       );
 
+      if (!result.success) {
+        setError(result.error || 'Failed to update tickets');
+        setLoading(false);
+        return;
+      }
+
+      const results = result.results!;
       if (results.failed > 0) {
         setError(`Updated ${results.success} tickets, but ${results.failed} failed. Errors: ${results.errors.join(', ')}`);
       } else {
@@ -136,6 +192,11 @@ const JiraUpdater: React.FC = () => {
                 placeholder="Your Jira API token"
                 sx={{ mb: 2 }}
               />
+              {credentialsLoaded && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Credentials loaded from Settings
+                </Alert>
+              )}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Update Action</InputLabel>
                 <Select
@@ -148,6 +209,42 @@ const JiraUpdater: React.FC = () => {
                   <MenuItem value="assignee">Update Assignee</MenuItem>
                 </Select>
               </FormControl>
+              {updateAction === 'comment' && (
+                <TextField
+                  fullWidth
+                  label="Comment Text"
+                  variant="outlined"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  multiline
+                  rows={3}
+                  sx={{ mb: 2 }}
+                />
+              )}
+              {updateAction === 'status' && (
+                <TextField
+                  fullWidth
+                  label="Transition ID"
+                  variant="outlined"
+                  value={transitionId}
+                  onChange={(e) => setTransitionId(e.target.value)}
+                  placeholder="e.g. 31"
+                  helperText="Jira transition ID for the target status"
+                  sx={{ mb: 2 }}
+                />
+              )}
+              {updateAction === 'assignee' && (
+                <TextField
+                  fullWidth
+                  label="Assignee Account ID"
+                  variant="outlined"
+                  value={assigneeAccountId}
+                  onChange={(e) => setAssigneeAccountId(e.target.value)}
+                  placeholder="e.g. 5b10a2844c20165700ede21g"
+                  helperText="Jira account ID of the new assignee"
+                  sx={{ mb: 2 }}
+                />
+              )}
               <Button
                 fullWidth
                 variant="contained"

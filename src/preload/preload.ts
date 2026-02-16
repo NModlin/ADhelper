@@ -102,6 +102,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   setUserRole: (role: string) =>
     ipcRenderer.invoke('set-user-role', role),
+
+  // Jira Integration (routed through main process for security + CSP bypass)
+  findStaleJiraTickets: (config: { url: string; email: string; apiToken: string }, hoursThreshold: number) =>
+    ipcRenderer.invoke('jira-find-stale-tickets', config, hoursThreshold),
+
+  bulkUpdateJiraTickets: (config: { url: string; email: string; apiToken: string }, tickets: any[], action: string, value: string) =>
+    ipcRenderer.invoke('jira-bulk-update', config, tickets, action, value),
 });
 
 // Type definitions for TypeScript
@@ -132,6 +139,8 @@ export interface ElectronAPI {
   getJobProfiles: (siteId: string) => Promise<{ success: boolean; jobProfiles?: any[]; error?: string }>;
   getUserRole: () => Promise<{ success: boolean; role: string; config: any; adminOnlyOperations: string[] }>;
   setUserRole: (role: string) => Promise<{ success: boolean; config?: any; error?: string }>;
+  findStaleJiraTickets: (config: { url: string; email: string; apiToken: string }, hoursThreshold: number) => Promise<{ success: boolean; tickets?: any[]; error?: string }>;
+  bulkUpdateJiraTickets: (config: { url: string; email: string; apiToken: string }, tickets: any[], action: string, value: string) => Promise<{ success: boolean; results?: { success: number; failed: number; errors: string[] }; error?: string }>;
 }
 
 declare global {

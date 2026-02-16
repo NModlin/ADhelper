@@ -28,6 +28,7 @@ const ADMIN_ONLY_OPERATIONS = new Set([
   'process-contractor-account',
   'process-bulk-users',
   'set-user-role',
+  'jira-bulk-update',
 ]);
 
 class RoleManager {

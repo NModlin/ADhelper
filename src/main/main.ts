@@ -8,6 +8,7 @@ import auditLogger from './auditLogger';
 import roleManager from './roleManager';
 import { rateLimited } from './rateLimiter';
 import config from './config';
+import { registerJiraHandlers } from './jiraHandler';
 
 // ── Resource Path Resolution ────────────────────────────────────────────────
 // In development, resources (scripts, icons) live at the project root.
@@ -279,6 +280,7 @@ app.whenReady().then(() => {
   logger.init(config.logLevel);
   auditLogger.init();
   roleManager.init();
+  registerJiraHandlers();
   logger.info('App starting', { version: app.getVersion(), env: config.isDev ? 'development' : 'production' });
 
   createWindow();

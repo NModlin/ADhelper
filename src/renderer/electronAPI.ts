@@ -28,6 +28,8 @@ export interface ElectronAPI {
   getJobProfiles: (siteId: string) => Promise<{ success: boolean; jobProfiles?: any[]; error?: string }>;
   getUserRole: () => Promise<{ success: boolean; role: string; config: any; adminOnlyOperations: string[] }>;
   setUserRole: (role: string) => Promise<{ success: boolean; config?: any; error?: string }>;
+  findStaleJiraTickets: (config: { url: string; email: string; apiToken: string }, hoursThreshold: number) => Promise<{ success: boolean; tickets?: any[]; error?: string }>;
+  bulkUpdateJiraTickets: (config: { url: string; email: string; apiToken: string }, tickets: any[], action: string, value: string) => Promise<{ success: boolean; results?: { success: number; failed: number; errors: string[] }; error?: string }>;
 }
 
 // Mock implementation for browser mode
@@ -237,6 +239,16 @@ const mockElectronAPI: ElectronAPI = {
   setUserRole: async (_role: string) => {
     console.warn('Running in browser mode - RBAC not available');
     return { success: false, error: 'Role management is only available in desktop mode.' };
+  },
+
+  findStaleJiraTickets: async (_config: { url: string; email: string; apiToken: string }, _hoursThreshold: number) => {
+    console.warn('Running in browser mode - Jira integration not available');
+    return { success: false, error: 'Jira integration is only available in desktop mode.' };
+  },
+
+  bulkUpdateJiraTickets: async (_config: { url: string; email: string; apiToken: string }, _tickets: any[], _action: string, _value: string) => {
+    console.warn('Running in browser mode - Jira integration not available');
+    return { success: false, error: 'Jira integration is only available in desktop mode.' };
   },
 };
 
