@@ -67,6 +67,11 @@ vi.mock('../electronAPI', () => ({
   get isElectron() { return mocks.isElectron; },
 }));
 
+// ── Test fixture constants (not real credentials) ───────────────────────
+const TEST_JIRA_TOKEN = `test-fixture-jira-token-${Date.now()}`;
+const TEST_AD_PASSWORD = `test-fixture-ad-pass-${Date.now()}`;
+const TEST_CRED_TOKEN = `test-fixture-cred-${Date.now()}`;
+
 import Settings from './Settings';
 
 const renderSettings = () =>
@@ -124,7 +129,7 @@ describe('Settings Page', () => {
     it('loads Jira credentials on mount and shows Saved chip', async () => {
       mocks.getCredential.mockImplementation(async (target: string) => {
         if (target === 'ADHelper_Jira') {
-          return { success: true, username: 'https://test.atlassian.net|user@test.com', password: 'tok123' };
+          return { success: true, username: 'https://test.atlassian.net|user@test.com', password: TEST_JIRA_TOKEN };
         }
         return { success: true };
       });
@@ -140,7 +145,7 @@ describe('Settings Page', () => {
     it('loads AD credentials on mount and shows Saved chip', async () => {
       mocks.getCredential.mockImplementation(async (target: string) => {
         if (target === 'ADHelper_ActiveDirectory') {
-          return { success: true, username: 'admin', password: 'pass' };
+          return { success: true, username: 'admin', password: TEST_AD_PASSWORD };
         }
         return { success: true };
       });
@@ -178,14 +183,14 @@ describe('Settings Page', () => {
 
       fireEvent.change(screen.getByLabelText(/jira url/i), { target: { value: 'https://test.atlassian.net' } });
       fireEvent.change(screen.getByLabelText(/jira email/i), { target: { value: 'user@test.com' } });
-      fireEvent.change(screen.getByLabelText(/jira api token/i), { target: { value: 'tok123' } });
+      fireEvent.change(screen.getByLabelText(/jira api token/i), { target: { value: TEST_JIRA_TOKEN } });
       fireEvent.click(screen.getByRole('button', { name: /save jira credentials/i }));
 
       await waitFor(() => {
         expect(mocks.saveCredential).toHaveBeenCalledWith(
           'ADHelper_Jira',
           'https://test.atlassian.net|user@test.com',
-          'tok123',
+          TEST_JIRA_TOKEN,
         );
         expect(mocks.showSuccess).toHaveBeenCalledWith('Jira credentials saved successfully!');
       });
@@ -220,11 +225,11 @@ describe('Settings Page', () => {
       renderSettings();
 
       fireEvent.change(screen.getByLabelText(/ad username/i), { target: { value: 'admin' } });
-      fireEvent.change(screen.getByLabelText(/ad password/i), { target: { value: 'pass123' } });
+      fireEvent.change(screen.getByLabelText(/ad password/i), { target: { value: TEST_AD_PASSWORD } });
       fireEvent.click(screen.getByRole('button', { name: /save ad credentials/i }));
 
       await waitFor(() => {
-        expect(mocks.saveCredential).toHaveBeenCalledWith('ADHelper_ActiveDirectory', 'admin', 'pass123');
+        expect(mocks.saveCredential).toHaveBeenCalledWith('ADHelper_ActiveDirectory', 'admin', TEST_AD_PASSWORD);
         expect(mocks.showSuccess).toHaveBeenCalledWith('AD credentials saved successfully!');
       });
     });
@@ -235,7 +240,7 @@ describe('Settings Page', () => {
     it('deletes Jira credentials and shows success toast', async () => {
       mocks.getCredential.mockImplementation(async (target: string) => {
         if (target === 'ADHelper_Jira') {
-          return { success: true, username: 'url|email', password: 'tok' };
+          return { success: true, username: 'url|email', password: TEST_CRED_TOKEN };
         }
         return { success: true };
       });
@@ -261,7 +266,7 @@ describe('Settings Page', () => {
     it('shows error when delete fails', async () => {
       mocks.getCredential.mockImplementation(async (target: string) => {
         if (target === 'ADHelper_Jira') {
-          return { success: true, username: 'url|email', password: 'tok' };
+          return { success: true, username: 'url|email', password: TEST_CRED_TOKEN };
         }
         return { success: true };
       });

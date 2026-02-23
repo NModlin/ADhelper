@@ -66,7 +66,9 @@ vi.mock('../electronAPI', () => ({
   isElectron: true,
 }));
 
-// ── Test data ──────────────────────────────────────────────────────────
+// ── Test fixture constants (not real credentials) ───────────────────────
+const TEST_JIRA_TOKEN = `test-fixture-jira-token-${Date.now()}`;
+
 const MOCK_TICKETS = [
   { key: 'PROJ-101', summary: 'Fix login bug', status: 'Open', lastUpdated: '3 days ago', assignee: 'Alice', updated: '2026-02-13' },
   { key: 'PROJ-202', summary: 'Update docs', status: 'In Progress', lastUpdated: '2 days ago', assignee: 'Bob', updated: '2026-02-14' },
@@ -75,7 +77,7 @@ const MOCK_TICKETS = [
 const SAVED_CRED = {
   success: true,
   username: 'https://test.atlassian.net|user@test.com',
-  password: 'tok_abc123',
+  password: TEST_JIRA_TOKEN,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -210,7 +212,7 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
 
       await waitFor(() => {
         expect(mocks.findStaleJiraTickets).toHaveBeenCalledWith(
-          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: 'tok_abc123' },
+          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: TEST_JIRA_TOKEN },
           48,
         );
       });
@@ -259,7 +261,7 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
 
       await waitFor(() => {
         expect(mocks.bulkUpdateJiraTickets).toHaveBeenCalledWith(
-          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: 'tok_abc123' },
+          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: TEST_JIRA_TOKEN },
           MOCK_TICKETS,
           'comment',
           expect.stringContaining('automatically updated'),
@@ -415,7 +417,7 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
       await waitFor(() => {
         expect(mocks.findStaleJiraTickets).toHaveBeenCalledTimes(1);
         expect(mocks.findStaleJiraTickets).toHaveBeenCalledWith(
-          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: 'tok_abc123' },
+          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: TEST_JIRA_TOKEN },
           48,
         );
       });
@@ -441,7 +443,7 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
       await waitFor(() => {
         expect(mocks.bulkUpdateJiraTickets).toHaveBeenCalledTimes(1);
         expect(mocks.bulkUpdateJiraTickets).toHaveBeenCalledWith(
-          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: 'tok_abc123' },
+          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: TEST_JIRA_TOKEN },
           MOCK_TICKETS,
           'comment',
           expect.any(String),
