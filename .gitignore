@@ -58,4 +58,4 @@ out/
 .vscode/
 .idea/
 *.swp
-*.swo
+*.swocoverage/  

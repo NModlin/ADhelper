@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { isValidUsernameOrEmail, isValidName, isValidEmail, isValidDN } from '../utils/validation';
+import { useNotification } from '../hooks/useNotification';
 import {
   Box,
   Paper,
@@ -66,10 +67,10 @@ function parseProgressPercent(line: string): number | null {
 }
 
 const ADHelper: React.FC = () => {
+  const { showSuccess, showError, showWarning } = useNotification();
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string[]>([]);
   const [progressPercent, setProgressPercent] = useState<number | null>(null);
   const [showTerminal, setShowTerminal] = useState(true);
@@ -215,26 +216,25 @@ const ADHelper: React.FC = () => {
       if (result.success) {
         setUserRole(newRole);
       } else {
-        setError(result.error || 'Failed to change role');
+        showError(result.error || 'Failed to change role');
       }
     } catch (err: any) {
-      setError(err.error || 'Failed to change role');
+      showError(err.error || 'Failed to change role');
     }
   };
 
   const handleSearch = async () => {
     if (!username.trim()) {
-      setError('Please enter a username or email');
+      showWarning('Please enter a username or email');
       return;
     }
 
     if (!isValidUsernameOrEmail(username.trim())) {
-      setError('Invalid username or email format. Use only letters, numbers, dots, hyphens, underscores, and @.');
+      showWarning('Invalid username or email format. Use only letters, numbers, dots, hyphens, underscores, and @.');
       return;
     }
 
     setLoading(true);
-    setError(null);
     setResult(null);
     setProgress([]);
     setProgressPercent(null);
@@ -253,7 +253,7 @@ const ADHelper: React.FC = () => {
       setResult(response);
       setLoading(false);
     } catch (err: any) {
-      setError(err.error || 'An error occurred while processing the user');
+      showError(err.error || 'An error occurred while processing the user');
       setLoading(false);
     } finally {
       electronAPI.removeADHelperProgressListener();
@@ -629,12 +629,6 @@ const ADHelper: React.FC = () => {
         </Grid>
       </Grid>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
       {/* Terminal Output Section */}
       {(loading || progress.length > 0) && (
         <Paper sx={{ mb: 3, overflow: 'hidden' }}>
@@ -804,7 +798,7 @@ const ADHelper: React.FC = () => {
             </Paper>
           )}
 
-          {!loading && !result && !error && progress.length === 0 && (
+          {!loading && !result && progress.length === 0 && (
             <Paper sx={{ p: 3, textAlign: 'center' }}>
               <PersonIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">

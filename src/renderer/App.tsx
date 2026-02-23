@@ -21,6 +21,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { SnackbarProvider } from 'notistack';
 
 // Import Rehrig theme
 import { getRehrigTheme } from './theme/rehrigTheme';
@@ -126,6 +127,12 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
+      <SnackbarProvider
+        maxSnack={3}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        autoHideDuration={5000}
+        preventDuplicate
+      >
       <ADConnectionProvider>
         <CssBaseline />
         <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -225,6 +232,7 @@ function App() {
         </Box>
       </Box>
       </ADConnectionProvider>
+      </SnackbarProvider>
     </ThemeProvider>
   );
 }

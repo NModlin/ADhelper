@@ -19,8 +19,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import { electronAPI, isElectron } from '../electronAPI';
 import SiteManagement from '../components/SiteManagement';
+import { useNotification } from '../hooks/useNotification';
 
 const Settings: React.FC = () => {
+  const { showSuccess, showError, showWarning } = useNotification();
+
   // Jira Credentials
   const [jiraUrl, setJiraUrl] = useState('');
   const [jiraEmail, setJiraEmail] = useState('');
@@ -35,9 +38,6 @@ const Settings: React.FC = () => {
   const [adLoaded, setAdLoaded] = useState(false);
 
   // UI State
-  const [jiraSaved, setJiraSaved] = useState(false);
-  const [adSaved, setAdSaved] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Load credentials on mount
@@ -77,12 +77,11 @@ const Settings: React.FC = () => {
 
   const handleSaveJira = async () => {
     if (!jiraUrl || !jiraEmail || !jiraApiToken) {
-      setError('Please fill in all Jira fields');
+      showWarning('Please fill in all Jira fields');
       return;
     }
 
     setLoading(true);
-    setError('');
 
     try {
       // Store URL and email in username field (separated by |)
@@ -90,14 +89,13 @@ const Settings: React.FC = () => {
       const result = await electronAPI.saveCredential('ADHelper_Jira', username, jiraApiToken);
 
       if (result.success) {
-        setJiraSaved(true);
         setJiraLoaded(true);
-        setTimeout(() => setJiraSaved(false), 3000);
+        showSuccess('Jira credentials saved successfully!');
       } else {
-        setError(result.error || 'Failed to save Jira credentials');
+        showError(result.error || 'Failed to save Jira credentials');
       }
     } catch (err: any) {
-      setError(err.error || 'Failed to save Jira credentials');
+      showError(err.error || 'Failed to save Jira credentials');
     } finally {
       setLoading(false);
     }
@@ -105,25 +103,23 @@ const Settings: React.FC = () => {
 
   const handleSaveAD = async () => {
     if (!adUsername || !adPassword) {
-      setError('Please fill in all AD fields');
+      showWarning('Please fill in all AD fields');
       return;
     }
 
     setLoading(true);
-    setError('');
 
     try {
       const result = await electronAPI.saveCredential('ADHelper_ActiveDirectory', adUsername, adPassword);
 
       if (result.success) {
-        setAdSaved(true);
         setAdLoaded(true);
-        setTimeout(() => setAdSaved(false), 3000);
+        showSuccess('AD credentials saved successfully!');
       } else {
-        setError(result.error || 'Failed to save AD credentials');
+        showError(result.error || 'Failed to save AD credentials');
       }
     } catch (err: any) {
-      setError(err.error || 'Failed to save AD credentials');
+      showError(err.error || 'Failed to save AD credentials');
     } finally {
       setLoading(false);
     }
@@ -137,10 +133,9 @@ const Settings: React.FC = () => {
       setJiraEmail('');
       setJiraApiToken('');
       setJiraLoaded(false);
-      setJiraSaved(true);
-      setTimeout(() => setJiraSaved(false), 3000);
+      showSuccess('Jira credentials deleted');
     } catch (err) {
-      setError('Failed to delete Jira credentials');
+      showError('Failed to delete Jira credentials');
     } finally {
       setLoading(false);
     }
@@ -153,10 +148,9 @@ const Settings: React.FC = () => {
       setAdUsername('');
       setAdPassword('');
       setAdLoaded(false);
-      setAdSaved(true);
-      setTimeout(() => setAdSaved(false), 3000);
+      showSuccess('AD credentials deleted');
     } catch (err) {
-      setError('Failed to delete AD credentials');
+      showError('Failed to delete AD credentials');
     } finally {
       setLoading(false);
     }
@@ -181,24 +175,6 @@ const Settings: React.FC = () => {
       {isElectron && (
         <Alert severity="info" sx={{ mb: 3 }} icon={<LockIcon />}>
           <strong>Secure Storage:</strong> Your credentials are encrypted and stored in Windows Credential Manager.
-        </Alert>
-      )}
-
-      {jiraSaved && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          Jira credentials saved successfully!
-        </Alert>
-      )}
-
-      {adSaved && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          AD credentials saved successfully!
-        </Alert>
-      )}
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
-          {error}
         </Alert>
       )}
 

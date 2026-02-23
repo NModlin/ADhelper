@@ -7,7 +7,6 @@ import {
   Grid,
   Card,
   CardContent,
-  Alert,
   CircularProgress,
   TextField,
   FormControl,
@@ -26,6 +25,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import { electronAPI } from '../electronAPI';
+import { useNotification } from '../hooks/useNotification';
 
 interface JiraTicket {
   key: string;
@@ -37,10 +37,9 @@ interface JiraTicket {
 }
 
 const JiraUpdater: React.FC = () => {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState<JiraTicket[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [jiraUrl, setJiraUrl] = useState('');
   const [jiraEmail, setJiraEmail] = useState('');
   const [jiraToken, setJiraToken] = useState('');
@@ -50,7 +49,6 @@ const JiraUpdater: React.FC = () => {
   );
   const [transitionId, setTransitionId] = useState('');
   const [assigneeAccountId, setAssigneeAccountId] = useState('');
-  const [credentialsLoaded, setCredentialsLoaded] = useState(false);
 
   // C2 Fix: Load saved Jira credentials from Windows Credential Manager on mount
   useEffect(() => {
@@ -62,7 +60,7 @@ const JiraUpdater: React.FC = () => {
           setJiraUrl(url || '');
           setJiraEmail(email || '');
           setJiraToken(result.password || '');
-          setCredentialsLoaded(true);
+          showInfo('Credentials loaded from Settings');
         }
       } catch (err) {
         console.error('Failed to load Jira credentials:', err);
@@ -75,13 +73,11 @@ const JiraUpdater: React.FC = () => {
 
   const handleFindTickets = async () => {
     setLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       const result = await electronAPI.findStaleJiraTickets(getJiraConfig(), 48);
       if (!result.success) {
-        setError(result.error || 'Failed to fetch Jira tickets');
+        showError(result.error || 'Failed to fetch Jira tickets');
         setLoading(false);
         return;
       }
@@ -91,10 +87,10 @@ const JiraUpdater: React.FC = () => {
       setLoading(false);
 
       if (staleTickets.length === 0) {
-        setSuccess('No stale tickets found!');
+        showSuccess('No stale tickets found!');
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch Jira tickets');
+      showError(err.message || 'Failed to fetch Jira tickets');
       setLoading(false);
     }
   };
@@ -111,13 +107,11 @@ const JiraUpdater: React.FC = () => {
   const handleUpdateTickets = async () => {
     const value = getActionValue();
     if (!value) {
-      setError(`Please provide a value for the "${updateAction}" action.`);
+      showWarning(`Please provide a value for the "${updateAction}" action.`);
       return;
     }
 
     setLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       const result = await electronAPI.bulkUpdateJiraTickets(
@@ -128,22 +122,22 @@ const JiraUpdater: React.FC = () => {
       );
 
       if (!result.success) {
-        setError(result.error || 'Failed to update tickets');
+        showError(result.error || 'Failed to update tickets');
         setLoading(false);
         return;
       }
 
       const results = result.results!;
       if (results.failed > 0) {
-        setError(`Updated ${results.success} tickets, but ${results.failed} failed. Errors: ${results.errors.join(', ')}`);
+        showWarning(`Updated ${results.success} tickets, but ${results.failed} failed. Errors: ${results.errors.join(', ')}`);
       } else {
-        setSuccess(`Successfully updated ${results.success} tickets`);
+        showSuccess(`Successfully updated ${results.success} tickets`);
       }
 
       setTickets([]);
       setLoading(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to update tickets');
+      showError(err.message || 'Failed to update tickets');
       setLoading(false);
     }
   };
@@ -192,11 +186,6 @@ const JiraUpdater: React.FC = () => {
                 placeholder="Your Jira API token"
                 sx={{ mb: 2 }}
               />
-              {credentialsLoaded && (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  Credentials loaded from Settings
-                </Alert>
-              )}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Update Action</InputLabel>
                 <Select
@@ -259,18 +248,6 @@ const JiraUpdater: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 8 }}>
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
-
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
-              {success}
-            </Alert>
-          )}
-
           {tickets.length > 0 && (
             <Paper sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
