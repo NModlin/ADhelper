@@ -30,22 +30,9 @@ import {
   Select,
   FormControl,
   InputLabel,
+  useTheme,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import PersonIcon from '@mui/icons-material/Person';
-import GroupIcon from '@mui/icons-material/Group';
-import EmailIcon from '@mui/icons-material/Email';
-
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import TerminalIcon from '@mui/icons-material/Terminal';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ClearIcon from '@mui/icons-material/Clear';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import BadgeIcon from '@mui/icons-material/Badge';
-import PeopleIcon from '@mui/icons-material/People';
-import SecurityIcon from '@mui/icons-material/Security';
+import { MaterialSymbol } from '../components/MaterialSymbol';
 import { electronAPI, isElectron } from '../electronAPI';
 
 /** Extract a percentage (0–100) from a PowerShell progress line, or return null */
@@ -67,6 +54,7 @@ function parseProgressPercent(line: string): number | null {
 }
 
 const ADHelper: React.FC = () => {
+  const theme = useTheme();
   const { showError, showWarning } = useNotification();
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
@@ -439,8 +427,8 @@ const ADHelper: React.FC = () => {
   };
 
   const operations = [
-    { id: 'groups', label: 'Add to Standard Groups', icon: <GroupIcon />, color: '#0536B6' },
-    { id: 'proxies', label: 'Configure Proxy Addresses', icon: <EmailIcon />, color: '#3283FE' },
+    { id: 'groups', label: 'Add to Standard Groups', icon: <MaterialSymbol icon="group" />, color: theme.palette.primary.main },
+    { id: 'proxies', label: 'Configure Proxy Addresses', icon: <MaterialSymbol icon="mail" />, color: theme.palette.primary.light },
   ];
 
   return (
@@ -456,7 +444,7 @@ const ADHelper: React.FC = () => {
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
-            icon={<SecurityIcon />}
+            icon={<MaterialSymbol icon="security" size={18} />}
             label={userRole === 'admin' ? 'Admin' : 'Operator'}
             color={userRole === 'admin' ? 'primary' : 'default'}
             variant="outlined"
@@ -492,7 +480,7 @@ const ADHelper: React.FC = () => {
               fullWidth
               variant="contained"
               size="large"
-              startIcon={loading ? <CircularProgress size={20} /> : <SearchIcon />}
+              startIcon={loading ? <CircularProgress size={20} /> : <MaterialSymbol icon="search" />}
               onClick={handleSearch}
               disabled={loading}
             >
@@ -509,12 +497,12 @@ const ADHelper: React.FC = () => {
             fullWidth
             variant="outlined"
             size="large"
-            startIcon={<LockOpenIcon />}
+            startIcon={<MaterialSymbol icon="lock_open" />}
             sx={{
-              borderColor: '#FFC20E',
-              color: '#FFC20E',
+              borderColor: theme.palette.secondary.main,
+              color: theme.palette.secondary.main,
               '&:hover': {
-                borderColor: '#E6AD00',
+                borderColor: theme.palette.secondary.dark,
                 backgroundColor: 'rgba(255, 194, 14, 0.08)',
               },
             }}
@@ -536,13 +524,13 @@ const ADHelper: React.FC = () => {
                 variant="outlined"
                 size="large"
                 disabled={!isAdmin}
-                startIcon={<PersonAddIcon />}
+                startIcon={<MaterialSymbol icon="person_add" />}
                 sx={{
-                  borderColor: '#0536B6',
-                  color: '#0536B6',
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
                   '&:hover': {
-                    borderColor: '#003063',
-                    backgroundColor: 'rgba(5, 54, 182, 0.08)',
+                    borderColor: 'primary.dark',
+                    backgroundColor: theme.palette.action.hover,
                   },
                 }}
                 onClick={() => {
@@ -576,13 +564,13 @@ const ADHelper: React.FC = () => {
                 variant="outlined"
                 size="large"
                 disabled={!isAdmin}
-                startIcon={<BadgeIcon />}
+                startIcon={<MaterialSymbol icon="badge" />}
                 sx={{
-                  borderColor: '#0536B6',
-                  color: '#0536B6',
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
                   '&:hover': {
-                    borderColor: '#003063',
-                    backgroundColor: 'rgba(5, 54, 182, 0.08)',
+                    borderColor: 'primary.dark',
+                    backgroundColor: theme.palette.action.hover,
                   },
                 }}
                 onClick={() => {
@@ -605,13 +593,13 @@ const ADHelper: React.FC = () => {
                 variant="outlined"
                 size="large"
                 disabled={!isAdmin}
-                startIcon={<PeopleIcon />}
+                startIcon={<MaterialSymbol icon="group" />}
                 sx={{
-                  borderColor: '#0536B6',
-                  color: '#0536B6',
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
                   '&:hover': {
-                    borderColor: '#003063',
-                    backgroundColor: 'rgba(5, 54, 182, 0.08)',
+                    borderColor: 'primary.dark',
+                    backgroundColor: theme.palette.action.hover,
                   },
                 }}
                 onClick={() => {
@@ -644,7 +632,7 @@ const ADHelper: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TerminalIcon />
+              <MaterialSymbol icon="terminal" />
               <Typography variant="h6">
                 PowerShell Terminal Output
               </Typography>
@@ -668,7 +656,7 @@ const ADHelper: React.FC = () => {
                   sx={{ color: 'white', mr: 1 }}
                   disabled={loading}
                 >
-                  <ClearIcon />
+                  <MaterialSymbol icon="clear" />
                 </IconButton>
               </Tooltip>
               <Tooltip title={showTerminal ? 'Collapse terminal' : 'Expand terminal'}>
@@ -677,7 +665,7 @@ const ADHelper: React.FC = () => {
                   onClick={() => setShowTerminal(!showTerminal)}
                   sx={{ color: 'white' }}
                 >
-                  {showTerminal ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  {showTerminal ? <MaterialSymbol icon="expand_less" /> : <MaterialSymbol icon="expand_more" />}
                 </IconButton>
               </Tooltip>
             </Box>
@@ -786,7 +774,7 @@ const ADHelper: React.FC = () => {
           {result && !loading && (
             <Paper sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+                <MaterialSymbol icon="check_circle" filled color={theme.palette.success.main} sx={{ mr: 1 }} />
                 <Typography variant="h6">
                   Operation Completed Successfully
                 </Typography>
@@ -800,7 +788,7 @@ const ADHelper: React.FC = () => {
 
           {!loading && !result && progress.length === 0 && (
             <Paper sx={{ p: 3, textAlign: 'center' }}>
-              <PersonIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+              <MaterialSymbol icon="person" size={60} sx={{ color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
                 Enter a username to get started
               </Typography>
@@ -811,7 +799,7 @@ const ADHelper: React.FC = () => {
 
       {/* MFA Removal Dialog */}
       <Dialog open={mfaDialogOpen} onClose={() => !mfaLoading && setMfaDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#FFC20E', color: '#003063' }}>
+        <DialogTitle sx={{ bgcolor: 'secondary.main', color: 'primary.dark' }}>
           Remove from MFA Blocking Group
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
@@ -877,8 +865,9 @@ const ADHelper: React.FC = () => {
               <Button
                 onClick={handleMFARemoval}
                 variant="contained"
+                startIcon={mfaLoading ? <CircularProgress size={20} color="inherit" /> : undefined}
                 disabled={mfaLoading || !mfaUsername.trim()}
-                sx={{ bgcolor: '#FFC20E', color: '#003063', '&:hover': { bgcolor: '#E6AD00' } }}
+                sx={{ bgcolor: 'secondary.main', color: 'primary.dark', '&:hover': { bgcolor: 'secondary.dark' } }}
               >
                 {mfaLoading ? 'Removing...' : 'Remove from Group'}
               </Button>
@@ -894,7 +883,7 @@ const ADHelper: React.FC = () => {
 
       {/* User Creation Dialog */}
       <Dialog open={userDialogOpen} onClose={() => !userCreationLoading && setUserDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#0536B6', color: 'white' }}>
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
           Create New User Account
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
@@ -1121,10 +1110,10 @@ const ADHelper: React.FC = () => {
               </Alert>
               {userCreationResult.success && userCreationResult.result && (
                 <>
-                  <Paper sx={{ p: 2, bgcolor: '#f5f5f5', mb: 2 }}>
+                  <Paper sx={{ p: 2, bgcolor: 'action.hover', mb: 2 }}>
                     <Typography variant="body2"><strong>Username:</strong> {userCreationResult.result.Username}</Typography>
                     <Typography variant="body2"><strong>Email:</strong> {userCreationResult.result.Email}</Typography>
-                    <Typography variant="body2" sx={{ color: '#d32f2f', mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'error.main', mt: 1 }}>
                       <strong>Temporary Password:</strong> {userCreationResult.result.Password}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
@@ -1171,8 +1160,9 @@ const ADHelper: React.FC = () => {
               <Button
                 onClick={handleUserCreation}
                 variant="contained"
+                startIcon={userCreationLoading ? <CircularProgress size={20} color="inherit" /> : undefined}
                 disabled={userCreationLoading || !newUserInfo.firstName || !newUserInfo.lastName || !newUserInfo.username || !newUserInfo.email}
-                sx={{ bgcolor: '#0536B6', '&:hover': { bgcolor: '#003063' } }}
+                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
               >
                 {userCreationLoading ? 'Creating...' : 'Create User'}
               </Button>
@@ -1188,7 +1178,7 @@ const ADHelper: React.FC = () => {
 
       {/* Contractor Account Extension Dialog */}
       <Dialog open={contractorDialogOpen} onClose={() => !contractorLoading && setContractorDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#0536B6', color: 'white' }}>
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
           Process Contractor Accounts
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
@@ -1235,7 +1225,7 @@ const ADHelper: React.FC = () => {
                   : contractorResult.error || 'Some errors occurred during processing.'}
               </Alert>
               {contractorResult.result?.Stats && (
-                <Paper sx={{ p: 2, bgcolor: '#f5f5f5', mb: 2 }}>
+                <Paper sx={{ p: 2, bgcolor: 'action.hover', mb: 2 }}>
                   <Typography variant="subtitle2" gutterBottom><strong>Processing Summary</strong></Typography>
                   <Typography variant="body2">Users found &amp; processed: <strong>{contractorResult.result.Stats.UsersFound}</strong></Typography>
                   <Typography variant="body2">Users skipped: <strong>{contractorResult.result.Stats.UsersSkipped}</strong></Typography>
@@ -1244,7 +1234,7 @@ const ADHelper: React.FC = () => {
                   <Typography variant="body2">Display names already correct: <strong>{contractorResult.result.Stats.DisplayNamesAlreadyCorrect}</strong></Typography>
                   <Typography variant="body2">Expirations extended: <strong>{contractorResult.result.Stats.ExpirationsExtended}</strong></Typography>
                   {contractorResult.result.Stats.Errors > 0 && (
-                    <Typography variant="body2" sx={{ color: '#d32f2f', mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'error.main', mt: 1 }}>
                       Errors: <strong>{contractorResult.result.Stats.Errors}</strong>
                     </Typography>
                   )}
@@ -1274,8 +1264,9 @@ const ADHelper: React.FC = () => {
               <Button
                 onClick={handleContractorProcessing}
                 variant="contained"
+                startIcon={contractorLoading ? <CircularProgress size={20} color="inherit" /> : undefined}
                 disabled={contractorLoading || !contractorUsernames.trim()}
-                sx={{ bgcolor: '#0536B6', '&:hover': { bgcolor: '#003063' } }}
+                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
               >
                 {contractorLoading ? 'Processing...' : 'Process Contractors'}
               </Button>
@@ -1291,7 +1282,7 @@ const ADHelper: React.FC = () => {
 
       {/* Bulk User Processing Dialog */}
       <Dialog open={bulkDialogOpen} onClose={() => !bulkLoading && setBulkDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#0536B6', color: 'white' }}>
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
           Bulk User Processing
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
@@ -1362,7 +1353,7 @@ const ADHelper: React.FC = () => {
                   : bulkResult.error || 'Bulk processing completed with errors.'}
               </Alert>
               {bulkResult.Stats && (
-                <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1 }}>
+                <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1 }}>
                   <Typography variant="subtitle2" gutterBottom>Summary</Typography>
                   <Grid container spacing={1}>
                     <Grid size={{ xs: 6 }}><Typography variant="body2">Users Processed:</Typography></Grid>
@@ -1402,8 +1393,9 @@ const ADHelper: React.FC = () => {
               <Button
                 onClick={handleBulkProcessing}
                 variant="contained"
+                startIcon={bulkLoading ? <CircularProgress size={20} color="inherit" /> : undefined}
                 disabled={bulkLoading || !bulkUsernames.trim()}
-                sx={{ bgcolor: '#0536B6', '&:hover': { bgcolor: '#003063' } }}
+                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
               >
                 {bulkLoading ? 'Processing...' : 'Process Users'}
               </Button>
@@ -1419,9 +1411,9 @@ const ADHelper: React.FC = () => {
 
       {/* Role Management Dialog (Admin only) */}
       <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#0536B6', color: 'white' }}>
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SecurityIcon />
+            <MaterialSymbol icon="security" />
             Role Management
           </Box>
         </DialogTitle>

@@ -21,9 +21,7 @@ import {
   TableRow,
   Chip,
 } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import AssignmentIcon from '@mui/icons-material/Assignment';
+import { MaterialSymbol } from '../components/MaterialSymbol';
 import { electronAPI } from '../electronAPI';
 import { useNotification } from '../hooks/useNotification';
 
@@ -237,7 +235,7 @@ const JiraUpdater: React.FC = () => {
               <Button
                 fullWidth
                 variant="contained"
-                startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+                startIcon={loading ? <CircularProgress size={20} /> : <MaterialSymbol icon="refresh" />}
                 onClick={handleFindTickets}
                 disabled={loading || !jiraUrl || !jiraEmail || !jiraToken}
               >
@@ -257,11 +255,11 @@ const JiraUpdater: React.FC = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  startIcon={<PlayArrowIcon />}
+                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <MaterialSymbol icon="play_arrow" />}
                   onClick={handleUpdateTickets}
                   disabled={loading}
                 >
-                  Update All
+                  {loading ? 'Updating...' : 'Update All'}
                 </Button>
               </Box>
               <TableContainer>
@@ -295,7 +293,7 @@ const JiraUpdater: React.FC = () => {
 
           {tickets.length === 0 && !loading && (
             <Paper sx={{ p: 3, textAlign: 'center' }}>
-              <AssignmentIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+              <MaterialSymbol icon="assignment" size={60} sx={{ color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
                 Configure Jira settings and click "Find Stale Tickets" to get started
               </Typography>

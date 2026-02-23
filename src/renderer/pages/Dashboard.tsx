@@ -10,17 +10,14 @@ import {
   Box,
   Avatar,
 } from '@mui/material';
-import PeopleIcon from '@mui/icons-material/People';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import { MaterialSymbol } from '../components/MaterialSymbol';
 
 const Dashboard: React.FC = () => {
   const stats = [
-    { title: 'Users Processed Today', value: '0', icon: <PeopleIcon fontSize="large" />, color: '#0536B6' },  // Rehrig Blue Primary
-    { title: 'Jira Tickets Updated', value: '0', icon: <AssignmentIcon fontSize="large" />, color: '#FFC20E' },  // Rehrig Yellow
-    { title: 'Success Rate', value: '100%', icon: <CheckCircleIcon fontSize="large" />, color: '#27AE60' },  // Success Green
-    { title: 'Active Sessions', value: '1', icon: <TrendingUpIcon fontSize="large" />, color: '#3283FE' },  // Rehrig Light Blue
+    { title: 'Users Processed Today', value: '0', icon: <MaterialSymbol icon="group" filled size={32} />, color: '#0536B6' },  // Rehrig Blue Primary
+    { title: 'Jira Tickets Updated', value: '0', icon: <MaterialSymbol icon="assignment" filled size={32} />, color: '#FFC20E' },  // Rehrig Yellow
+    { title: 'Success Rate', value: '100%', icon: <MaterialSymbol icon="check_circle" filled size={32} />, color: '#27AE60' },  // Success Green
+    { title: 'Active Sessions', value: '1', icon: <MaterialSymbol icon="trending_up" filled size={32} />, color: '#3283FE' },  // Rehrig Light Blue
   ];
 
   return (

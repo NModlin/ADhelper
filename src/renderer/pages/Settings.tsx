@@ -11,12 +11,9 @@ import {
   IconButton,
   InputAdornment,
   Chip,
+  CircularProgress,
 } from '@mui/material';
-import SaveIcon from '@mui/icons-material/Save';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import DeleteIcon from '@mui/icons-material/Delete';
-import LockIcon from '@mui/icons-material/Lock';
+import { MaterialSymbol } from '../components/MaterialSymbol';
 import { electronAPI, isElectron } from '../electronAPI';
 import SiteManagement from '../components/SiteManagement';
 import { useNotification } from '../hooks/useNotification';
@@ -173,7 +170,7 @@ const Settings: React.FC = () => {
       )}
 
       {isElectron && (
-        <Alert severity="info" sx={{ mb: 3 }} icon={<LockIcon />}>
+        <Alert severity="info" sx={{ mb: 3 }} icon={<MaterialSymbol icon="lock" />}>
           <strong>Secure Storage:</strong> Your credentials are encrypted and stored in Windows Credential Manager.
         </Alert>
       )}
@@ -229,7 +226,7 @@ const Settings: React.FC = () => {
                       onClick={() => setShowJiraToken(!showJiraToken)}
                       edge="end"
                     >
-                      {showJiraToken ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      {showJiraToken ? <MaterialSymbol icon="visibility_off" /> : <MaterialSymbol icon="visibility" />}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -243,21 +240,21 @@ const Settings: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 variant="contained"
-                startIcon={<SaveIcon />}
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <MaterialSymbol icon="save" />}
                 onClick={handleSaveJira}
                 disabled={loading}
               >
-                Save Jira Credentials
+                {loading ? 'Saving...' : 'Save Jira Credentials'}
               </Button>
               {jiraLoaded && (
                 <Button
                   variant="outlined"
                   color="error"
-                  startIcon={<DeleteIcon />}
+                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <MaterialSymbol icon="delete" />}
                   onClick={handleDeleteJira}
                   disabled={loading}
                 >
-                  Delete
+                  {loading ? 'Deleting...' : 'Delete'}
                 </Button>
               )}
             </Box>
@@ -303,7 +300,7 @@ const Settings: React.FC = () => {
                       onClick={() => setShowAdPassword(!showAdPassword)}
                       edge="end"
                     >
-                      {showAdPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      {showAdPassword ? <MaterialSymbol icon="visibility_off" /> : <MaterialSymbol icon="visibility" />}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -317,21 +314,21 @@ const Settings: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 variant="contained"
-                startIcon={<SaveIcon />}
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <MaterialSymbol icon="save" />}
                 onClick={handleSaveAD}
                 disabled={loading}
               >
-                Save AD Credentials
+                {loading ? 'Saving...' : 'Save AD Credentials'}
               </Button>
               {adLoaded && (
                 <Button
                   variant="outlined"
                   color="error"
-                  startIcon={<DeleteIcon />}
+                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <MaterialSymbol icon="delete" />}
                   onClick={handleDeleteAD}
                   disabled={loading}
                 >
-                  Delete
+                  {loading ? 'Deleting...' : 'Delete'}
                 </Button>
               )}
             </Box>

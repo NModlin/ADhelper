@@ -7,11 +7,9 @@ import {
   Snackbar,
   Alert,
   IconButton,
+  useTheme,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import CloudOffIcon from '@mui/icons-material/CloudOff';
+import { MaterialSymbol } from './MaterialSymbol';
 import { useADConnection } from '../context/ADConnectionContext';
 
 interface ADConnectionStatusProps {
@@ -23,6 +21,7 @@ const ADConnectionStatus: React.FC<ADConnectionStatusProps> = ({
   variant = 'chip',
   showRefresh = true 
 }) => {
+  const theme = useTheme();
   const { status, checkConnection, lastCheck } = useADConnection();
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
@@ -80,11 +79,11 @@ const ADConnectionStatus: React.FC<ADConnectionStatusProps> = ({
         <Tooltip title={getTooltipContent()} arrow>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {status.checking ? (
-              <CircularProgress size={16} sx={{ color: '#FFC20E' }} />
+              <CircularProgress size={16} sx={{ color: theme.palette.secondary.main }} />
             ) : status.connected ? (
-              <CheckCircleIcon sx={{ color: '#4caf50', fontSize: 20 }} />
+              <MaterialSymbol icon="check_circle" filled size={20} color={theme.palette.success.light} />
             ) : (
-              <ErrorIcon sx={{ color: '#f44336', fontSize: 20 }} />
+              <MaterialSymbol icon="error" filled size={20} color={theme.palette.error.light} />
             )}
           </Box>
         </Tooltip>
@@ -95,10 +94,10 @@ const ADConnectionStatus: React.FC<ADConnectionStatusProps> = ({
             disabled={status.checking}
             sx={{ p: 0.5 }}
           >
-            <RefreshIcon fontSize="small" />
+            <MaterialSymbol icon="refresh" size={20} />
           </IconButton>
         )}
-        
+
         <Snackbar
           open={showNotification}
           autoHideDuration={4000}
@@ -126,9 +125,9 @@ const ADConnectionStatus: React.FC<ADConnectionStatusProps> = ({
             status.checking ? (
               <CircularProgress size={16} sx={{ color: 'white !important' }} />
             ) : status.connected ? (
-              <CheckCircleIcon />
+              <MaterialSymbol icon="check_circle" filled size={18} />
             ) : (
-              <CloudOffIcon />
+              <MaterialSymbol icon="cloud_off" filled size={18} />
             )
           }
           label={
@@ -142,7 +141,7 @@ const ADConnectionStatus: React.FC<ADConnectionStatusProps> = ({
           size="small"
           sx={{
             fontWeight: 500,
-            bgcolor: status.connected ? '#4caf50' : '#f44336',
+            bgcolor: status.connected ? theme.palette.success.light : theme.palette.error.light,
             color: 'white',
             '& .MuiChip-icon': {
               color: 'white !important',
@@ -157,11 +156,11 @@ const ADConnectionStatus: React.FC<ADConnectionStatusProps> = ({
           onClick={handleRefresh}
           disabled={status.checking}
           sx={{ 
-            color: '#0536B6',
-            '&:hover': { bgcolor: 'rgba(5, 54, 182, 0.1)' }
+            color: theme.palette.primary.main,
+            '&:hover': { bgcolor: theme.palette.action.hover }
           }}
         >
-          <RefreshIcon fontSize="small" />
+          <MaterialSymbol icon="refresh" size={20} />
         </IconButton>
       )}
 

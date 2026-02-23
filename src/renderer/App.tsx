@@ -14,14 +14,8 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Avatar from '@mui/material/Avatar';
-import MenuIcon from '@mui/icons-material/Menu';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import SettingsIcon from '@mui/icons-material/Settings';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { SnackbarProvider } from 'notistack';
+import { MaterialSymbol } from './components/MaterialSymbol';
 
 // Import Rehrig theme
 import { getRehrigTheme } from './theme/rehrigTheme';
@@ -53,10 +47,10 @@ function App() {
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-    { id: 'adhelper', label: 'AD Helper', icon: <PeopleIcon /> },
-    { id: 'jira', label: 'Jira Updater', icon: <AssignmentIcon /> },
-    { id: 'settings', label: 'Settings', icon: <SettingsIcon /> },
+    { id: 'dashboard', label: 'Dashboard', symbolIcon: 'dashboard' },
+    { id: 'adhelper', label: 'AD Helper', symbolIcon: 'group' },
+    { id: 'jira', label: 'Jira Updater', symbolIcon: 'assignment' },
+    { id: 'settings', label: 'Settings', symbolIcon: 'settings' },
   ];
 
   const drawer = (
@@ -101,7 +95,9 @@ function App() {
               selected={currentPage === item.id}
               onClick={() => setCurrentPage(item.id)}
             >
-              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemIcon>
+                    <MaterialSymbol icon={item.symbolIcon} filled={currentPage === item.id} size={24} />
+                  </ListItemIcon>
               <ListItemText primary={item.label} />
             </ListItemButton>
           </ListItem>
@@ -151,7 +147,7 @@ function App() {
                 onClick={handleDrawerToggle}
                 sx={{ mr: 2, display: { sm: 'none' } }}
               >
-                <MenuIcon />
+                <MaterialSymbol icon="menu" />
               </IconButton>
               <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
                 {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
@@ -163,7 +159,7 @@ function App() {
               </Box>
 
               <IconButton onClick={() => setDarkMode(!darkMode)} color="inherit">
-                {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+                {darkMode ? <MaterialSymbol icon="light_mode" /> : <MaterialSymbol icon="dark_mode" />}
               </IconButton>
             </Toolbar>
           </AppBar>
