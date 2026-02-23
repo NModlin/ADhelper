@@ -12,6 +12,6 @@
     "moduleResolution": "node"
   },
   "include": ["src/main/**/*", "src/preload/**/*"],
-  "exclude": ["node_modules", "dist", "src/renderer"]
+  "exclude": ["node_modules", "dist", "src/renderer", "src/**/*.test.*"]
 }
 
