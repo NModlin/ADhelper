@@ -11,7 +11,6 @@ vi.mock('electron', () => ({
 }));
 
 let roleManager: typeof import('./roleManager').default;
-let UserRole: typeof import('./roleManager').UserRole;
 
 const configPath = path.join(os.tmpdir(), 'rbac-config.json');
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
@@ -293,12 +292,7 @@ describe('Settings Page', () => {
       const tokenField = screen.getByLabelText(/jira api token/i);
       expect(tokenField).toHaveAttribute('type', 'password');
 
-      // Click the visibility toggle (first one in Jira section)
-      const toggleButtons = screen.getAllByRole('button').filter(
-        btn => btn.querySelector('[data-testid="VisibilityIcon"]') || btn.querySelector('[data-testid="VisibilityOffIcon"]')
-      );
-      // The toggle buttons include SVG icons - use a broader approach
-      // Find buttons inside InputAdornment wrappers
+      // Find the visibility toggle button inside the Jira token input
       const jiraTokenInput = tokenField.closest('.MuiTextField-root');
       const toggleBtn = jiraTokenInput?.querySelector('button');
       if (toggleBtn) {

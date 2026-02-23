@@ -67,7 +67,7 @@ function parseProgressPercent(line: string): number | null {
 }
 
 const ADHelper: React.FC = () => {
-  const { showSuccess, showError, showWarning } = useNotification();
+  const { showError, showWarning } = useNotification();
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
