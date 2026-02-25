@@ -80,6 +80,14 @@ const renderSettings = () =>
     </ThemeProvider>,
   );
 
+/** Render and wait for credential loading skeleton to clear */
+const renderSettingsAndWait = async () => {
+  renderSettings();
+  await waitFor(() => {
+    expect(screen.getByText('Secure Credentials')).toBeInTheDocument();
+  });
+};
+
 describe('Settings Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -91,26 +99,26 @@ describe('Settings Page', () => {
 
   // ── Rendering ──────────────────────────────────────────────────────
   describe('Rendering', () => {
-    it('renders the page title and description', () => {
-      renderSettings();
+    it('renders the page title and description', async () => {
+      await renderSettingsAndWait();
       expect(screen.getByText('Secure Credentials')).toBeInTheDocument();
       expect(screen.getByText(/Manage your credentials securely/)).toBeInTheDocument();
     });
 
-    it('renders Jira and AD credential sections', () => {
-      renderSettings();
+    it('renders Jira and AD credential sections', async () => {
+      await renderSettingsAndWait();
       expect(screen.getByText('Jira API Credentials')).toBeInTheDocument();
       expect(screen.getByText('Active Directory Credentials')).toBeInTheDocument();
     });
 
-    it('renders About section with version', () => {
-      renderSettings();
+    it('renders About section with version', async () => {
+      await renderSettingsAndWait();
       expect(screen.getByText('About')).toBeInTheDocument();
       expect(screen.getByText(/1\.0\.0/)).toBeInTheDocument();
     });
 
-    it('shows Secure Storage alert when in Electron mode', () => {
-      renderSettings();
+    it('shows Secure Storage alert when in Electron mode', async () => {
+      await renderSettingsAndWait();
       expect(screen.getByText(/Secure Storage/)).toBeInTheDocument();
     });
 
@@ -118,7 +126,7 @@ describe('Settings Page', () => {
       mocks.isElectron = false;
       vi.resetModules();
       // Re-import with updated isElectron - but since vi.mock is hoisted, the getter reads mocks.isElectron
-      renderSettings();
+      await renderSettingsAndWait();
       expect(screen.getByText(/Browser Mode/)).toBeInTheDocument();
     });
   });
@@ -170,7 +178,7 @@ describe('Settings Page', () => {
   // ── Jira Credential Save ──────────────────────────────────────────
   describe('Jira Credential Save', () => {
     it('shows warning when saving with empty fields', async () => {
-      renderSettings();
+      await renderSettingsAndWait();
       fireEvent.click(screen.getByRole('button', { name: /save jira credentials/i }));
 
       expect(mocks.showWarning).toHaveBeenCalledWith('Please fill in all Jira fields');
@@ -178,7 +186,7 @@ describe('Settings Page', () => {
 
     it('saves Jira credentials successfully', async () => {
       mocks.saveCredential.mockResolvedValue({ success: true });
-      renderSettings();
+      await renderSettingsAndWait();
 
       fireEvent.change(screen.getByLabelText(/jira url/i), { target: { value: 'https://test.atlassian.net' } });
       fireEvent.change(screen.getByLabelText(/jira email/i), { target: { value: 'user@test.com' } });
@@ -197,7 +205,7 @@ describe('Settings Page', () => {
 
     it('shows error when Jira save fails', async () => {
       mocks.saveCredential.mockResolvedValue({ success: false, error: 'Access denied' });
-      renderSettings();
+      await renderSettingsAndWait();
 
       fireEvent.change(screen.getByLabelText(/jira url/i), { target: { value: 'https://x.com' } });
       fireEvent.change(screen.getByLabelText(/jira email/i), { target: { value: 'u@x.com' } });
@@ -213,7 +221,7 @@ describe('Settings Page', () => {
   // ── AD Credential Save ────────────────────────────────────────────
   describe('AD Credential Save', () => {
     it('shows warning when saving with empty fields', async () => {
-      renderSettings();
+      await renderSettingsAndWait();
       fireEvent.click(screen.getByRole('button', { name: /save ad credentials/i }));
 
       expect(mocks.showWarning).toHaveBeenCalledWith('Please fill in all AD fields');
@@ -221,7 +229,7 @@ describe('Settings Page', () => {
 
     it('saves AD credentials successfully', async () => {
       mocks.saveCredential.mockResolvedValue({ success: true });
-      renderSettings();
+      await renderSettingsAndWait();
 
       fireEvent.change(screen.getByLabelText(/ad username/i), { target: { value: 'admin' } });
       fireEvent.change(screen.getByLabelText(/ad password/i), { target: { value: TEST_AD_PASSWORD } });
@@ -287,8 +295,8 @@ describe('Settings Page', () => {
 
   // ── Password Visibility Toggle ────────────────────────────────────
   describe('Password Visibility Toggle', () => {
-    it('toggles Jira API token visibility', () => {
-      renderSettings();
+    it('toggles Jira API token visibility', async () => {
+      await renderSettingsAndWait();
       const tokenField = screen.getByLabelText(/jira api token/i);
       expect(tokenField).toHaveAttribute('type', 'password');
 
@@ -304,8 +312,8 @@ describe('Settings Page', () => {
 
   // ── Site Management Section ────────────────────────────────────────
   describe('Site Management Section', () => {
-    it('renders Site Location Management section', () => {
-      renderSettings();
+    it('renders Site Location Management section', async () => {
+      await renderSettingsAndWait();
       expect(screen.getByText('Site Location Management')).toBeInTheDocument();
     });
   });

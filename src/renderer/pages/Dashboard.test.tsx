@@ -1,14 +1,17 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { getRehrigTheme } from '../theme/rehrigTheme';
 import Dashboard from './Dashboard';
 
 // Helper to render Dashboard inside ThemeProvider
-const renderDashboard = (mode: 'light' | 'dark' = 'light') => {
+const renderDashboard = (
+  mode: 'light' | 'dark' = 'light',
+  onNavigate?: (pageId: string) => void,
+) => {
   return render(
     <ThemeProvider theme={getRehrigTheme(mode)}>
-      <Dashboard />
+      <Dashboard onNavigate={onNavigate} />
     </ThemeProvider>,
   );
 };
@@ -17,22 +20,29 @@ describe('Dashboard', () => {
   describe('Rendering', () => {
     it('renders without errors', () => {
       renderDashboard();
-      expect(screen.getByText('Welcome to ADHelper')).toBeInTheDocument();
+      // Hero section shows a time-based greeting
+      expect(
+        screen.getByText(/Good (morning|afternoon|evening)/),
+      ).toBeInTheDocument();
     });
 
     it('renders in dark mode without errors', () => {
       renderDashboard('dark');
-      expect(screen.getByText('Welcome to ADHelper')).toBeInTheDocument();
+      expect(
+        screen.getByText(/Good (morning|afternoon|evening)/),
+      ).toBeInTheDocument();
     });
 
     it('displays the Rehrig Pacific subtitle', () => {
       renderDashboard();
-      expect(screen.getByText('Rehrig Pacific IT Administration Portal')).toBeInTheDocument();
+      expect(
+        screen.getByText(/Rehrig Pacific IT Administration Portal/),
+      ).toBeInTheDocument();
     });
 
-    it('displays the ADH avatar text', () => {
+    it('displays the Rehrig Pacific avatar image', () => {
       renderDashboard();
-      expect(screen.getByText('ADH')).toBeInTheDocument();
+      expect(screen.getByAltText('Rehrig Pacific')).toBeInTheDocument();
     });
   });
 
@@ -40,9 +50,8 @@ describe('Dashboard', () => {
     it('displays Users Processed Today card with value 0', () => {
       renderDashboard();
       expect(screen.getByText('Users Processed Today')).toBeInTheDocument();
-      // The value '0' appears in multiple cards, so check it exists
       const zeros = screen.getAllByText('0');
-      expect(zeros.length).toBeGreaterThanOrEqual(2); // At least Users Processed + Jira Tickets
+      expect(zeros.length).toBeGreaterThanOrEqual(2);
     });
 
     it('displays Jira Tickets Updated card', () => {
@@ -76,43 +85,39 @@ describe('Dashboard', () => {
     });
   });
 
-  describe('Quick Action Cards', () => {
-    it('displays AD Helper quick action card', () => {
+  describe('Quick Actions Panel', () => {
+    it('displays AD Helper quick action', () => {
       renderDashboard();
       expect(screen.getByText('AD Helper')).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          'Manage Active Directory users, assign groups, configure licenses, and set up proxy addresses.',
-        ),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Manage users, groups & licenses')).toBeInTheDocument();
     });
 
-    it('displays Jira 48h Updater quick action card', () => {
+    it('displays Jira Updater quick action', () => {
       renderDashboard();
-      expect(screen.getByText('Jira 48h Updater')).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Automatically update Jira tickets that haven't been touched in 48 hours.",
-        ),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Jira Updater')).toBeInTheDocument();
+      expect(screen.getByText('Update stale Jira tickets')).toBeInTheDocument();
     });
 
-    it('renders Open AD Helper button', () => {
+    it('displays Settings quick action', () => {
       renderDashboard();
-      expect(screen.getByRole('button', { name: /open ad helper/i })).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+      expect(screen.getByText('Credentials & configuration')).toBeInTheDocument();
     });
 
-    it('renders Open Jira Updater button', () => {
+    it('renders quick action buttons that are clickable', () => {
       renderDashboard();
-      expect(screen.getByRole('button', { name: /open jira updater/i })).toBeInTheDocument();
+      const adAction = screen.getByText('AD Helper').closest('[role="button"]');
+      const jiraAction = screen.getByText('Jira Updater').closest('[role="button"]');
+      expect(adAction).toBeInTheDocument();
+      expect(jiraAction).toBeInTheDocument();
     });
 
-    it('buttons are present and enabled', () => {
-      renderDashboard();
-      const adButton = screen.getByRole('button', { name: /open ad helper/i });
-      const jiraButton = screen.getByRole('button', { name: /open jira updater/i });
-      expect(adButton).not.toBeDisabled();
-      expect(jiraButton).not.toBeDisabled();
+    it('calls onNavigate when quick action is clicked', () => {
+      const onNavigate = vi.fn();
+      renderDashboard('light', onNavigate);
+      const adAction = screen.getByText('AD Helper').closest('[role="button"]');
+      if (adAction) fireEvent.click(adAction);
+      expect(onNavigate).toHaveBeenCalledWith('adhelper');
     });
   });
 
@@ -124,24 +129,22 @@ describe('Dashboard', () => {
 
     it('shows empty state message when no activity', () => {
       renderDashboard();
-      expect(screen.getByText('No recent activity to display.')).toBeInTheDocument();
+      expect(screen.getByText('No recent activity')).toBeInTheDocument();
     });
   });
 
   describe('Layout and Structure', () => {
     it('renders hero section with gradient background', () => {
       const { container } = renderDashboard();
-      // The hero section Paper is the first Paper element
       const papers = container.querySelectorAll('.MuiPaper-root');
       expect(papers.length).toBeGreaterThan(0);
     });
 
-    it('renders correct number of stat cards (4) plus action cards and activity section', () => {
+    it('renders stat cards, activity timeline, and quick actions panels', () => {
       const { container } = renderDashboard();
-      // 4 stat card Papers + 2 Card components (quick actions) + 1 recent activity Paper + hero Paper
+      // hero Paper + 4 stat Card + activity Paper + quick actions Paper = 7
       const papers = container.querySelectorAll('.MuiPaper-root');
-      expect(papers.length).toBeGreaterThanOrEqual(6);
+      expect(papers.length).toBeGreaterThanOrEqual(7);
     });
   });
 });
-

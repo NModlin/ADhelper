@@ -88,6 +88,14 @@ const renderJira = () =>
     </ThemeProvider>,
   );
 
+/** Render and wait for credential loading skeleton to clear */
+const renderJiraAndWait = async () => {
+  renderJira();
+  await waitFor(() => {
+    expect(screen.getByText('Jira 48h Updater')).toBeInTheDocument();
+  });
+};
+
 // ── Tests ──────────────────────────────────────────────────────────────
 describe('JiraUpdater – Jira Workflow Integration', () => {
   beforeEach(() => {
@@ -116,8 +124,8 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
       });
     });
 
-    it('disables Find Stale Tickets button when credentials are empty', () => {
-      renderJira();
+    it('disables Find Stale Tickets button when credentials are empty', async () => {
+      await renderJiraAndWait();
       const btn = screen.getByRole('button', { name: /find stale tickets/i });
       expect(btn).toBeDisabled();
     });
@@ -216,8 +224,8 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
       });
     });
 
-    it('shows empty state prompt before any search', () => {
-      renderJira();
+    it('shows empty state prompt before any search', async () => {
+      await renderJiraAndWait();
       expect(
         screen.getByText('Configure Jira settings and click "Find Stale Tickets" to get started'),
       ).toBeInTheDocument();
@@ -296,8 +304,9 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
     it('shows warning toast when update action value is empty for status action', async () => {
       await findAndShowTickets();
 
-      // Switch to "status" action via the MUI Select combobox
-      const select = screen.getByRole('combobox', { hidden: true });
+      // Switch to "status" action via the MUI Select combobox (first one is Update Action)
+      const selects = screen.getAllByRole('combobox', { hidden: true });
+      const select = selects[0];
       fireEvent.mouseDown(select);
       const statusOption = await screen.findByRole('option', { name: /change status/i });
       fireEvent.click(statusOption);

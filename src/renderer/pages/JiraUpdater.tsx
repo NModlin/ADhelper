@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -13,15 +13,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
 } from '@mui/material';
 import { MaterialSymbol } from '../components/MaterialSymbol';
+import { DataTable, DataColumn } from '../components/DataTable';
+import { PageSkeleton } from '../components/ContentSkeleton';
 import { electronAPI } from '../electronAPI';
 import { useNotification } from '../hooks/useNotification';
 
@@ -36,6 +32,7 @@ interface JiraTicket {
 
 const JiraUpdater: React.FC = () => {
   const { showSuccess, showError, showWarning, showInfo } = useNotification();
+  const [credentialsLoading, setCredentialsLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState<JiraTicket[]>([]);
   const [jiraUrl, setJiraUrl] = useState('');
@@ -47,6 +44,24 @@ const JiraUpdater: React.FC = () => {
   );
   const [transitionId, setTransitionId] = useState('');
   const [assigneeAccountId, setAssigneeAccountId] = useState('');
+
+  // ── Column definitions for the DataTable ──────────────────────────
+  const ticketColumns = useMemo<DataColumn<JiraTicket>[]>(
+    () => [
+      { id: 'key', label: 'Key', width: 120, sortable: true },
+      { id: 'summary', label: 'Summary', sortable: true },
+      {
+        id: 'status',
+        label: 'Status',
+        width: 140,
+        sortable: true,
+        format: (v) => <Chip label={String(v)} size="small" />,
+      },
+      { id: 'lastUpdated', label: 'Last Updated', width: 140, sortable: true },
+      { id: 'assignee', label: 'Assignee', width: 140, sortable: true },
+    ],
+    [],
+  );
 
   // C2 Fix: Load saved Jira credentials from Windows Credential Manager on mount
   useEffect(() => {
@@ -62,6 +77,8 @@ const JiraUpdater: React.FC = () => {
         }
       } catch (err) {
         console.error('Failed to load Jira credentials:', err);
+      } finally {
+        setCredentialsLoading(false);
       }
     };
     loadCredentials();
@@ -139,6 +156,10 @@ const JiraUpdater: React.FC = () => {
       setLoading(false);
     }
   };
+
+  if (credentialsLoading) {
+    return <PageSkeleton />;
+  }
 
   return (
     <Box>
@@ -262,32 +283,14 @@ const JiraUpdater: React.FC = () => {
                   {loading ? 'Updating...' : 'Update All'}
                 </Button>
               </Box>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Key</TableCell>
-                      <TableCell>Summary</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Last Updated</TableCell>
-                      <TableCell>Assignee</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {tickets.map((ticket) => (
-                      <TableRow key={ticket.key}>
-                        <TableCell>{ticket.key}</TableCell>
-                        <TableCell>{ticket.summary}</TableCell>
-                        <TableCell>
-                          <Chip label={ticket.status} size="small" />
-                        </TableCell>
-                        <TableCell>{ticket.lastUpdated}</TableCell>
-                        <TableCell>{ticket.assignee}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <DataTable<JiraTicket>
+                columns={ticketColumns}
+                data={tickets}
+                getRowId={(t) => t.key}
+                searchable
+                defaultRowsPerPage={10}
+                emptyMessage="No stale tickets found"
+              />
             </Paper>
           )}
 

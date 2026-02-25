@@ -12,11 +12,13 @@ import {
   InputAdornment,
   Chip,
   CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { MaterialSymbol } from '../components/MaterialSymbol';
 import { electronAPI, isElectron } from '../electronAPI';
 import SiteManagement from '../components/SiteManagement';
 import { useNotification } from '../hooks/useNotification';
+import { FormSkeleton } from '../components/ContentSkeleton';
 
 const Settings: React.FC = () => {
   const { showSuccess, showError, showWarning } = useNotification();
@@ -36,11 +38,12 @@ const Settings: React.FC = () => {
 
   // UI State
   const [loading, setLoading] = useState(false);
+  const [credentialsLoading, setCredentialsLoading] = useState(true);
 
   // Load credentials on mount
   useEffect(() => {
-    loadJiraCredentials();
-    loadADCredentials();
+    Promise.all([loadJiraCredentials(), loadADCredentials()])
+      .finally(() => setCredentialsLoading(false));
   }, []);
 
   const loadJiraCredentials = async () => {
@@ -152,6 +155,16 @@ const Settings: React.FC = () => {
       setLoading(false);
     }
   };
+
+  if (credentialsLoading) {
+    return (
+      <Box>
+        <Skeleton variant="text" width={280} height={40} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width={450} height={24} sx={{ mb: 3 }} />
+        <FormSkeleton sections={3} />
+      </Box>
+    );
+  }
 
   return (
     <Box>

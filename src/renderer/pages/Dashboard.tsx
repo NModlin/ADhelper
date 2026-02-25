@@ -1,33 +1,84 @@
-import React from 'react';
+import { useMemo } from 'react';
 import {
   Grid,
   Paper,
   Typography,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
   Box,
   Avatar,
 } from '@mui/material';
 import { MaterialSymbol } from '../components/MaterialSymbol';
+import { StatCard } from '../components/StatCard';
+import { ActivityTimeline, ActivityItem } from '../components/ActivityTimeline';
+import { QuickActions, QuickAction } from '../components/QuickActions';
 
-const Dashboard: React.FC = () => {
-  const stats = [
-    { title: 'Users Processed Today', value: '0', icon: <MaterialSymbol icon="group" filled size={32} />, color: '#0536B6' },  // Rehrig Blue Primary
-    { title: 'Jira Tickets Updated', value: '0', icon: <MaterialSymbol icon="assignment" filled size={32} />, color: '#FFC20E' },  // Rehrig Yellow
-    { title: 'Success Rate', value: '100%', icon: <MaterialSymbol icon="check_circle" filled size={32} />, color: '#27AE60' },  // Success Green
-    { title: 'Active Sessions', value: '1', icon: <MaterialSymbol icon="trending_up" filled size={32} />, color: '#3283FE' },  // Rehrig Light Blue
-  ];
+/** Props so the parent can wire navigation from quick actions */
+export interface DashboardProps {
+  onNavigate?: (pageId: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+
+  // ── Greeting helper ─────────────────────────────────────────────────
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
+  }, []);
+
+  const dateStr = useMemo(
+    () =>
+      new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+    [],
+  );
+
+  // ── Quick actions ───────────────────────────────────────────────────
+  const quickActions: QuickAction[] = useMemo(
+    () => [
+      {
+        id: 'ad',
+        label: 'AD Helper',
+        description: 'Manage users, groups & licenses',
+        icon: 'group',
+        color: 'primary',
+        onClick: () => onNavigate?.('adhelper'),
+      },
+      {
+        id: 'jira',
+        label: 'Jira Updater',
+        description: 'Update stale Jira tickets',
+        icon: 'assignment',
+        color: 'secondary',
+        onClick: () => onNavigate?.('jira'),
+      },
+      {
+        id: 'settings',
+        label: 'Settings',
+        description: 'Credentials & configuration',
+        icon: 'settings',
+        color: 'info',
+        onClick: () => onNavigate?.('settings'),
+      },
+    ],
+    [onNavigate],
+  );
+
+  // ── Placeholder activity (empty for now – will be wired to audit log later)
+  const recentActivity: ActivityItem[] = [];
 
   return (
     <Box>
-      {/* Hero Section with Electric Blue Gradient */}
+      {/* ── Hero Section ────────────────────────────────────────────── */}
       <Paper
         sx={{
           p: 4,
           mb: 4,
-          background: 'linear-gradient(90deg, #0536B6 0%, #3283FE 100%)',  // Official Electric Blue gradient
+          background: 'linear-gradient(90deg, #0536B6 0%, #3283FE 100%)',
           color: 'white',
           borderRadius: 3,
           boxShadow: '0px 8px 24px rgba(5, 54, 182, 0.25)',
@@ -36,104 +87,79 @@ const Dashboard: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
           <Avatar
             sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.2)',
-              width: 80,
-              height: 80,
-              fontSize: '2rem',
+              bgcolor: 'rgba(255,255,255,0.2)',
+              width: 72,
+              height: 72,
+              fontSize: '1.75rem',
               fontWeight: 700,
               backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
+              border: '2px solid rgba(255,255,255,0.3)',
             }}
+            src="/logo.png"
+            alt="Rehrig Pacific"
           >
             ADH
           </Avatar>
           <Box>
-            <Typography variant="h3" fontWeight={700} gutterBottom>
-              Welcome to ADHelper
+            <Typography variant="h4" fontWeight={700} gutterBottom>
+              {greeting}
             </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.95 }}>
-              Rehrig Pacific IT Administration Portal
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              {dateStr} &bull; Rehrig Pacific IT Administration Portal
             </Typography>
           </Box>
         </Box>
       </Paper>
 
+      {/* ── Stat Cards ──────────────────────────────────────────────── */}
       <Grid container spacing={3}>
-        {stats.map((stat, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-            <Paper
-              sx={{
-                p: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                height: 140,
-                background: `linear-gradient(135deg, ${stat.color}22 0%, ${stat.color}11 100%)`,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ color: stat.color, mr: 2 }}>
-                  {stat.icon}
-                </Box>
-                <Typography variant="h4" component="div">
-                  {stat.value}
-                </Typography>
-              </Box>
-              <Typography color="text.secondary" variant="body2">
-                {stat.title}
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Grid container spacing={3} sx={{ mt: 2 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                AD Helper
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Manage Active Directory users, assign groups, configure licenses, and set up proxy addresses.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" color="primary">
-                Open AD Helper
-              </Button>
-            </CardActions>
-          </Card>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            title="Users Processed Today"
+            value={0}
+            icon={<MaterialSymbol icon="group" filled size={28} />}
+            color="primary"
+            subtitle="Active Directory operations"
+          />
         </Grid>
-
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Jira 48h Updater
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Automatically update Jira tickets that haven't been touched in 48 hours.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" color="primary">
-                Open Jira Updater
-              </Button>
-            </CardActions>
-          </Card>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            title="Jira Tickets Updated"
+            value={0}
+            icon={<MaterialSymbol icon="assignment" filled size={28} />}
+            color="secondary"
+            subtitle="48-hour stale ticket updates"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            title="Success Rate"
+            value="100%"
+            icon={<MaterialSymbol icon="check_circle" filled size={28} />}
+            color="success"
+            subtitle="All operations"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            title="Active Sessions"
+            value={1}
+            icon={<MaterialSymbol icon="trending_up" filled size={28} />}
+            color="info"
+            subtitle="Current session"
+          />
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 4 }}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Recent Activity
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            No recent activity to display.
-          </Typography>
-        </Paper>
-      </Box>
+      {/* ── Activity + Quick Actions row ────────────────────────────── */}
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <ActivityTimeline items={recentActivity} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <QuickActions actions={quickActions} />
+        </Grid>
+      </Grid>
     </Box>
   );
 };

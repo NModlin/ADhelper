@@ -94,6 +94,14 @@ const renderADHelper = () =>
     </ThemeProvider>,
   );
 
+/** Render and wait for initial loading skeleton to clear */
+const renderADHelperAndWait = async () => {
+  renderADHelper();
+  await waitFor(() => {
+    expect(screen.getByText('Active Directory Helper')).toBeInTheDocument();
+  });
+};
+
 describe('ADHelper Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -105,19 +113,19 @@ describe('ADHelper Page', () => {
   // ── Rendering ──────────────────────────────────────────────────────
   describe('Rendering', () => {
     it('renders the page title and description', async () => {
-      renderADHelper();
+      await renderADHelperAndWait();
       expect(screen.getByText('Active Directory Helper')).toBeInTheDocument();
       expect(screen.getByText('Manage user groups and proxy addresses')).toBeInTheDocument();
     });
 
-    it('renders the search field and Process User button', () => {
-      renderADHelper();
+    it('renders the search field and Process User button', async () => {
+      await renderADHelperAndWait();
       expect(screen.getByLabelText(/username or email/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /process user/i })).toBeInTheDocument();
     });
 
-    it('renders quick action buttons', () => {
-      renderADHelper();
+    it('renders quick action buttons', async () => {
+      await renderADHelperAndWait();
       expect(screen.getByRole('button', { name: /remove from mfa blocking group/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /create new user account/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /process contractor accounts/i })).toBeInTheDocument();
@@ -125,7 +133,7 @@ describe('ADHelper Page', () => {
     });
 
     it('shows Admin role chip', async () => {
-      renderADHelper();
+      await renderADHelperAndWait();
       await waitFor(() => {
         expect(screen.getByText('Admin')).toBeInTheDocument();
       });
@@ -135,13 +143,13 @@ describe('ADHelper Page', () => {
   // ── User Search / Process ──────────────────────────────────────────
   describe('User Search', () => {
     it('shows warning when searching with empty username', async () => {
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.click(screen.getByRole('button', { name: /process user/i }));
       expect(mocks.showWarning).toHaveBeenCalledWith('Please enter a username or email');
     });
 
     it('shows warning for invalid username format', async () => {
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.change(screen.getByLabelText(/username or email/i), { target: { value: '"; DROP TABLE;--' } });
       fireEvent.click(screen.getByRole('button', { name: /process user/i }));
       expect(mocks.showWarning).toHaveBeenCalledWith(expect.stringContaining('Invalid username'));
@@ -149,7 +157,7 @@ describe('ADHelper Page', () => {
 
     it('calls runADHelperScript with valid username', async () => {
       mocks.runADHelperScript.mockResolvedValue({ success: true, output: 'Done' });
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.change(screen.getByLabelText(/username or email/i), { target: { value: 'jsmith' } });
       fireEvent.click(screen.getByRole('button', { name: /process user/i }));
 
@@ -160,7 +168,7 @@ describe('ADHelper Page', () => {
 
     it('shows error toast when search fails', async () => {
       mocks.runADHelperScript.mockRejectedValue({ error: 'AD unreachable' });
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.change(screen.getByLabelText(/username or email/i), { target: { value: 'jsmith' } });
       fireEvent.click(screen.getByRole('button', { name: /process user/i }));
 
@@ -171,7 +179,7 @@ describe('ADHelper Page', () => {
 
     it('registers and cleans up progress listener', async () => {
       mocks.runADHelperScript.mockResolvedValue({ success: true, output: 'Done' });
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.change(screen.getByLabelText(/username or email/i), { target: { value: 'jsmith' } });
       fireEvent.click(screen.getByRole('button', { name: /process user/i }));
 
@@ -185,7 +193,7 @@ describe('ADHelper Page', () => {
   // ── MFA Removal Dialog ─────────────────────────────────────────────
   describe('MFA Removal Dialog', () => {
     it('opens MFA dialog when button is clicked', async () => {
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.click(screen.getByRole('button', { name: /remove from mfa blocking group/i }));
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -197,7 +205,7 @@ describe('ADHelper Page', () => {
         success: true,
         result: { Success: true, WasInGroup: true, Message: 'Removed' },
       });
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.click(screen.getByRole('button', { name: /remove from mfa blocking group/i }));
 
       await waitFor(() => {
@@ -230,7 +238,7 @@ describe('ADHelper Page', () => {
         adminOnlyOperations: ['create-user', 'process-contractor', 'process-bulk'],
       });
 
-      renderADHelper();
+      await renderADHelperAndWait();
 
       await waitFor(() => {
         expect(screen.getByText('Operator')).toBeInTheDocument();
@@ -250,7 +258,7 @@ describe('ADHelper Page', () => {
         adminOnlyOperations: [],
       });
 
-      renderADHelper();
+      await renderADHelperAndWait();
 
       await waitFor(() => {
         expect(screen.getByText('Operator')).toBeInTheDocument();
@@ -261,17 +269,15 @@ describe('ADHelper Page', () => {
     });
 
     it('loads user role on mount', async () => {
-      renderADHelper();
-      await waitFor(() => {
-        expect(mocks.getUserRole).toHaveBeenCalled();
-      });
+      await renderADHelperAndWait();
+      expect(mocks.getUserRole).toHaveBeenCalled();
     });
   });
 
   // ── Contractor Processing ─────────────────────────────────────────
   describe('Contractor Processing', () => {
     it('opens contractor dialog when button is clicked', async () => {
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.click(screen.getByRole('button', { name: /process contractor accounts/i }));
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -282,7 +288,7 @@ describe('ADHelper Page', () => {
   // ── Bulk Processing ───────────────────────────────────────────────
   describe('Bulk Processing', () => {
     it('opens bulk processing dialog when button is clicked', async () => {
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.click(screen.getByRole('button', { name: /bulk user processing/i }));
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -294,7 +300,7 @@ describe('ADHelper Page', () => {
   describe('Progress Parsing', () => {
     it('search triggers progress listener registration', async () => {
       mocks.runADHelperScript.mockResolvedValue({ success: true, output: 'Done' });
-      renderADHelper();
+      await renderADHelperAndWait();
       fireEvent.change(screen.getByLabelText(/username or email/i), { target: { value: 'jsmith' } });
       fireEvent.click(screen.getByRole('button', { name: /process user/i }));
 
@@ -308,10 +314,8 @@ describe('ADHelper Page', () => {
   // ── Site Configs ──────────────────────────────────────────────────
   describe('Site Configuration', () => {
     it('loads site configs on mount', async () => {
-      renderADHelper();
-      await waitFor(() => {
-        expect(mocks.getSiteConfigs).toHaveBeenCalled();
-      });
+      await renderADHelperAndWait();
+      expect(mocks.getSiteConfigs).toHaveBeenCalled();
     });
   });
 });

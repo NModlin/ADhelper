@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { isValidUsernameOrEmail, isValidName, isValidEmail, isValidDN } from '../utils/validation';
 import { useNotification } from '../hooks/useNotification';
 import {
@@ -18,8 +18,6 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  IconButton,
-  Collapse,
   Tooltip,
   Dialog,
   DialogTitle,
@@ -33,6 +31,9 @@ import {
   useTheme,
 } from '@mui/material';
 import { MaterialSymbol } from '../components/MaterialSymbol';
+import StepperForm, { type FormStep } from '../components/StepperForm';
+import { PageSkeleton } from '../components/ContentSkeleton';
+import Terminal from '../components/Terminal';
 import { electronAPI, isElectron } from '../electronAPI';
 
 /** Extract a percentage (0–100) from a PowerShell progress line, or return null */
@@ -61,8 +62,6 @@ const ADHelper: React.FC = () => {
   const [result, setResult] = useState<any>(null);
   const [progress, setProgress] = useState<string[]>([]);
   const [progressPercent, setProgressPercent] = useState<number | null>(null);
-  const [showTerminal, setShowTerminal] = useState(true);
-  const terminalRef = useRef<HTMLDivElement>(null);
 
   // MFA Removal Dialog State
   const [mfaDialogOpen, setMfaDialogOpen] = useState(false);
@@ -76,6 +75,7 @@ const ADHelper: React.FC = () => {
   const [userCreationLoading, setUserCreationLoading] = useState(false);
   const [userCreationProgress, setUserCreationProgress] = useState<string[]>([]);
   const [userCreationResult, setUserCreationResult] = useState<any>(null);
+  const [userCreationStep, setUserCreationStep] = useState(0);
   const [newUserInfo, setNewUserInfo] = useState({
     firstName: '',
     lastName: '',
@@ -118,10 +118,200 @@ const ADHelper: React.FC = () => {
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const isAdmin = userRole === 'admin';
 
+  // Initial loading state
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // ── Multi-step user creation form ──
+  const userCreationSteps = useMemo<FormStep[]>(() => [
+    {
+      label: 'Basic Info',
+      icon: 'person',
+      content: (
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="First Name *" variant="outlined" value={newUserInfo.firstName}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, firstName: e.target.value })} disabled={userCreationLoading} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Last Name *" variant="outlined" value={newUserInfo.lastName}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, lastName: e.target.value })} disabled={userCreationLoading} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Username *" variant="outlined" value={newUserInfo.username}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, username: e.target.value })} disabled={userCreationLoading} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Email *" variant="outlined" value={newUserInfo.email}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, email: e.target.value })} disabled={userCreationLoading} />
+          </Grid>
+        </Grid>
+      ),
+      validate: () => {
+        const errs: string[] = [];
+        if (!newUserInfo.firstName.trim()) errs.push('First name is required');
+        if (!newUserInfo.lastName.trim()) errs.push('Last name is required');
+        if (!newUserInfo.username.trim()) errs.push('Username is required');
+        if (!newUserInfo.email.trim()) errs.push('Email is required');
+        return errs.length ? errs : undefined;
+      },
+    },
+    {
+      label: 'Organization',
+      icon: 'corporate_fare',
+      content: (
+        <Grid container spacing={2}>
+          <Grid size={12}>
+            <TextField fullWidth label="Organizational Unit *" variant="outlined" value={newUserInfo.ou}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, ou: e.target.value })} disabled={userCreationLoading} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Title (Optional)" variant="outlined" value={newUserInfo.title}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, title: e.target.value })} disabled={userCreationLoading} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Department (Optional)" variant="outlined" value={newUserInfo.department}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, department: e.target.value })} disabled={userCreationLoading} />
+          </Grid>
+          <Grid size={12}>
+            <TextField fullWidth label="Manager DN (Optional)" variant="outlined" value={newUserInfo.manager}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, manager: e.target.value })} disabled={userCreationLoading}
+              placeholder="e.g., CN=John Doe,OU=Users,DC=RPL,DC=Local" />
+          </Grid>
+          <Grid size={12}>
+            <TextField fullWidth label="Manager Email (Optional)" variant="outlined" type="email" value={newUserInfo.managerEmail}
+              onChange={(e) => setNewUserInfo({ ...newUserInfo, managerEmail: e.target.value })} disabled={userCreationLoading}
+              placeholder="e.g., manager@rehrig.com"
+              helperText="If no Manager DN is provided, enter the manager's email to receive credentials" />
+          </Grid>
+        </Grid>
+      ),
+      validate: () => {
+        const errs: string[] = [];
+        if (!newUserInfo.ou.trim()) errs.push('Organizational Unit is required');
+        return errs.length ? errs : undefined;
+      },
+    },
+    {
+      label: 'Groups',
+      icon: 'group_add',
+      optional: true,
+      content: (
+        <Grid container spacing={2}>
+          <Grid size={12}>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel>Site Location (Optional)</InputLabel>
+              <Select value={newUserInfo.siteLocation}
+                onChange={(e) => setNewUserInfo({ ...newUserInfo, siteLocation: e.target.value })}
+                label="Site Location (Optional)" disabled={userCreationLoading}>
+                <MenuItem value=""><em>Default Groups Only</em></MenuItem>
+                {siteConfigs.map((site) => (
+                  <MenuItem key={site.id} value={site.id}>{site.name} ({site.groups.length} additional groups)</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          {jobProfiles.length > 0 && (
+            <Grid size={12}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Job Category (Optional)</InputLabel>
+                <Select value={selectedJobProfile} onChange={(e) => setSelectedJobProfile(e.target.value)}
+                  label="Job Category (Optional)" disabled={userCreationLoading}>
+                  <MenuItem value=""><em>No Job Category</em></MenuItem>
+                  {jobProfiles.map((profile, idx) => (
+                    <MenuItem key={idx} value={profile.category}>{profile.category} ({profile.groups.length} groups)</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+          {selectedSiteGroups.length > 0 && (
+            <Grid size={12}>
+              <Alert severity="info" icon="📍">
+                <Typography variant="subtitle2" gutterBottom>
+                  <strong>Site Groups for {siteConfigs.find(s => s.id === newUserInfo.siteLocation)?.name}:</strong>
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  {selectedSiteGroups.map((group, idx) => (
+                    <Chip key={idx} label={group.split(',')[0].replace('CN=', '')} size="small" color="primary" sx={{ mr: 0.5, mb: 0.5 }} />
+                  ))}
+                </Box>
+              </Alert>
+            </Grid>
+          )}
+          {selectedJobProfileGroups.length > 0 && (
+            <Grid size={12}>
+              <Alert severity="success" icon="💼">
+                <Typography variant="subtitle2" gutterBottom>
+                  <strong>Job Profile Groups for {selectedJobProfile}:</strong>
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  {selectedJobProfileGroups.map((group, idx) => (
+                    <Chip key={idx} label={group.name} size="small" color="success" sx={{ mr: 0.5, mb: 0.5 }} />
+                  ))}
+                </Box>
+              </Alert>
+            </Grid>
+          )}
+          {(selectedSiteGroups.length > 0 || selectedJobProfileGroups.length > 0) && (
+            <Grid size={12}>
+              <Alert severity="warning" icon="📊">
+                <Typography variant="subtitle2" gutterBottom><strong>Total Groups Summary:</strong></Typography>
+                <Typography variant="body2">
+                  • 10 default groups (standard for all users)<br />
+                  {selectedSiteGroups.length > 0 && `• ${selectedSiteGroups.length} site-specific groups\n`}
+                  {selectedJobProfileGroups.length > 0 && `• ${selectedJobProfileGroups.length} job profile groups\n`}
+                  <strong>Total: {10 + selectedSiteGroups.length + selectedJobProfileGroups.length} groups</strong> (after deduplication)
+                </Typography>
+              </Alert>
+            </Grid>
+          )}
+        </Grid>
+      ),
+    },
+    {
+      label: 'Review',
+      icon: 'checklist',
+      content: (
+        <Paper variant="outlined" sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>Review Account Details</Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Grid container spacing={1}>
+            <Grid size={6}><Typography variant="body2" color="text.secondary">First Name</Typography></Grid>
+            <Grid size={6}><Typography variant="body2"><strong>{newUserInfo.firstName}</strong></Typography></Grid>
+            <Grid size={6}><Typography variant="body2" color="text.secondary">Last Name</Typography></Grid>
+            <Grid size={6}><Typography variant="body2"><strong>{newUserInfo.lastName}</strong></Typography></Grid>
+            <Grid size={6}><Typography variant="body2" color="text.secondary">Username</Typography></Grid>
+            <Grid size={6}><Typography variant="body2"><strong>{newUserInfo.username}</strong></Typography></Grid>
+            <Grid size={6}><Typography variant="body2" color="text.secondary">Email</Typography></Grid>
+            <Grid size={6}><Typography variant="body2"><strong>{newUserInfo.email}</strong></Typography></Grid>
+            <Grid size={6}><Typography variant="body2" color="text.secondary">OU</Typography></Grid>
+            <Grid size={6}><Typography variant="body2"><strong>{newUserInfo.ou}</strong></Typography></Grid>
+            {newUserInfo.title && (<><Grid size={6}><Typography variant="body2" color="text.secondary">Title</Typography></Grid>
+              <Grid size={6}><Typography variant="body2"><strong>{newUserInfo.title}</strong></Typography></Grid></>)}
+            {newUserInfo.department && (<><Grid size={6}><Typography variant="body2" color="text.secondary">Department</Typography></Grid>
+              <Grid size={6}><Typography variant="body2"><strong>{newUserInfo.department}</strong></Typography></Grid></>)}
+            {newUserInfo.manager && (<><Grid size={6}><Typography variant="body2" color="text.secondary">Manager DN</Typography></Grid>
+              <Grid size={6}><Typography variant="body2" sx={{ wordBreak: 'break-all' }}><strong>{newUserInfo.manager}</strong></Typography></Grid></>)}
+            {newUserInfo.managerEmail && (<><Grid size={6}><Typography variant="body2" color="text.secondary">Manager Email</Typography></Grid>
+              <Grid size={6}><Typography variant="body2"><strong>{newUserInfo.managerEmail}</strong></Typography></Grid></>)}
+            {newUserInfo.siteLocation && (<><Grid size={6}><Typography variant="body2" color="text.secondary">Site</Typography></Grid>
+              <Grid size={6}><Typography variant="body2"><strong>{siteConfigs.find(s => s.id === newUserInfo.siteLocation)?.name}</strong></Typography></Grid></>)}
+            {selectedJobProfile && (<><Grid size={6}><Typography variant="body2" color="text.secondary">Job Profile</Typography></Grid>
+              <Grid size={6}><Typography variant="body2"><strong>{selectedJobProfile}</strong></Typography></Grid></>)}
+          </Grid>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Total groups: {10 + selectedSiteGroups.length + selectedJobProfileGroups.length}
+          </Typography>
+        </Paper>
+      ),
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [newUserInfo, userCreationLoading, siteConfigs, jobProfiles, selectedJobProfile, selectedSiteGroups, selectedJobProfileGroups]);
+
   // Load site configurations and user role on mount
   useEffect(() => {
-    loadSiteConfigs();
-    loadUserRole();
+    Promise.all([loadSiteConfigs(), loadUserRole()])
+      .finally(() => setInitialLoading(false));
   }, []);
 
   // Load job profiles when site location changes
@@ -154,13 +344,6 @@ const ADHelper: React.FC = () => {
       setSelectedJobProfileGroups([]);
     }
   }, [selectedJobProfile, jobProfiles]);
-
-  // Auto-scroll terminal to bottom when new content arrives
-  useEffect(() => {
-    if (terminalRef.current && showTerminal) {
-      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-    }
-  }, [progress, showTerminal]);
 
   const loadSiteConfigs = async () => {
     try {
@@ -226,7 +409,6 @@ const ADHelper: React.FC = () => {
     setResult(null);
     setProgress([]);
     setProgressPercent(null);
-    setShowTerminal(true); // Auto-show terminal when processing starts
 
     try {
       // Listen for progress updates
@@ -402,34 +584,14 @@ const ADHelper: React.FC = () => {
     }
   };
 
-  const formatTerminalLine = (line: string) => {
-    // Parse ANSI color codes and PowerShell formatting
-    let color = 'inherit';
-    let fontWeight = 'normal';
-
-    // Check for common PowerShell output patterns
-    if (line.includes('✅') || line.includes('SUCCESS')) {
-      color = '#4caf50'; // Green
-    } else if (line.includes('❌') || line.includes('ERROR') || line.includes('Failed')) {
-      color = '#f44336'; // Red
-    } else if (line.includes('⚠️') || line.includes('WARNING') || line.includes('WARN')) {
-      color = '#ff9800'; // Orange
-    } else if (line.includes('💡') || line.includes('INFO')) {
-      color = '#2196f3'; // Blue
-    } else if (line.includes('🔍') || line.includes('Checking')) {
-      color = '#00bcd4'; // Cyan
-    } else if (line.includes('===') || line.includes('---')) {
-      color = '#9e9e9e'; // Gray
-      fontWeight = 'bold';
-    }
-
-    return { color, fontWeight };
-  };
-
   const operations = [
     { id: 'groups', label: 'Add to Standard Groups', icon: <MaterialSymbol icon="group" />, color: theme.palette.primary.main },
     { id: 'proxies', label: 'Configure Proxy Addresses', icon: <MaterialSymbol icon="mail" />, color: theme.palette.primary.light },
   ];
+
+  if (initialLoading) {
+    return <PageSkeleton />;
+  }
 
   return (
     <Box>
@@ -549,6 +711,7 @@ const ADHelper: React.FC = () => {
                   });
                   setUserCreationResult(null);
                   setUserCreationProgress([]);
+                  setUserCreationStep(0);
                 }}
               >
                 Create New User Account
@@ -618,138 +781,14 @@ const ADHelper: React.FC = () => {
       </Grid>
 
       {/* Terminal Output Section */}
-      {(loading || progress.length > 0) && (
-        <Paper sx={{ mb: 3, overflow: 'hidden' }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              p: 2,
-              bgcolor: '#1e1e1e',
-              color: '#fff',
-              borderBottom: showTerminal ? '1px solid #333' : 'none',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <MaterialSymbol icon="terminal" />
-              <Typography variant="h6">
-                PowerShell Terminal Output
-              </Typography>
-              {loading && (
-                <Chip
-                  label="Running"
-                  size="small"
-                  color="primary"
-                  icon={<CircularProgress size={12} sx={{ color: 'white !important' }} />}
-                />
-              )}
-              {!loading && progress.length > 0 && (
-                <Chip label="Completed" size="small" color="success" />
-              )}
-            </Box>
-            <Box>
-              <Tooltip title="Clear terminal">
-                <IconButton
-                  size="small"
-                  onClick={clearTerminal}
-                  sx={{ color: 'white', mr: 1 }}
-                  disabled={loading}
-                >
-                  <MaterialSymbol icon="clear" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={showTerminal ? 'Collapse terminal' : 'Expand terminal'}>
-                <IconButton
-                  size="small"
-                  onClick={() => setShowTerminal(!showTerminal)}
-                  sx={{ color: 'white' }}
-                >
-                  {showTerminal ? <MaterialSymbol icon="expand_less" /> : <MaterialSymbol icon="expand_more" />}
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-          {/* Native progress bar — parsed from PowerShell Write-Progress output */}
-          {loading && progressPercent !== null && (
-            <Box sx={{ px: 2, py: 1, bgcolor: '#1e1e1e' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={progressPercent}
-                  sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
-                />
-                <Typography variant="caption" sx={{ color: '#d4d4d4', minWidth: 40, textAlign: 'right' }}>
-                  {progressPercent}%
-                </Typography>
-              </Box>
-            </Box>
-          )}
-          <Collapse in={showTerminal}>
-            <Box
-              ref={terminalRef}
-              sx={{
-                bgcolor: '#1e1e1e',
-                color: '#d4d4d4',
-                p: 2,
-                fontFamily: '"Consolas", "Courier New", monospace',
-                fontSize: '13px',
-                maxHeight: 500,
-                minHeight: 200,
-                overflow: 'auto',
-                '&::-webkit-scrollbar': {
-                  width: '10px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: '#2d2d2d',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#555',
-                  borderRadius: '5px',
-                },
-                '&::-webkit-scrollbar-thumb:hover': {
-                  background: '#777',
-                },
-              }}
-            >
-              {progress.length === 0 && loading && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#00bcd4' }}>
-                  <CircularProgress size={16} sx={{ color: '#00bcd4' }} />
-                  <Typography sx={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
-                    Initializing PowerShell script...
-                  </Typography>
-                </Box>
-              )}
-              {progress.map((line, index) => {
-                const style = formatTerminalLine(line);
-                return (
-                  <Box
-                    key={index}
-                    sx={{
-                      color: style.color,
-                      fontWeight: style.fontWeight,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      lineHeight: 1.5,
-                      mb: 0.5,
-                    }}
-                  >
-                    {line}
-                  </Box>
-                );
-              })}
-              {loading && progress.length > 0 && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#00bcd4', mt: 1 }}>
-                  <CircularProgress size={12} sx={{ color: '#00bcd4' }} />
-                  <Typography sx={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
-                    Processing...
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Collapse>
-        </Paper>
-      )}
+      <Terminal
+        output={progress}
+        loading={loading}
+        onClear={clearTerminal}
+        progressPercent={progressPercent}
+        collapsible
+        showLineNumbers
+      />
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>
@@ -816,13 +855,15 @@ const ADHelper: React.FC = () => {
                 sx={{ mb: 2 }}
               />
               {mfaLoading && <LinearProgress sx={{ mb: 2 }} />}
-              {mfaProgress.length > 0 && (
-                <Paper sx={{ p: 2, bgcolor: '#000', color: '#0f0', fontFamily: 'monospace', fontSize: '0.875rem', maxHeight: 300, overflow: 'auto' }}>
-                  {mfaProgress.map((line, idx) => (
-                    <div key={idx}>{line}</div>
-                  ))}
-                </Paper>
-              )}
+              <Terminal
+                output={mfaProgress}
+                loading={mfaLoading}
+                title="MFA Removal Output"
+                collapsible={false}
+                showLineNumbers={false}
+                maxHeight={300}
+                minHeight={100}
+              />
             </>
           )}
           {mfaResult && (
@@ -841,18 +882,15 @@ const ADHelper: React.FC = () => {
                   Due to AD replication, this change may take up to 35 minutes to propagate across all domain controllers.
                 </Alert>
               )}
-              {mfaProgress.length > 0 && (
-                <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: '#d4d4d4', fontFamily: '"Consolas", "Courier New", monospace', fontSize: '0.8rem', maxHeight: 200, overflow: 'auto' }}>
-                  {mfaProgress.map((line, idx) => {
-                    const style = formatTerminalLine(line);
-                    return (
-                      <Box key={idx} sx={{ color: style.color, fontWeight: style.fontWeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, mb: 0.25 }}>
-                        {line}
-                      </Box>
-                    );
-                  })}
-                </Paper>
-              )}
+              <Terminal
+                output={mfaProgress}
+                loading={false}
+                title="MFA Removal Output"
+                collapsible={false}
+                showLineNumbers={false}
+                maxHeight={200}
+                minHeight={80}
+              />
             </>
           )}
         </DialogContent>
@@ -887,220 +925,31 @@ const ADHelper: React.FC = () => {
           Create New User Account
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
-          {!userCreationResult && (
+          {!userCreationResult && !userCreationLoading && (
+            <StepperForm
+              steps={userCreationSteps}
+              onComplete={handleUserCreation}
+              onStepChange={setUserCreationStep}
+              activeStep={userCreationStep}
+              loading={userCreationLoading}
+              completeLabel="Create User"
+              draftKey="adhelper_newuser_draft"
+              draftData={newUserInfo as unknown as Record<string, unknown>}
+              onRestoreDraft={(data) => setNewUserInfo(data as typeof newUserInfo)}
+            />
+          )}
+          {userCreationLoading && (
             <>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="First Name *"
-                    variant="outlined"
-                    value={newUserInfo.firstName}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, firstName: e.target.value })}
-                    disabled={userCreationLoading}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Last Name *"
-                    variant="outlined"
-                    value={newUserInfo.lastName}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, lastName: e.target.value })}
-                    disabled={userCreationLoading}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Username *"
-                    variant="outlined"
-                    value={newUserInfo.username}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, username: e.target.value })}
-                    disabled={userCreationLoading}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Email *"
-                    variant="outlined"
-                    value={newUserInfo.email}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, email: e.target.value })}
-                    disabled={userCreationLoading}
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label="Organizational Unit *"
-                    variant="outlined"
-                    value={newUserInfo.ou}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, ou: e.target.value })}
-                    disabled={userCreationLoading}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Title (Optional)"
-                    variant="outlined"
-                    value={newUserInfo.title}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, title: e.target.value })}
-                    disabled={userCreationLoading}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Department (Optional)"
-                    variant="outlined"
-                    value={newUserInfo.department}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, department: e.target.value })}
-                    disabled={userCreationLoading}
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label="Manager DN (Optional)"
-                    variant="outlined"
-                    value={newUserInfo.manager}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, manager: e.target.value })}
-                    disabled={userCreationLoading}
-                    placeholder="e.g., CN=John Doe,OU=Users,DC=RPL,DC=Local"
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label="Manager Email (Optional)"
-                    variant="outlined"
-                    type="email"
-                    value={newUserInfo.managerEmail}
-                    onChange={(e) => setNewUserInfo({ ...newUserInfo, managerEmail: e.target.value })}
-                    disabled={userCreationLoading}
-                    placeholder="e.g., manager@rehrig.com"
-                    helperText="If no Manager DN is provided, enter the manager's email to receive credentials"
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Site Location (Optional)</InputLabel>
-                    <Select
-                      value={newUserInfo.siteLocation}
-                      onChange={(e) => setNewUserInfo({ ...newUserInfo, siteLocation: e.target.value })}
-                      label="Site Location (Optional)"
-                      disabled={userCreationLoading}
-                    >
-                      <MenuItem value="">
-                        <em>Default Groups Only</em>
-                      </MenuItem>
-                      {siteConfigs.map((site) => (
-                        <MenuItem key={site.id} value={site.id}>
-                          {site.name} ({site.groups.length} additional groups)
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Job Category Selection (only for sites with job profiles) */}
-                {jobProfiles.length > 0 && (
-                  <Grid size={12}>
-                    <FormControl fullWidth variant="outlined">
-                      <InputLabel>Job Category (Optional)</InputLabel>
-                      <Select
-                        value={selectedJobProfile}
-                        onChange={(e) => setSelectedJobProfile(e.target.value)}
-                        label="Job Category (Optional)"
-                        disabled={userCreationLoading}
-                      >
-                        <MenuItem value="">
-                          <em>No Job Category</em>
-                        </MenuItem>
-                        {jobProfiles.map((profile, idx) => (
-                          <MenuItem key={idx} value={profile.category}>
-                            {profile.category} ({profile.groups.length} groups)
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                )}
-
-                {selectedSiteGroups.length > 0 && (
-                  <Grid size={12}>
-                    <Alert severity="info" icon="📍">
-                      <Typography variant="subtitle2" gutterBottom>
-                        <strong>Site Groups for {siteConfigs.find(s => s.id === newUserInfo.siteLocation)?.name}:</strong>
-                      </Typography>
-                      <Box sx={{ mt: 1 }}>
-                        {selectedSiteGroups.map((group, idx) => (
-                          <Chip
-                            key={idx}
-                            label={group.split(',')[0].replace('CN=', '')}
-                            size="small"
-                            color="primary"
-                            sx={{ mr: 0.5, mb: 0.5 }}
-                          />
-                        ))}
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                        {selectedSiteGroups.length} site-specific group(s)
-                      </Typography>
-                    </Alert>
-                  </Grid>
-                )}
-
-                {selectedJobProfileGroups.length > 0 && (
-                  <Grid size={12}>
-                    <Alert severity="success" icon="💼">
-                      <Typography variant="subtitle2" gutterBottom>
-                        <strong>Job Profile Groups for {selectedJobProfile}:</strong>
-                      </Typography>
-                      <Box sx={{ mt: 1 }}>
-                        {selectedJobProfileGroups.map((group, idx) => (
-                          <Chip
-                            key={idx}
-                            label={group.name}
-                            size="small"
-                            color="success"
-                            sx={{ mr: 0.5, mb: 0.5 }}
-                          />
-                        ))}
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                        {selectedJobProfileGroups.length} job-specific group(s)
-                      </Typography>
-                    </Alert>
-                  </Grid>
-                )}
-
-                {(selectedSiteGroups.length > 0 || selectedJobProfileGroups.length > 0) && (
-                  <Grid size={12}>
-                    <Alert severity="warning" icon="📊">
-                      <Typography variant="subtitle2" gutterBottom>
-                        <strong>Total Groups Summary:</strong>
-                      </Typography>
-                      <Typography variant="body2">
-                        • 10 default groups (standard for all users)<br />
-                        {selectedSiteGroups.length > 0 && `• ${selectedSiteGroups.length} site-specific groups\n`}
-                        {selectedJobProfileGroups.length > 0 && `• ${selectedJobProfileGroups.length} job profile groups\n`}
-                        <strong>Total: {10 + selectedSiteGroups.length + selectedJobProfileGroups.length} groups</strong> (after deduplication)
-                      </Typography>
-                    </Alert>
-                  </Grid>
-                )}
-              </Grid>
-              {userCreationLoading && <LinearProgress sx={{ mt: 2 }} />}
-              {userCreationProgress.length > 0 && (
-                <Paper sx={{ p: 2, mt: 2, bgcolor: '#000', color: '#0f0', fontFamily: 'monospace', fontSize: '0.875rem', maxHeight: 200, overflow: 'auto' }}>
-                  {userCreationProgress.map((line, idx) => (
-                    <div key={idx}>{line}</div>
-                  ))}
-                </Paper>
-              )}
+              <LinearProgress sx={{ mt: 2 }} />
+              <Terminal
+                output={userCreationProgress}
+                loading={userCreationLoading}
+                title="User Creation Output"
+                collapsible={false}
+                showLineNumbers={false}
+                maxHeight={200}
+                minHeight={80}
+              />
             </>
           )}
           {userCreationResult && (
@@ -1120,8 +969,6 @@ const ADHelper: React.FC = () => {
                       ⚠️ User must change password at first logon.
                     </Typography>
                   </Paper>
-
-                  {/* Email Status */}
                   {userCreationResult.result.EmailSent && (
                     <Alert severity="success" icon="📧" sx={{ mb: 2 }}>
                       <strong>Email Sent Successfully!</strong><br />
@@ -1152,25 +999,14 @@ const ADHelper: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          {!userCreationResult && (
-            <>
-              <Button onClick={() => setUserDialogOpen(false)} disabled={userCreationLoading}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleUserCreation}
-                variant="contained"
-                startIcon={userCreationLoading ? <CircularProgress size={20} color="inherit" /> : undefined}
-                disabled={userCreationLoading || !newUserInfo.firstName || !newUserInfo.lastName || !newUserInfo.username || !newUserInfo.email}
-                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
-              >
-                {userCreationLoading ? 'Creating...' : 'Create User'}
-              </Button>
-            </>
+          {!userCreationResult && !userCreationLoading && (
+            <Button onClick={() => setUserDialogOpen(false)}>
+              Cancel
+            </Button>
           )}
-          {userCreationResult && (
-            <Button onClick={() => setUserDialogOpen(false)} variant="contained">
-              Close
+          {(userCreationResult || userCreationLoading) && (
+            <Button onClick={() => setUserDialogOpen(false)} variant="contained" disabled={userCreationLoading}>
+              {userCreationResult ? 'Close' : 'Cancel'}
             </Button>
           )}
         </DialogActions>
@@ -1203,18 +1039,15 @@ const ADHelper: React.FC = () => {
                 sx={{ mb: 2 }}
               />
               {contractorLoading && <LinearProgress sx={{ mb: 2 }} />}
-              {contractorProgress.length > 0 && (
-                <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: '#d4d4d4', fontFamily: '"Consolas", "Courier New", monospace', fontSize: '0.8rem', maxHeight: 300, overflow: 'auto' }}>
-                  {contractorProgress.map((line, idx) => {
-                    const style = formatTerminalLine(line);
-                    return (
-                      <Box key={idx} sx={{ color: style.color, fontWeight: style.fontWeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, mb: 0.25 }}>
-                        {line}
-                      </Box>
-                    );
-                  })}
-                </Paper>
-              )}
+              <Terminal
+                output={contractorProgress}
+                loading={contractorLoading}
+                title="Contractor Processing Output"
+                collapsible={false}
+                showLineNumbers={false}
+                maxHeight={300}
+                minHeight={80}
+              />
             </>
           )}
           {contractorResult && (
@@ -1240,18 +1073,15 @@ const ADHelper: React.FC = () => {
                   )}
                 </Paper>
               )}
-              {contractorProgress.length > 0 && (
-                <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: '#d4d4d4', fontFamily: '"Consolas", "Courier New", monospace', fontSize: '0.8rem', maxHeight: 200, overflow: 'auto' }}>
-                  {contractorProgress.map((line, idx) => {
-                    const style = formatTerminalLine(line);
-                    return (
-                      <Box key={idx} sx={{ color: style.color, fontWeight: style.fontWeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, mb: 0.25 }}>
-                        {line}
-                      </Box>
-                    );
-                  })}
-                </Paper>
-              )}
+              <Terminal
+                output={contractorProgress}
+                loading={false}
+                title="Contractor Processing Output"
+                collapsible={false}
+                showLineNumbers={false}
+                maxHeight={200}
+                minHeight={80}
+              />
             </>
           )}
         </DialogContent>
@@ -1320,29 +1150,15 @@ const ADHelper: React.FC = () => {
           )}
 
           {/* Progress display */}
-          {bulkLoading && (
-            <Box sx={{ mb: 2 }}>
-              <LinearProgress sx={{ mb: 1 }} />
-              <Typography variant="body2" color="text.secondary">Processing users...</Typography>
-            </Box>
-          )}
-
-          {bulkProgress.length > 0 && (
-            <Box sx={{
-              bgcolor: '#1e1e1e', color: '#d4d4d4', p: 2, borderRadius: 1,
-              maxHeight: 300, overflow: 'auto', fontFamily: 'monospace', fontSize: '0.8rem',
-              mb: 2,
-            }}>
-              {bulkProgress.map((line, idx) => {
-                const style = formatTerminalLine(line);
-                return (
-                  <Box key={idx} sx={{ color: style.color, fontWeight: style.fontWeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.4, mb: 0.25 }}>
-                    {line}
-                  </Box>
-                );
-              })}
-            </Box>
-          )}
+          <Terminal
+            output={bulkProgress}
+            loading={bulkLoading}
+            title="Bulk Processing Output"
+            collapsible={false}
+            showLineNumbers={false}
+            maxHeight={300}
+            minHeight={80}
+          />
 
           {/* Results summary */}
           {bulkResult && (
