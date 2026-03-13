@@ -57,10 +57,14 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
+    "@testing-library/dom": "^10.4.1",
     "axios": "^1.13.2",
+    "kbar": "^0.1.0-beta.48",
     "notistack": "^3.0.2",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "react-joyride": "^2.9.3",
+    "recharts": "^3.7.0"
   },
   "build": {
     "appId": "com.adhelper.app",

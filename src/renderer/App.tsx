@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { ThemeProvider, alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
@@ -17,7 +17,10 @@ import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import Tooltip from '@mui/material/Tooltip';
 import { SnackbarProvider } from 'notistack';
+import type { Action } from 'kbar';
 import { MaterialSymbol } from './components/MaterialSymbol';
+import { CommandPalette } from './components/CommandPalette';
+import { AppOnboarding } from './components/Onboarding';
 
 // Import Rehrig theme
 import { getRehrigTheme } from './theme/rehrigTheme';
@@ -103,10 +106,72 @@ function App() {
         e.preventDefault();
         toggleSidebar();
       }
+      // Ctrl+, → Settings
+      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault();
+        setCurrentPage('settings');
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleSidebar]);
+
+  // ── Command palette actions ────────────────────────────────────────────
+  const kbarActions: Action[] = useMemo(
+    () => [
+      // Navigation
+      {
+        id: 'nav-dashboard',
+        name: 'Go to Dashboard',
+        shortcut: ['g', 'd'],
+        keywords: 'home overview stats',
+        section: 'Navigation',
+        perform: () => setCurrentPage('dashboard'),
+      },
+      {
+        id: 'nav-adhelper',
+        name: 'Open AD Helper',
+        shortcut: ['g', 'a'],
+        keywords: 'active directory users groups',
+        section: 'Navigation',
+        perform: () => setCurrentPage('adhelper'),
+      },
+      {
+        id: 'nav-jira',
+        name: 'Open Jira Updater',
+        shortcut: ['g', 'j'],
+        keywords: 'jira tickets stale update',
+        section: 'Navigation',
+        perform: () => setCurrentPage('jira'),
+      },
+      {
+        id: 'nav-settings',
+        name: 'Open Settings',
+        shortcut: ['g', 's'],
+        keywords: 'preferences config credentials',
+        section: 'Navigation',
+        perform: () => setCurrentPage('settings'),
+      },
+      // UI actions
+      {
+        id: 'toggle-theme',
+        name: 'Toggle Dark/Light Theme',
+        shortcut: ['t', 't'],
+        keywords: 'dark light mode theme',
+        section: 'Actions',
+        perform: () => setDarkMode((prev) => !prev),
+      },
+      {
+        id: 'toggle-sidebar',
+        name: 'Toggle Sidebar',
+        shortcut: ['Ctrl+b'],
+        keywords: 'sidebar collapse expand',
+        section: 'Actions',
+        perform: () => toggleSidebar(),
+      },
+    ],
+    [toggleSidebar],
+  );
 
   // Find current page label for AppBar title
   const currentLabel =
@@ -171,7 +236,7 @@ function App() {
       </Box>
 
       {/* Navigation groups */}
-      <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', py: 1 }}>
+      <Box component="nav" aria-label="Main navigation" className="sidebar-nav" sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', py: 1 }}>
         {navGroups.map((group, gi) => (
           <Box key={group.label}>
             {gi > 0 && <Divider sx={{ mx: 2, my: 0.5 }} />}
@@ -215,6 +280,7 @@ function App() {
                     <Tooltip title={showExpanded ? '' : item.label} placement="right" arrow>
                       <ListItemButton
                         selected={isActive}
+                        aria-current={isActive ? 'page' : undefined}
                         onClick={() => setCurrentPage(item.id)}
                         sx={{
                           minHeight: 44,
@@ -282,7 +348,37 @@ function App() {
         preventDuplicate
       >
         <ADConnectionProvider>
+          <CommandPalette actions={kbarActions}>
           <CssBaseline />
+          {/* Skip-to-content link for keyboard/screen-reader users */}
+          <Box
+            component="a"
+            href="#main-content"
+            sx={{
+              position: 'absolute',
+              left: '-9999px',
+              top: 'auto',
+              width: '1px',
+              height: '1px',
+              overflow: 'hidden',
+              '&:focus': {
+                position: 'fixed',
+                top: 8,
+                left: 8,
+                width: 'auto',
+                height: 'auto',
+                zIndex: 2000,
+                p: 2,
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 4,
+                color: 'primary.main',
+                fontWeight: 600,
+              },
+            }}
+          >
+            Skip to main content
+          </Box>
           <Box sx={{ display: 'flex', height: '100vh' }}>
             {/* AppBar */}
             <AppBar
@@ -309,7 +405,12 @@ function App() {
                 <Box sx={{ mr: 2 }}>
                   <ADConnectionStatus variant="chip" showRefresh={true} />
                 </Box>
-                <IconButton onClick={() => setDarkMode(!darkMode)} color="inherit">
+                <IconButton
+                  className="theme-toggle"
+                  onClick={() => setDarkMode(!darkMode)}
+                  color="inherit"
+                  aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+                >
                   {darkMode ? <MaterialSymbol icon="light_mode" /> : <MaterialSymbol icon="dark_mode" />}
                 </IconButton>
               </Toolbar>
@@ -366,7 +467,9 @@ function App() {
 
             {/* Main content */}
             <Box
+              id="main-content"
               component="main"
+              tabIndex={-1}
               sx={{
                 flexGrow: 1,
                 display: 'flex',
@@ -375,6 +478,7 @@ function App() {
                 mt: 8,
                 overflow: 'auto',
                 transition: 'width 0.3s cubic-bezier(0.2, 0, 0, 1)',
+                '&:focus': { outline: 'none' },
               }}
             >
               <Box sx={{ flexGrow: 1, p: 3 }}>
@@ -404,6 +508,22 @@ function App() {
               </Box>
             </Box>
           </Box>
+          {/* Screen reader live region for dynamic announcements */}
+          <Box
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            sx={{
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
+            }}
+          />
+          <AppOnboarding />
+          </CommandPalette>
         </ADConnectionProvider>
       </SnackbarProvider>
     </ThemeProvider>

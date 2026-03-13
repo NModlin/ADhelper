@@ -238,6 +238,7 @@ const Settings: React.FC = () => {
                     <IconButton
                       onClick={() => setShowJiraToken(!showJiraToken)}
                       edge="end"
+                      aria-label={showJiraToken ? 'Hide API token' : 'Show API token'}
                     >
                       {showJiraToken ? <MaterialSymbol icon="visibility_off" /> : <MaterialSymbol icon="visibility" />}
                     </IconButton>
@@ -312,6 +313,7 @@ const Settings: React.FC = () => {
                     <IconButton
                       onClick={() => setShowAdPassword(!showAdPassword)}
                       edge="end"
+                      aria-label={showAdPassword ? 'Hide password' : 'Show password'}
                     >
                       {showAdPassword ? <MaterialSymbol icon="visibility_off" /> : <MaterialSymbol icon="visibility" />}
                     </IconButton>

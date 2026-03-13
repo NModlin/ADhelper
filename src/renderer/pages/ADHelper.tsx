@@ -627,6 +627,7 @@ const ADHelper: React.FC = () => {
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, md: 8 }}>
             <TextField
+              className="ad-helper-search"
               fullWidth
               label="Username or Email"
               variant="outlined"
@@ -635,6 +636,7 @@ const ADHelper: React.FC = () => {
               placeholder="e.g., jsmith or jsmith@company.com"
               disabled={loading}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              inputProps={{ 'aria-label': 'Enter Active Directory username or email' }}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>

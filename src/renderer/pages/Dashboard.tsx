@@ -10,6 +10,8 @@ import { MaterialSymbol } from '../components/MaterialSymbol';
 import { StatCard } from '../components/StatCard';
 import { ActivityTimeline, ActivityItem } from '../components/ActivityTimeline';
 import { QuickActions, QuickAction } from '../components/QuickActions';
+import { UsageChart } from '../components/UsageChart';
+import { TicketStatusChart } from '../components/TicketStatusChart';
 
 /** Props so the parent can wire navigation from quick actions */
 export interface DashboardProps {
@@ -158,6 +160,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </Grid>
         <Grid size={{ xs: 12, lg: 4 }}>
           <QuickActions actions={quickActions} />
+        </Grid>
+      </Grid>
+
+      {/* ── Charts row ──────────────────────────────────────────────── */}
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <UsageChart />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TicketStatusChart />
         </Grid>
       </Grid>
     </Box>
