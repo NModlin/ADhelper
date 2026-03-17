@@ -305,6 +305,28 @@ export const getRehrigTheme = (mode: 'light' | 'dark') => {
           },
         },
       },
+      // Glassmorphism for dialogs / modals
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: 20,
+            border: `1px solid ${isLight ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.08)'}`,
+            boxShadow: isLight
+              ? '0 8px 32px rgba(5,54,182,0.15)'
+              : '0 8px 32px rgba(0,0,0,0.5)',
+          },
+        },
+      },
+      MuiBackdrop: {
+        styleOverrides: {
+          root: {
+            backdropFilter: 'blur(8px) saturate(150%)',
+            backgroundColor: isLight
+              ? 'rgba(0, 0, 0, 0.25)'
+              : 'rgba(0, 0, 0, 0.45)',
+          },
+        },
+      },
     },
   };
 

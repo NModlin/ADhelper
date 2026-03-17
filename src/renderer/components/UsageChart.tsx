@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   AreaChart,
   Area,
@@ -26,7 +27,7 @@ const WEEKLY_DATA = [
  * UsageChart — area chart showing AD operations and Jira updates per day for the past week.
  * Uses demo data; connect to the audit log API for real historical data.
  */
-export const UsageChart: React.FC = () => {
+export const UsageChart: React.FC = React.memo(() => {
   const theme = useTheme();
   const primary = theme.palette.primary.main;
   const secondary = theme.palette.secondary.main;
@@ -107,7 +108,7 @@ export const UsageChart: React.FC = () => {
       </ResponsiveContainer>
     </Paper>
   );
-};
+});
 
 export default UsageChart;
 

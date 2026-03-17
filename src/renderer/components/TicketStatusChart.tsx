@@ -1,3 +1,4 @@
+import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Paper, Typography, Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -14,7 +15,7 @@ const STATUS_DATA = [
  * TicketStatusChart — donut chart showing distribution of Jira ticket update outcomes.
  * Uses demo data; wire to the last bulkUpdateJiraTickets result for live values.
  */
-export const TicketStatusChart: React.FC = () => {
+export const TicketStatusChart: React.FC = React.memo(() => {
   const theme = useTheme();
 
   const COLORS = [
@@ -81,7 +82,7 @@ export const TicketStatusChart: React.FC = () => {
       </ResponsiveContainer>
     </Paper>
   );
-};
+});
 
 export default TicketStatusChart;
 

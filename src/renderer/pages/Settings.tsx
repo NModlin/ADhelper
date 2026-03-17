@@ -19,6 +19,7 @@ import { electronAPI, isElectron } from '../electronAPI';
 import SiteManagement from '../components/SiteManagement';
 import { useNotification } from '../hooks/useNotification';
 import { FormSkeleton } from '../components/ContentSkeleton';
+import { HelpTooltip } from '../components/HelpTooltip';
 
 const Settings: React.FC = () => {
   const { showSuccess, showError, showWarning } = useNotification();
@@ -168,9 +169,15 @@ const Settings: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Secure Credentials
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h4" gutterBottom>
+          Secure Credentials
+        </Typography>
+        <HelpTooltip
+          title="Credential Storage"
+          content={`Credentials are stored securely using ${isElectron ? 'Windows Credential Manager (encrypted at OS level)' : 'browser localStorage (less secure)'}. They are never transmitted to external servers.`}
+        />
+      </Box>
       <Typography variant="body1" color="text.secondary" paragraph>
         Manage your credentials securely using {isElectron ? 'Windows Credential Manager' : 'browser storage'}
       </Typography>

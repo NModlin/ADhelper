@@ -227,7 +227,7 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
     it('shows empty state prompt before any search', async () => {
       await renderJiraAndWait();
       expect(
-        screen.getByText('Configure Jira settings and click "Find Stale Tickets" to get started'),
+        screen.getByText('No Stale Tickets Found'),
       ).toBeInTheDocument();
     });
   });

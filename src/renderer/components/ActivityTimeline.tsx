@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { MaterialSymbol } from './MaterialSymbol';
+import { EmptyState } from './EmptyState';
 
 export interface ActivityItem {
   id: string;
@@ -47,21 +48,11 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       </Typography>
 
       {visibleItems.length === 0 ? (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            py: 6,
-            color: 'text.disabled',
-          }}
-        >
-          <MaterialSymbol icon="history" size={48} />
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            No recent activity
-          </Typography>
-        </Box>
+        <EmptyState
+          icon="history"
+          title="No recent activity"
+          description="Activity will appear here as you process AD operations and update Jira tickets."
+        />
       ) : (
         <Box sx={{ position: 'relative' }}>
           {visibleItems.map((item, idx) => {

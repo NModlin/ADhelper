@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react';
 import { ThemeProvider, alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
@@ -16,11 +16,13 @@ import ListItemText from '@mui/material/ListItemText';
 import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import Tooltip from '@mui/material/Tooltip';
+import CircularProgress from '@mui/material/CircularProgress';
 import { SnackbarProvider } from 'notistack';
 import type { Action } from 'kbar';
 import { MaterialSymbol } from './components/MaterialSymbol';
 import { CommandPalette } from './components/CommandPalette';
 import { AppOnboarding } from './components/Onboarding';
+import { PageTransition } from './components/PageTransition';
 
 // Import Rehrig theme
 import { getRehrigTheme } from './theme/rehrigTheme';
@@ -32,11 +34,18 @@ import { ADConnectionProvider } from './context/ADConnectionContext';
 import ADConnectionStatus from './components/ADConnectionStatus';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Import pages
-import Dashboard from './pages/Dashboard';
-import ADHelper from './pages/ADHelper';
-import JiraUpdater from './pages/JiraUpdater';
-import Settings from './pages/Settings';
+// Lazy-loaded pages (code splitting)
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const ADHelper = lazy(() => import('./pages/ADHelper'));
+const JiraUpdater = lazy(() => import('./pages/JiraUpdater'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+// Suspense fallback — centered spinner
+const PageFallback = () => (
+  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+    <CircularProgress />
+  </Box>
+);
 
 // Sidebar dimensions
 const DRAWER_EXPANDED = 260;
@@ -191,6 +200,15 @@ function App() {
         return <Dashboard onNavigate={setCurrentPage} />;
     }
   };
+
+  // Wrap the current page in Suspense + PageTransition
+  const pageContent = (
+    <Suspense fallback={<PageFallback />}>
+      <PageTransition pageKey={currentPage}>
+        {renderPage()}
+      </PageTransition>
+    </Suspense>
+  );
 
   // ── Sidebar drawer content ───────────────────────────────────────────
   const drawerContent = (
@@ -439,7 +457,7 @@ function App() {
                 {drawerContent}
               </Drawer>
 
-              {/* Desktop permanent drawer */}
+              {/* Desktop permanent drawer — glassmorphism */}
               <Drawer
                 variant="permanent"
                 open
@@ -450,6 +468,11 @@ function App() {
                     width: sidebarWidth,
                     transition: 'width 0.3s cubic-bezier(0.2, 0, 0, 1)',
                     overflowX: 'hidden',
+                    backdropFilter: 'blur(12px)',
+                    backgroundColor: (t) =>
+                      t.palette.mode === 'light'
+                        ? alpha('#FFFFFF', 0.85)
+                        : alpha('#161B22', 0.85),
                     borderRight: (t) =>
                       `1px solid ${t.palette.mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
                   },
@@ -483,7 +506,7 @@ function App() {
             >
               <Box sx={{ flexGrow: 1, p: 3 }}>
                 <ErrorBoundary sectionName={currentLabel}>
-                  {renderPage()}
+                  {pageContent}
                 </ErrorBoundary>
               </Box>
 

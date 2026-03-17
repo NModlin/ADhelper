@@ -18,6 +18,8 @@ import {
 import { MaterialSymbol } from '../components/MaterialSymbol';
 import { DataTable, DataColumn } from '../components/DataTable';
 import { PageSkeleton } from '../components/ContentSkeleton';
+import { EmptyState } from '../components/EmptyState';
+import { HelpTooltip } from '../components/HelpTooltip';
 import { electronAPI } from '../electronAPI';
 import { useNotification } from '../hooks/useNotification';
 
@@ -163,9 +165,15 @@ const JiraUpdater: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Jira 48h Updater
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h4" gutterBottom>
+          Jira 48h Updater
+        </Typography>
+        <HelpTooltip
+          title="Jira 48h Updater"
+          content="Finds Jira tickets that haven't been updated in 48 hours and performs a bulk action (comment, status change, or reassignment) to keep them active."
+        />
+      </Box>
       <Typography variant="body1" color="text.secondary" paragraph>
         Automatically find and update Jira tickets that haven't been touched in 48 hours
       </Typography>
@@ -295,11 +303,12 @@ const JiraUpdater: React.FC = () => {
           )}
 
           {tickets.length === 0 && !loading && (
-            <Paper sx={{ p: 3, textAlign: 'center' }}>
-              <MaterialSymbol icon="assignment" size={60} sx={{ color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
-                Configure Jira settings and click "Find Stale Tickets" to get started
-              </Typography>
+            <Paper sx={{ p: 3 }}>
+              <EmptyState
+                icon="assignment"
+                title="No Stale Tickets Found"
+                description='Configure your Jira credentials and click "Find Stale Tickets" to scan for tickets that haven&#39;t been updated in 48 hours.'
+              />
             </Paper>
           )}
         </Grid>

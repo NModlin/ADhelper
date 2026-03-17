@@ -34,6 +34,7 @@ import { MaterialSymbol } from '../components/MaterialSymbol';
 import StepperForm, { type FormStep } from '../components/StepperForm';
 import { PageSkeleton } from '../components/ContentSkeleton';
 import Terminal from '../components/Terminal';
+import { HelpTooltip } from '../components/HelpTooltip';
 import { electronAPI, isElectron } from '../electronAPI';
 
 /** Extract a percentage (0–100) from a PowerShell progress line, or return null */
@@ -597,9 +598,15 @@ const ADHelper: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Box>
-          <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
-            Active Directory Helper
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+              Active Directory Helper
+            </Typography>
+            <HelpTooltip
+              title="AD Helper"
+              content="Manage Active Directory user groups, proxy addresses, MFA removal, and contractor onboarding/offboarding. Requires AD credentials configured in Settings."
+            />
+          </Box>
           <Typography variant="body1" color="text.secondary" paragraph>
             Manage user groups and proxy addresses
           </Typography>
