@@ -26,6 +26,8 @@ export interface SiteConfig {
   id: string;
   name: string;
   groups: string[];
+  /** Optional Jira project key used for site-based ticket filtering (e.g. "ORL", "PHX") */
+  jiraProjectKey?: string;
 }
 
 interface SiteManagementProps {
@@ -38,6 +40,7 @@ const SiteManagement: React.FC<SiteManagementProps> = ({ onSitesChange }) => {
   const [editingSite, setEditingSite] = useState<SiteConfig | null>(null);
   const [siteName, setSiteName] = useState('');
   const [siteGroups, setSiteGroups] = useState('');
+  const [jiraProjectKey, setJiraProjectKey] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -61,10 +64,12 @@ const SiteManagement: React.FC<SiteManagementProps> = ({ onSitesChange }) => {
       setEditingSite(site);
       setSiteName(site.name);
       setSiteGroups(site.groups.join('\n'));
+      setJiraProjectKey(site.jiraProjectKey || '');
     } else {
       setEditingSite(null);
       setSiteName('');
       setSiteGroups('');
+      setJiraProjectKey('');
     }
     setDialogOpen(true);
     setError('');
@@ -75,6 +80,7 @@ const SiteManagement: React.FC<SiteManagementProps> = ({ onSitesChange }) => {
     setEditingSite(null);
     setSiteName('');
     setSiteGroups('');
+    setJiraProjectKey('');
     setError('');
   };
 
@@ -98,6 +104,7 @@ const SiteManagement: React.FC<SiteManagementProps> = ({ onSitesChange }) => {
       id: editingSite?.id || `site-${Date.now()}`,
       name: siteName.trim(),
       groups,
+      ...(jiraProjectKey.trim() ? { jiraProjectKey: jiraProjectKey.trim().toUpperCase() } : {}),
     };
 
     try {
@@ -174,12 +181,15 @@ const SiteManagement: React.FC<SiteManagementProps> = ({ onSitesChange }) => {
             <ListItem key={site.id} sx={{ bgcolor: '#f5f5f5', mb: 1, borderRadius: 1 }}>
               <ListItemText
                 primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                     <LocationOnIcon sx={{ color: '#0536B6' }} />
                     <Typography variant="subtitle1" fontWeight="bold">
                       {site.name}
                     </Typography>
                     <Chip label={`${site.groups.length} groups`} size="small" color="primary" />
+                    {site.jiraProjectKey && (
+                      <Chip label={`Jira: ${site.jiraProjectKey}`} size="small" color="secondary" variant="outlined" />
+                    )}
                   </Box>
                 }
                 secondary={
@@ -234,6 +244,18 @@ const SiteManagement: React.FC<SiteManagementProps> = ({ onSitesChange }) => {
             onChange={(e) => setSiteGroups(e.target.value)}
             placeholder="Enter one group DN per line, e.g.:&#10;CN=Orlando_Employees,OU=Security Groups,DC=RPL,DC=Local&#10;CN=Orlando_Building_Access,OU=Security Groups,DC=RPL,DC=Local"
             helperText="Enter one Active Directory group Distinguished Name per line"
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            fullWidth
+            label="Jira Project Key (optional)"
+            variant="outlined"
+            value={jiraProjectKey}
+            onChange={(e) => setJiraProjectKey(e.target.value)}
+            placeholder="e.g. ORL, PHX, CORP"
+            helperText="Jira project key for site-based ticket tracking. Leave blank if not used."
+            inputProps={{ maxLength: 20 }}
           />
         </DialogContent>
         <DialogActions>

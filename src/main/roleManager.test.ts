@@ -38,9 +38,9 @@ describe('RoleManager', () => {
       expect(() => roleManager.init()).not.toThrow();
     });
 
-    it('defaults to admin role when no config file exists', () => {
+    it('defaults to operator role when no config file exists (fail-secure)', () => {
       roleManager.init();
-      expect(roleManager.getRole()).toBe('admin');
+      expect(roleManager.getRole()).toBe('operator');
     });
 
     it('loads existing role from config file', () => {
@@ -53,23 +53,23 @@ describe('RoleManager', () => {
       expect(roleManager.getRole()).toBe('operator');
     });
 
-    it('defaults to admin when config file has invalid role', () => {
+    it('defaults to operator when config file has invalid role (fail-secure)', () => {
       fs.writeFileSync(configPath, JSON.stringify({
         role: 'superadmin',
         configuredBy: 'testuser',
         configuredAt: '2026-01-01T00:00:00.000Z',
       }), 'utf8');
       roleManager.init();
-      expect(roleManager.getRole()).toBe('admin');
+      expect(roleManager.getRole()).toBe('operator');
     });
 
-    it('defaults to admin when config file is corrupted JSON', () => {
+    it('defaults to operator when config file is corrupted JSON (fail-secure)', () => {
       fs.writeFileSync(configPath, 'not valid json{{{', 'utf8');
       roleManager.init();
-      expect(roleManager.getRole()).toBe('admin');
+      expect(roleManager.getRole()).toBe('operator');
     });
 
-    it('defaults to admin when init fails (e.g., bad path)', async () => {
+    it('defaults to operator when init fails (e.g., bad path) (fail-secure)', async () => {
       vi.resetModules();
       vi.doMock('electron', () => ({
         app: {
@@ -79,7 +79,7 @@ describe('RoleManager', () => {
       const mod = await import('./roleManager');
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mod.default.init();
-      expect(mod.default.getRole()).toBe('admin');
+      expect(mod.default.getRole()).toBe('operator');
       spy.mockRestore();
     });
   });
@@ -122,6 +122,7 @@ describe('RoleManager', () => {
   describe('hasPermission()', () => {
     it('admin has permission for all operations', () => {
       roleManager.init();
+      roleManager.setRole('admin'); // init() defaults to operator (fail-secure); elevate for this test
       expect(roleManager.hasPermission('create-new-user')).toBe(true);
       expect(roleManager.hasPermission('process-contractor-account')).toBe(true);
       expect(roleManager.hasPermission('process-bulk-users')).toBe(true);
@@ -153,7 +154,8 @@ describe('RoleManager', () => {
     it('returns config with current role', () => {
       roleManager.init();
       const config = roleManager.getConfig();
-      expect(config.role).toBe('admin');
+      // init() with no saved config file defaults to 'operator' (fail-secure)
+      expect(config.role).toBe('operator');
       expect(config.configuredBy).toBeTruthy();
       expect(config.configuredAt).toBeTruthy();
     });
@@ -174,9 +176,10 @@ describe('RoleManager', () => {
       expect(ops).toContain('create-new-user');
       expect(ops).toContain('process-contractor-account');
       expect(ops).toContain('process-bulk-users');
+      expect(ops).toContain('update-display-name');
       expect(ops).toContain('set-user-role');
       expect(ops).toContain('jira-bulk-update');
-      expect(ops.length).toBe(5);
+      expect(ops.length).toBe(6);
     });
   });
 });

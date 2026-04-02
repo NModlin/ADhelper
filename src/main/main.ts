@@ -8,7 +8,30 @@ import auditLogger from './auditLogger';
 import roleManager from './roleManager';
 import { rateLimited } from './rateLimiter';
 import config from './config';
-import { registerJiraHandlers } from './jiraHandler';
+import { registerJiraHandlers, startSiteTicketPoller, stopSiteTicketPoller } from './jiraHandler';
+
+// ── Input Validation Constants ──────────────────────────────────────────────
+/** Permitted operations that may be passed to the ADHelper script via IPC */
+const ALLOWED_OPERATIONS = new Set(['process', 'groups', 'proxies']);
+
+/** Permitted modes for bulk user processing */
+const ALLOWED_BULK_MODES = new Set(['groups', 'proxies', 'both']);
+
+/** sAMAccountName or UPN — matches renderer's isValidUsernameOrEmail pattern */
+const USERNAME_REGEX = /^[a-zA-Z0-9._%+-]+(@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})?$/;
+
+/**
+ * Credential username — broader than USERNAME_REGEX to support compound formats
+ * such as "url|email" used by the Jira credential store entry.
+ * Still rejects shell metacharacters (`$`, `` ` ``, `"`, `'`, `\n`, etc.).
+ */
+const CREDENTIAL_USERNAME_REGEX = /^[a-zA-Z0-9._%+\-@:/|\\]{1,512}$/;
+
+/** Site/profile IDs — alphanumeric plus hyphens and underscores, max 64 chars */
+const SITE_ID_REGEX = /^[a-zA-Z0-9_-]{1,64}$/;
+
+/** Credential target names — safe characters, no shell metacharacters, max 256 chars */
+const CREDENTIAL_TARGET_REGEX = /^[a-zA-Z0-9._/\\:@-]{1,256}$/;
 
 // ── Resource Path Resolution ────────────────────────────────────────────────
 // In development, resources (scripts, icons) live at the project root.
@@ -22,6 +45,45 @@ function getResourcePath(...segments: string[]): string {
 // ── Secure PowerShell Execution Helper ───────────────────────────────────────
 // All PowerShell execution MUST go through this helper to prevent command injection.
 // It uses -File (never -Command with user input) and passes arguments safely.
+
+// ── IPC Payload Interfaces ──────────────────────────────────────────────────
+
+/** Site location configuration stored in site-config.json */
+interface SiteConfig {
+  id: string;
+  name: string;
+  groups: string[];
+  /** Optional Jira project key used for site-based ticket filtering (e.g. "ORL", "PHX") */
+  jiraProjectKey?: string;
+}
+
+/** A single group entry within a job profile */
+interface JobProfileGroup {
+  name: string;
+  distinguishedName: string;
+}
+
+/** A job profile category with associated AD groups */
+interface JobProfile {
+  category: string;
+  groups: JobProfileGroup[];
+}
+
+/** Payload sent from the renderer when creating a new AD user */
+interface NewUserInfo {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  ou: string;
+  title?: string;
+  department?: string;
+  manager?: string;
+  managerEmail?: string;
+  siteLocation?: string;
+  /** Distinguished names of groups from the selected job profile */
+  jobProfileGroups?: string[];
+}
 
 interface PSExecutionOptions {
   /** Absolute path to the .ps1 script to execute */
@@ -280,17 +342,44 @@ app.whenReady().then(() => {
   logger.init(config.logLevel);
   auditLogger.init();
   roleManager.init();
-  registerJiraHandlers();
+  registerJiraHandlers(async (target: string) => {
+    const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
+    try {
+      return await executePowerShellScript({
+        scriptPath,
+        args: { Action: 'Get', Target: target },
+      });
+    } catch {
+      return { success: false, error: 'Credential not found' };
+    }
+  });
   logger.info('App starting', { version: app.getVersion(), env: config.isDev ? 'development' : 'production' });
 
   createWindow();
   createTray();
+
+  // Start background polling for site tickets (OS notifications on new arrivals)
+  startSiteTicketPoller(async (target: string) => {
+    const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
+    try {
+      return await executePowerShellScript({
+        scriptPath,
+        args: { Action: 'Get', Target: target },
+      });
+    } catch {
+      return { success: false, error: 'Credential not found' };
+    }
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
+});
+
+app.on('before-quit', () => {
+  stopSiteTicketPoller();
 });
 
 app.on('window-all-closed', () => {
@@ -306,15 +395,42 @@ app.on('window-all-closed', () => {
 
 // IPC Handler for running the main ADHelper script
 ipcMain.handle('run-adhelper-script', rateLimited('run-adhelper-script', async (event, username: string, operation: string) => {
+  // Validate operation against the allowlist to prevent injection of arbitrary PS operations
+  if (!ALLOWED_OPERATIONS.has(operation)) {
+    logger.warn('IPC: run-adhelper-script — rejected invalid operation', { operation });
+    return { success: false, error: `Invalid operation: "${operation}"` };
+  }
+
+  // Validate username format (sAMAccountName or UPN)
+  if (!USERNAME_REGEX.test(username)) {
+    logger.warn('IPC: run-adhelper-script — rejected invalid username', { username });
+    return { success: false, error: 'Invalid username format' };
+  }
+
+  // RBAC check
+  if (!roleManager.hasPermission('run-adhelper-script')) {
+    logger.warn('IPC: run-adhelper-script — permission denied', { username, operation });
+    return { success: false, error: 'Permission denied.' };
+  }
+
   logger.info('IPC: run-adhelper-script', { username, operation });
   const scriptPath = getResourcePath('ADhelper.ps1');
 
-  return executePowerShellScript({
-    scriptPath,
-    args: { Username: username, Operation: operation },
-    progressChannel: 'adhelper-progress',
-    sender: event.sender,
-  });
+  auditLogger.logStart('run-adhelper-script', username, { operation });
+
+  try {
+    const result = await executePowerShellScript({
+      scriptPath,
+      args: { Username: username, Operation: operation },
+      progressChannel: 'adhelper-progress',
+      sender: event.sender,
+    });
+    auditLogger.logSuccess('run-adhelper-script', username, { operation });
+    return result;
+  } catch (err: any) {
+    auditLogger.logFailure('run-adhelper-script', username, err.error || err.message || String(err));
+    throw err;
+  }
 }));
 
 // IPC Handler for MFA Blocking Group Removal
@@ -353,7 +469,7 @@ ipcMain.handle('remove-mfa-blocking', rateLimited('remove-mfa-blocking', async (
 // IPC Handler for Creating New User
 // SECURE: All user input is written to a JSON temp file, never interpolated into commands.
 // The PS bridge script reads the JSON file and deletes it after parsing.
-ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, userInfo: any) => {
+ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, userInfo: NewUserInfo) => {
   if (!roleManager.hasPermission('create-new-user')) {
     return { success: false, error: 'Permission denied. Admin role required to create new users.' };
   }
@@ -367,7 +483,7 @@ ipcMain.handle('create-new-user', rateLimited('create-new-user', async (event, u
       if (fs.existsSync(configPath)) {
         const data = fs.readFileSync(configPath, 'utf8');
         const sites = JSON.parse(data);
-        const selectedSite = sites.find((s: any) => s.id === userInfo.siteLocation);
+        const selectedSite = (sites as SiteConfig[]).find(s => s.id === userInfo.siteLocation);
         if (selectedSite) {
           siteGroups = selectedSite.groups;
           logger.info('Loaded site-specific groups', { count: siteGroups.length, site: selectedSite.name });
@@ -450,6 +566,10 @@ ipcMain.handle('process-bulk-users', rateLimited('process-bulk-users', async (ev
   if (!roleManager.hasPermission('process-bulk-users')) {
     return { success: false, error: 'Permission denied. Admin role required for bulk user processing.' };
   }
+  if (!ALLOWED_BULK_MODES.has(mode)) {
+    logger.warn('IPC: process-bulk-users — rejected invalid mode', { mode });
+    return { success: false, error: `Invalid mode: "${mode}". Must be one of: groups, proxies, both.` };
+  }
   logger.info('IPC: process-bulk-users', { count: usernames.length, mode });
   auditLogger.logStart('process-bulk-users', usernames.join(', '), { count: usernames.length, mode });
 
@@ -470,8 +590,63 @@ ipcMain.handle('process-bulk-users', rateLimited('process-bulk-users', async (ev
   }
 }));
 
+// IPC Handler for AD Display Name Update
+// SECURE: All user input is written to a JSON temp file, never interpolated into commands.
+ipcMain.handle('update-display-name', rateLimited('update-display-name', async (event, samAccountName: string, newDisplayName: string) => {
+  if (!roleManager.hasPermission('update-display-name')) {
+    return { success: false, error: 'Permission denied. Admin role required to update display names.' };
+  }
+
+  // Validate sAMAccountName format
+  if (!USERNAME_REGEX.test(samAccountName)) {
+    logger.warn('IPC: update-display-name — rejected invalid samAccountName', { samAccountName });
+    return { success: false, error: 'Invalid sAMAccountName format' };
+  }
+
+  // Validate newDisplayName — non-empty, printable chars only, max 256 chars
+  const DISPLAY_NAME_REGEX = /^[\p{L}\p{M}\p{N} ,.''\-]{1,256}$/u;
+  if (!DISPLAY_NAME_REGEX.test(newDisplayName.trim())) {
+    logger.warn('IPC: update-display-name — rejected invalid newDisplayName');
+    return { success: false, error: 'Invalid display name. Use letters, spaces, hyphens, apostrophes, and commas only.' };
+  }
+
+  logger.info('IPC: update-display-name', { samAccountName });
+  auditLogger.logStart('update-display-name', samAccountName, { newDisplayName: newDisplayName.trim() });
+
+  const scriptPath = getResourcePath('scripts', 'Update-ADDisplayName.ps1');
+
+  try {
+    const result = await executePowerShellScript({
+      scriptPath,
+      paramsFile: { samAccountName, newDisplayName: newDisplayName.trim() },
+      progressChannel: 'display-name-update-progress',
+      sender: event.sender,
+    });
+    auditLogger.logSuccess('update-display-name', samAccountName, { newDisplayName: newDisplayName.trim() });
+    return result;
+  } catch (err: any) {
+    auditLogger.logFailure('update-display-name', samAccountName, err.error || err.message || String(err));
+    throw err;
+  }
+}));
+
 // IPC Handlers for Windows Credential Manager (already safe — using -File with args)
-ipcMain.handle('save-credential', async (_event, target: string, username: string, password: string) => {
+ipcMain.handle('save-credential', rateLimited('save-credential', async (_event, target: string, username: string, password: string) => {
+  // Validate target name (safe characters, no shell metacharacters)
+  if (!CREDENTIAL_TARGET_REGEX.test(target)) {
+    logger.warn('IPC: save-credential — rejected invalid target', { target });
+    return { success: false, error: 'Invalid credential target name' };
+  }
+  // Validate username (sAMAccountName, UPN, or composite "url|email" for Jira)
+  if (!CREDENTIAL_USERNAME_REGEX.test(username)) {
+    logger.warn('IPC: save-credential — rejected invalid username', { username });
+    return { success: false, error: 'Invalid username format' };
+  }
+  // Validate password is non-empty and within a safe length limit
+  if (!password || password.length > 1024) {
+    logger.warn('IPC: save-credential — rejected invalid password length');
+    return { success: false, error: 'Invalid password: must be non-empty and under 1024 characters' };
+  }
   auditLogger.logStart('save-credential', target, { username });
   const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
   try {
@@ -485,9 +660,13 @@ ipcMain.handle('save-credential', async (_event, target: string, username: strin
     auditLogger.logFailure('save-credential', target, err.error || err.message || String(err));
     throw err;
   }
-});
+}));
 
-ipcMain.handle('get-credential', async (_event, target: string) => {
+ipcMain.handle('get-credential', rateLimited('get-credential', async (_event, target: string) => {
+  if (!CREDENTIAL_TARGET_REGEX.test(target)) {
+    logger.warn('IPC: get-credential — rejected invalid target', { target });
+    return { success: false, error: 'Invalid credential target name' };
+  }
   const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
   try {
     return await executePowerShellScript({
@@ -498,13 +677,18 @@ ipcMain.handle('get-credential', async (_event, target: string) => {
     // Return null if credential not found (not an error)
     return { success: true, username: null, password: null };
   }
-});
+}));
 
 // IPC Handlers for Site Configuration Management
-ipcMain.handle('save-site-config', async (_event, siteConfig: any) => {
+ipcMain.handle('save-site-config', rateLimited('save-site-config', async (_event, siteConfig: SiteConfig) => {
+  if (!SITE_ID_REGEX.test(siteConfig.id)) {
+    logger.warn('IPC: save-site-config — rejected invalid site id', { id: siteConfig.id });
+    return { success: false, error: 'Invalid site ID' };
+  }
+  auditLogger.logStart('save-site-config', siteConfig.id || 'unknown');
   try {
     const configPath = path.join(app.getPath('userData'), 'site-config.json');
-    let sites: any[] = [];
+    let sites: SiteConfig[] = [];
 
     // Load existing sites
     if (fs.existsSync(configPath)) {
@@ -523,13 +707,15 @@ ipcMain.handle('save-site-config', async (_event, siteConfig: any) => {
     // Save to file
     fs.writeFileSync(configPath, JSON.stringify(sites, null, 2), 'utf8');
 
+    auditLogger.logSuccess('save-site-config', siteConfig.id || 'unknown');
     return { success: true, message: 'Site configuration saved successfully' };
   } catch (error: any) {
+    auditLogger.logFailure('save-site-config', siteConfig.id || 'unknown', error.message);
     return { success: false, error: error.message };
   }
-});
+}));
 
-ipcMain.handle('get-site-configs', async (_event) => {
+ipcMain.handle('get-site-configs', rateLimited('get-site-configs', async (_event) => {
   try {
     const configPath = path.join(app.getPath('userData'), 'site-config.json');
 
@@ -544,13 +730,19 @@ ipcMain.handle('get-site-configs', async (_event) => {
   } catch (error: any) {
     return { success: false, error: error.message };
   }
-});
+}));
 
-ipcMain.handle('delete-site-config', async (_event, siteId: string) => {
+ipcMain.handle('delete-site-config', rateLimited('delete-site-config', async (_event, siteId: string) => {
+  if (!SITE_ID_REGEX.test(siteId)) {
+    logger.warn('IPC: delete-site-config — rejected invalid siteId', { siteId });
+    return { success: false, error: 'Invalid site ID' };
+  }
+  auditLogger.logStart('delete-site-config', siteId);
   try {
     const configPath = path.join(app.getPath('userData'), 'site-config.json');
 
     if (!fs.existsSync(configPath)) {
+      auditLogger.logSuccess('delete-site-config', siteId, { note: 'no config file' });
       return { success: true, message: 'No sites to delete' };
     }
 
@@ -558,16 +750,52 @@ ipcMain.handle('delete-site-config', async (_event, siteId: string) => {
     let sites = JSON.parse(data);
 
     // Remove site
-    sites = sites.filter((s: any) => s.id !== siteId);
+    sites = sites.filter((s: SiteConfig) => s.id !== siteId);
 
     // Save updated list
     fs.writeFileSync(configPath, JSON.stringify(sites, null, 2), 'utf8');
 
+    auditLogger.logSuccess('delete-site-config', siteId);
     return { success: true, message: 'Site configuration deleted successfully' };
   } catch (error: any) {
+    auditLogger.logFailure('delete-site-config', siteId, error.message);
     return { success: false, error: error.message };
   }
-});
+}));
+
+// IPC Handlers for Responsible Sites (Jira site-ownership tracking)
+ipcMain.handle('get-responsible-sites', rateLimited('get-responsible-sites', async (_event) => {
+  try {
+    const configPath = path.join(app.getPath('userData'), 'responsible-sites.json');
+    if (!fs.existsSync(configPath)) return { success: true, siteIds: [] };
+    const data = fs.readFileSync(configPath, 'utf8');
+    return { success: true, siteIds: JSON.parse(data) as string[] };
+  } catch (error: any) {
+    return { success: false, error: error.message, siteIds: [] };
+  }
+}));
+
+ipcMain.handle('save-responsible-sites', rateLimited('save-responsible-sites', async (_event, siteIds: string[]) => {
+  if (!Array.isArray(siteIds)) {
+    return { success: false, error: 'siteIds must be an array' };
+  }
+  for (const id of siteIds) {
+    if (!SITE_ID_REGEX.test(id)) {
+      logger.warn('IPC: save-responsible-sites — rejected invalid site id', { id });
+      return { success: false, error: `Invalid site ID: ${id}` };
+    }
+  }
+  auditLogger.logStart('save-responsible-sites', 'config', { siteCount: siteIds.length });
+  try {
+    const configPath = path.join(app.getPath('userData'), 'responsible-sites.json');
+    fs.writeFileSync(configPath, JSON.stringify(siteIds, null, 2), 'utf8');
+    auditLogger.logSuccess('save-responsible-sites', 'config', { siteCount: siteIds.length });
+    return { success: true, message: 'Responsible sites saved successfully' };
+  } catch (error: any) {
+    auditLogger.logFailure('save-responsible-sites', 'config', error.message);
+    return { success: false, error: error.message };
+  }
+}));
 
 // IPC Handler for AD Connection Test
 // SECURE: Uses -File to call Test-ADConnection.ps1 which uses lightweight .NET
@@ -616,11 +844,16 @@ ipcMain.handle('test-ad-connection', async (_event) => {
 });
 
 // IPC Handler for Job Profile Management
-ipcMain.handle('save-job-profiles', async (_event, siteId: string, jobProfiles: any[]) => {
+ipcMain.handle('save-job-profiles', rateLimited('save-job-profiles', async (_event, siteId: string, jobProfiles: JobProfile[]) => {
+  if (!SITE_ID_REGEX.test(siteId)) {
+    logger.warn('IPC: save-job-profiles — rejected invalid siteId', { siteId });
+    return { success: false, error: 'Invalid site ID' };
+  }
+  auditLogger.logStart('save-job-profiles', siteId, { count: jobProfiles?.length });
   try {
     const configPath = path.join(app.getPath('userData'), 'job-profiles.json');
 
-    let allProfiles: any = {};
+    let allProfiles: Record<string, JobProfile[]> = {};
 
     // Load existing profiles
     if (fs.existsSync(configPath)) {
@@ -634,13 +867,19 @@ ipcMain.handle('save-job-profiles', async (_event, siteId: string, jobProfiles: 
     // Save updated profiles
     fs.writeFileSync(configPath, JSON.stringify(allProfiles, null, 2), 'utf8');
 
+    auditLogger.logSuccess('save-job-profiles', siteId, { count: jobProfiles?.length });
     return { success: true, message: 'Job profiles saved successfully' };
   } catch (error: any) {
+    auditLogger.logFailure('save-job-profiles', siteId, error.message);
     return { success: false, error: error.message };
   }
-});
+}));
 
-ipcMain.handle('get-job-profiles', async (_event, siteId: string) => {
+ipcMain.handle('get-job-profiles', rateLimited('get-job-profiles', async (_event, siteId: string) => {
+  if (!SITE_ID_REGEX.test(siteId)) {
+    logger.warn('IPC: get-job-profiles — rejected invalid siteId', { siteId });
+    return { success: false, error: 'Invalid site ID' };
+  }
   try {
     const configPath = path.join(app.getPath('userData'), 'job-profiles.json');
 
@@ -657,9 +896,13 @@ ipcMain.handle('get-job-profiles', async (_event, siteId: string) => {
   } catch (error: any) {
     return { success: false, error: error.message };
   }
-});
+}));
 
-ipcMain.handle('delete-credential', async (_event, target: string) => {
+ipcMain.handle('delete-credential', rateLimited('delete-credential', async (_event, target: string) => {
+  if (!CREDENTIAL_TARGET_REGEX.test(target)) {
+    logger.warn('IPC: delete-credential — rejected invalid target', { target });
+    return { success: false, error: 'Invalid credential target name' };
+  }
   auditLogger.logStart('delete-credential', target);
   const scriptPath = getResourcePath('scripts', 'CredentialManager.ps1');
   try {
@@ -673,7 +916,7 @@ ipcMain.handle('delete-credential', async (_event, target: string) => {
     auditLogger.logFailure('delete-credential', target, err.error || err.message || String(err));
     throw err;
   }
-});
+}));
 
 // ── RBAC (Role-Based Access Control) IPC Handlers ──────────────────────────
 ipcMain.handle('get-user-role', async () => {
@@ -693,12 +936,15 @@ ipcMain.handle('set-user-role', async (_event, role: string) => {
     return { success: false, error: 'Invalid role. Must be "admin" or "operator".' };
   }
 
-  auditLogger.logStart('set-user-role', role, { previousRole: roleManager.getRole() });
+  // Capture the current role BEFORE mutation so both logStart and logSuccess
+  // accurately reflect the transition (previousRole → role).
+  const previousRole = roleManager.getRole();
+  auditLogger.logStart('set-user-role', role, { previousRole });
 
   try {
     const config = roleManager.setRole(role);
-    auditLogger.logSuccess('set-user-role', role, { previousRole: roleManager.getRole() });
-    logger.info('User role changed', { role, configuredBy: config.configuredBy });
+    auditLogger.logSuccess('set-user-role', role, { previousRole });
+    logger.info('User role changed', { role, previousRole, configuredBy: config.configuredBy });
     return { success: true, config };
   } catch (err: any) {
     auditLogger.logFailure('set-user-role', role, err.message || String(err));

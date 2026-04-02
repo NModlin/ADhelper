@@ -33,42 +33,42 @@ describe('electronAPI – browser mode fallback', () => {
       'testADConnection', 'saveJobProfiles', 'getJobProfiles',
       'getUserRole', 'setUserRole',
       'findStaleJiraTickets', 'bulkUpdateJiraTickets',
+      'getResponsibleSites', 'saveResponsibleSites', 'findSiteJiraTickets',
+      'onSiteTicketCount', 'removeSiteTicketCountListener',
+      'updateDisplayName', 'onDisplayNameUpdateProgress', 'removeDisplayNameUpdateProgressListener',
     ];
     for (const method of expectedMethods) {
       expect(typeof (api as any)[method]).toBe('function');
     }
   });
 
-  // ── Credential management via localStorage ─────────────────────────
-  describe('credential management (browser localStorage fallback)', () => {
-    it('saveCredential stores data and returns success', async () => {
+  // ── Credential management — browser mode (no localStorage fallback) ──
+  describe('credential management (desktop-only; returns error in browser mode)', () => {
+    it('saveCredential returns failure with desktop-only error', async () => {
       const result = await electronAPIModule.electronAPI.saveCredential('TestTarget', 'user1', 'pass1');
-      expect(result.success).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('credentials') || '{}');
-      expect(stored.TestTarget).toEqual({ username: 'user1', password: 'pass1' });
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/desktop/i);
     });
 
-    it('getCredential retrieves previously saved credentials', async () => {
-      await electronAPIModule.electronAPI.saveCredential('TestTarget', 'alice', 'secret');
+    it('getCredential returns failure with desktop-only error', async () => {
       const result = await electronAPIModule.electronAPI.getCredential('TestTarget');
-      expect(result.success).toBe(true);
-      expect(result.username).toBe('alice');
-      expect(result.password).toBe('secret');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/desktop/i);
     });
 
-    it('getCredential returns null fields for missing target', async () => {
-      const result = await electronAPIModule.electronAPI.getCredential('NonExistent');
-      expect(result.success).toBe(true);
-      expect(result.username).toBeNull();
-      expect(result.password).toBeNull();
+    it('getCredential does not return credentials from localStorage', async () => {
+      // Even if something was stored in localStorage, getCredential must not expose it
+      localStorage.setItem('credentials', JSON.stringify({ TestTarget: { username: 'u', password: 'p' } }));
+      const result = await electronAPIModule.electronAPI.getCredential('TestTarget');
+      expect(result.success).toBe(false);
+      expect(result.username).toBeUndefined();
+      expect(result.password).toBeUndefined();
     });
 
-    it('deleteCredential removes stored credential', async () => {
-      await electronAPIModule.electronAPI.saveCredential('TestTarget', 'u', 'p');
+    it('deleteCredential returns failure with desktop-only error', async () => {
       const del = await electronAPIModule.electronAPI.deleteCredential('TestTarget');
-      expect(del.success).toBe(true);
-      const result = await electronAPIModule.electronAPI.getCredential('TestTarget');
-      expect(result.username).toBeNull();
+      expect(del.success).toBe(false);
+      expect(del.error).toMatch(/desktop/i);
     });
   });
 
@@ -83,15 +83,15 @@ describe('electronAPI – browser mode fallback', () => {
     });
 
     it('saveSiteConfig updates existing config by id', async () => {
-      await electronAPIModule.electronAPI.saveSiteConfig({ id: 's1', name: 'Old' });
-      await electronAPIModule.electronAPI.saveSiteConfig({ id: 's1', name: 'New' });
+      await electronAPIModule.electronAPI.saveSiteConfig({ id: 's1', name: 'Old', groups: [] });
+      await electronAPIModule.electronAPI.saveSiteConfig({ id: 's1', name: 'New', groups: [] });
       const result = await electronAPIModule.electronAPI.getSiteConfigs();
       expect(result.sites).toHaveLength(1);
       expect(result.sites![0].name).toBe('New');
     });
 
     it('deleteSiteConfig removes the config', async () => {
-      await electronAPIModule.electronAPI.saveSiteConfig({ id: 's1', name: 'Site 1' });
+      await electronAPIModule.electronAPI.saveSiteConfig({ id: 's1', name: 'Site 1', groups: [] });
       await electronAPIModule.electronAPI.deleteSiteConfig('s1');
       const result = await electronAPIModule.electronAPI.getSiteConfigs();
       expect(result.sites).toHaveLength(0);
@@ -101,7 +101,7 @@ describe('electronAPI – browser mode fallback', () => {
   // ── Job profiles ───────────────────────────────────────────────────
   describe('job profile management (browser localStorage fallback)', () => {
     it('saveJobProfiles and getJobProfiles round-trip', async () => {
-      const profiles = [{ category: 'Engineering', groups: ['g1'] }];
+      const profiles = [{ category: 'Engineering', groups: [{ name: 'Eng Group', distinguishedName: 'CN=Eng,DC=example,DC=com' }] }];
       await electronAPIModule.electronAPI.saveJobProfiles('site1', profiles);
       const result = await electronAPIModule.electronAPI.getJobProfiles('site1');
       expect(result.success).toBe(true);
@@ -127,9 +127,9 @@ describe('electronAPI – browser mode fallback', () => {
       expect(result.connected).toBe(false);
     });
 
-    it('getUserRole returns admin in browser mode', async () => {
+    it('getUserRole returns operator in browser mode (fail-secure default)', async () => {
       const result = await electronAPIModule.electronAPI.getUserRole();
-      expect(result.role).toBe('admin');
+      expect(result.role).toBe('operator');
     });
 
     it('setUserRole returns error in browser mode', async () => {
@@ -138,9 +138,37 @@ describe('electronAPI – browser mode fallback', () => {
     });
 
     it('findStaleJiraTickets returns error in browser mode', async () => {
-      const cfg = { url: 'x', email: 'y', apiToken: 'z' };
-      const result = await electronAPIModule.electronAPI.findStaleJiraTickets(cfg, 48);
+      const result = await electronAPIModule.electronAPI.findStaleJiraTickets(48);
       expect(result.success).toBe(false);
+    });
+
+    it('findSiteJiraTickets returns error in browser mode', async () => {
+      const result = await electronAPIModule.electronAPI.findSiteJiraTickets(['ORL']);
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/desktop/i);
+    });
+  });
+
+  // ── Responsible sites — browser localStorage fallback ──────────────
+  describe('responsible sites (browser localStorage fallback)', () => {
+    it('getResponsibleSites returns empty array when nothing stored', async () => {
+      const result = await electronAPIModule.electronAPI.getResponsibleSites();
+      expect(result.success).toBe(true);
+      expect(result.siteIds).toEqual([]);
+    });
+
+    it('saveResponsibleSites persists and getResponsibleSites retrieves', async () => {
+      await electronAPIModule.electronAPI.saveResponsibleSites(['site-1', 'site-2']);
+      const result = await electronAPIModule.electronAPI.getResponsibleSites();
+      expect(result.success).toBe(true);
+      expect(result.siteIds).toEqual(['site-1', 'site-2']);
+    });
+
+    it('saveResponsibleSites overwrites previous selection', async () => {
+      await electronAPIModule.electronAPI.saveResponsibleSites(['site-1']);
+      await electronAPIModule.electronAPI.saveResponsibleSites(['site-2', 'site-3']);
+      const result = await electronAPIModule.electronAPI.getResponsibleSites();
+      expect(result.siteIds).toEqual(['site-2', 'site-3']);
     });
   });
 });

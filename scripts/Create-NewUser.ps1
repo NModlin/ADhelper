@@ -65,16 +65,15 @@ if (-not $credential) {
 
 # ── 4. Extract parameters from JSON ──────────────────────────────────────────
 $userParams = @{
-    FirstName        = $params.firstName
-    LastName         = $params.lastName
-    SamAccountName   = $params.username
-    UserPrincipalName = $params.email
-    Path             = $params.ou
+    FirstName         = $params.firstName
+    LastName          = $params.lastName
+    SamAccountName    = $params.username
+    UserPrincipalName = "$($params.username)@rehrig.com"
+    Path              = "OU=Rehrig,OU=Accounts,DC=RPL,DC=Local"
 }
 
 if (-not [string]::IsNullOrWhiteSpace($params.title))      { $userParams.Title = $params.title }
 if (-not [string]::IsNullOrWhiteSpace($params.department))  { $userParams.Department = $params.department }
-if (-not [string]::IsNullOrWhiteSpace($params.manager))     { $userParams.Manager = $params.manager }
 
 # Convert JSON arrays to PowerShell arrays
 $siteGroups = @()
@@ -88,6 +87,45 @@ if ($params.jobProfileGroups -and $params.jobProfileGroups.Count -gt 0) {
 }
 
 $managerEmail = $params.managerEmail
+
+# ── Manager lookup by display name ───────────────────────────────────────────
+$managerDN = $null
+$managerDisplayName = Read-Host "Enter manager's display name (optional, press Enter to skip)"
+if (-not [string]::IsNullOrWhiteSpace($managerDisplayName)) {
+    try {
+        $managerMatches = @(Get-ADUser -Filter "DisplayName -eq '$managerDisplayName'" `
+            -Properties DisplayName, EmailAddress, DistinguishedName `
+            -Credential $credential -ErrorAction Stop)
+
+        if ($managerMatches.Count -eq 0) {
+            Write-Warning "No AD account found for display name '$managerDisplayName'. Proceeding with no manager set."
+        }
+        elseif ($managerMatches.Count -eq 1) {
+            $managerDN = $managerMatches[0].DistinguishedName
+            Write-Host "✅ Manager resolved: $($managerMatches[0].DisplayName) ($managerDN)" -ForegroundColor Green
+        }
+        else {
+            Write-Host "Multiple users found with that display name:" -ForegroundColor Yellow
+            foreach ($m in $managerMatches) {
+                Write-Host "  - $($m.DisplayName) ($($m.EmailAddress))" -ForegroundColor Yellow
+            }
+            $disambigEmail = Read-Host "Multiple users found. Enter the manager's email address to disambiguate"
+            $emailMatches = @($managerMatches | Where-Object { $_.EmailAddress -eq $disambigEmail })
+            if ($emailMatches.Count -eq 1) {
+                $managerDN = $emailMatches[0].DistinguishedName
+                Write-Host "✅ Manager resolved: $($emailMatches[0].DisplayName) ($managerDN)" -ForegroundColor Green
+            }
+            else {
+                Write-Warning "Could not resolve manager from email address. Proceeding with no manager set."
+            }
+        }
+    }
+    catch {
+        Write-Warning "Manager lookup failed: $($_.Exception.Message). Proceeding with no manager set."
+    }
+}
+
+if (-not [string]::IsNullOrWhiteSpace($managerDN)) { $userParams.Manager = $managerDN }
 
 # ── 5. Create user ───────────────────────────────────────────────────────────
 try {
@@ -128,8 +166,8 @@ try {
     # ── 6. Add user to groups ────────────────────────────────────────────────
     Write-Host "`nAdding user to groups..." -ForegroundColor Cyan
 
-    if ($siteGroups.Count -gt 0 -or $jobProfileGroups.Count -gt 0) {
-        $groupSuccess = Add-UserToStandardGroups -SamAccountName $userParams.SamAccountName -Credential $credential -AdditionalGroups $siteGroups -JobProfileGroups $jobProfileGroups
+    if ($siteGroups.Count -gt 0) {
+        $groupSuccess = Add-UserToStandardGroups -SamAccountName $userParams.SamAccountName -Credential $credential -AdditionalGroups $siteGroups
     }
     else {
         $groupSuccess = Add-UserToStandardGroups -SamAccountName $userParams.SamAccountName -Credential $credential
@@ -137,6 +175,20 @@ try {
 
     if (-not $groupSuccess) {
         Write-Warning "Some groups failed to be added, but user was created successfully."
+    }
+
+    # Apply job profile groups individually with a status line per group
+    if ($jobProfileGroups.Count -gt 0) {
+        Write-Host "`nApplying job profile groups..." -ForegroundColor Cyan
+        foreach ($group in $jobProfileGroups) {
+            try {
+                Add-ADGroupMember -Identity $group -Members $userParams.SamAccountName -Credential $credential -ErrorAction Stop
+                Write-Host "✅ Added to group: $group" -ForegroundColor Green
+            }
+            catch {
+                Write-Warning "Failed to add user to group '$group': $($_.Exception.Message)"
+            }
+        }
     }
 
     # ── 7. Send email to manager ─────────────────────────────────────────────

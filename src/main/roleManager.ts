@@ -6,13 +6,14 @@
  *   - operator: Standard operations only (process user, MFA removal, AD test)
  *
  * Role is stored in %APPDATA%/adhelper-app/rbac-config.json
- * Default role is "admin" for backward compatibility.
+ * Default role is "operator" (fail-secure). Admin access requires explicit configuration.
  */
 
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
 import os from 'os';
+import logger from './logger';
 
 export type UserRole = 'admin' | 'operator';
 
@@ -27,13 +28,14 @@ const ADMIN_ONLY_OPERATIONS = new Set([
   'create-new-user',
   'process-contractor-account',
   'process-bulk-users',
+  'update-display-name',
   'set-user-role',
   'jira-bulk-update',
 ]);
 
 class RoleManager {
   private configPath = '';
-  private cachedRole: UserRole = 'admin';
+  private cachedRole: UserRole = 'operator';
 
   /** Call after app.whenReady() */
   init(): void {
@@ -43,8 +45,8 @@ class RoleManager {
       this.loadRole();
     } catch (err) {
       console.error('[RoleManager] Failed to initialize:', err);
-      // Default to admin for backward compatibility
-      this.cachedRole = 'admin';
+      // Default to operator (fail-secure) when init fails
+      this.cachedRole = 'operator';
     }
   }
 
@@ -97,8 +99,9 @@ class RoleManager {
     if (config && (config.role === 'admin' || config.role === 'operator')) {
       this.cachedRole = config.role;
     } else {
-      // Default to admin for backward compatibility
-      this.cachedRole = 'admin';
+      // Default to operator (fail-secure) — admin requires explicit configuration
+      logger.warn('[RoleManager] No valid RBAC config found — defaulting to operator role (fail-secure)');
+      this.cachedRole = 'operator';
     }
   }
 

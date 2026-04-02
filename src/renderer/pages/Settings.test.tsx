@@ -62,6 +62,14 @@ vi.mock('../electronAPI', () => ({
     setUserRole: vi.fn(),
     findStaleJiraTickets: vi.fn(),
     bulkUpdateJiraTickets: vi.fn(),
+    getResponsibleSites: vi.fn().mockResolvedValue({ success: true, siteIds: [] }),
+    saveResponsibleSites: vi.fn().mockResolvedValue({ success: true }),
+    findSiteJiraTickets: vi.fn().mockResolvedValue({ success: true, tickets: [] }),
+    onSiteTicketCount: vi.fn(),
+    removeSiteTicketCountListener: vi.fn(),
+    updateDisplayName: vi.fn(),
+    onDisplayNameUpdateProgress: vi.fn(),
+    removeDisplayNameUpdateProgressListener: vi.fn(),
   },
   get isElectron() { return mocks.isElectron; },
 }));
@@ -314,7 +322,9 @@ describe('Settings Page', () => {
   describe('Site Management Section', () => {
     it('renders Site Location Management section', async () => {
       await renderSettingsAndWait();
-      expect(screen.getByText('Site Location Management')).toBeInTheDocument();
+      // The text appears in both the section heading and inside SiteManagement component
+      const matches = screen.getAllByText('Site Location Management');
+      expect(matches.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

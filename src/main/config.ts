@@ -46,6 +46,9 @@ const config = {
 
   /** Vite dev server host */
   devServerHost: envString('ADHELPER_DEV_HOST', 'localhost'),
+
+  /** How often the site-ticket background poller runs (ms) — override with ADHELPER_SITE_POLL_MS */
+  siteTicketPollIntervalMs: envInt('ADHELPER_SITE_POLL_MS', 5 * 60 * 1000),
 } as const;
 
 export default config;

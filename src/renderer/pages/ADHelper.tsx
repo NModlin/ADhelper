@@ -105,6 +105,14 @@ const ADHelper: React.FC = () => {
   const [bulkProgress, setBulkProgress] = useState<string[]>([]);
   const [bulkResult, setBulkResult] = useState<any>(null);
 
+  // Update Display Name Dialog State
+  const [displayNameDialogOpen, setDisplayNameDialogOpen] = useState(false);
+  const [displayNameSam, setDisplayNameSam] = useState('');
+  const [displayNameNew, setDisplayNameNew] = useState('');
+  const [displayNameLoading, setDisplayNameLoading] = useState(false);
+  const [displayNameProgress, setDisplayNameProgress] = useState<string[]>([]);
+  const [displayNameResult, setDisplayNameResult] = useState<any>(null);
+
   // Site configuration state
   const [siteConfigs, setSiteConfigs] = useState<any[]>([]);
   const [selectedSiteGroups, setSelectedSiteGroups] = useState<string[]>([]);
@@ -585,6 +593,37 @@ const ADHelper: React.FC = () => {
     }
   };
 
+  // Update Display Name Handler
+  const handleDisplayNameUpdate = async () => {
+    if (!isValidUsernameOrEmail(displayNameSam.trim())) {
+      setDisplayNameResult({ success: false, error: 'Invalid sAMAccountName format.' });
+      return;
+    }
+    if (!displayNameNew.trim()) {
+      setDisplayNameResult({ success: false, error: 'New display name cannot be blank.' });
+      return;
+    }
+
+    setDisplayNameLoading(true);
+    setDisplayNameProgress([]);
+    setDisplayNameResult(null);
+
+    try {
+      electronAPI.onDisplayNameUpdateProgress((data: string) => {
+        setDisplayNameProgress(prev => [...prev, data]);
+      });
+
+      const response = await electronAPI.updateDisplayName(displayNameSam.trim(), displayNameNew.trim());
+      setDisplayNameResult(response);
+      setDisplayNameLoading(false);
+    } catch (err: any) {
+      setDisplayNameResult({ success: false, error: err.error || 'Display name update failed' });
+      setDisplayNameLoading(false);
+    } finally {
+      electronAPI.removeDisplayNameUpdateProgressListener();
+    }
+  };
+
   const operations = [
     { id: 'groups', label: 'Add to Standard Groups', icon: <MaterialSymbol icon="group" />, color: theme.palette.primary.main },
     { id: 'proxies', label: 'Configure Proxy Addresses', icon: <MaterialSymbol icon="mail" />, color: theme.palette.primary.light },
@@ -783,6 +822,36 @@ const ADHelper: React.FC = () => {
                 }}
               >
                 Bulk User Processing
+              </Button>
+            </span>
+          </Tooltip>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Tooltip title={!isAdmin ? 'Admin role required' : ''}>
+            <span>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                disabled={!isAdmin}
+                startIcon={<MaterialSymbol icon="badge" />}
+                sx={{
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  '&:hover': {
+                    borderColor: 'primary.dark',
+                    backgroundColor: theme.palette.action.hover,
+                  },
+                }}
+                onClick={() => {
+                  setDisplayNameDialogOpen(true);
+                  setDisplayNameSam('');
+                  setDisplayNameNew('');
+                  setDisplayNameResult(null);
+                  setDisplayNameProgress([]);
+                }}
+              >
+                Update Display Name
               </Button>
             </span>
           </Tooltip>
@@ -1228,6 +1297,89 @@ const ADHelper: React.FC = () => {
           )}
           {bulkResult && (
             <Button onClick={() => setBulkDialogOpen(false)} variant="contained">
+              Close
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Update Display Name Dialog */}
+      <Dialog open={displayNameDialogOpen} onClose={() => !displayNameLoading && setDisplayNameDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+          Update AD Display Name
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {!displayNameResult && (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Updates the DisplayName and GivenName of an Active Directory account. The GivenName is
+                automatically derived from the first word of the new display name.
+              </Typography>
+              <TextField
+                fullWidth
+                label="sAMAccountName"
+                variant="outlined"
+                value={displayNameSam}
+                onChange={(e) => setDisplayNameSam(e.target.value)}
+                disabled={displayNameLoading}
+                placeholder="e.g., jsmith"
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="New Display Name"
+                variant="outlined"
+                value={displayNameNew}
+                onChange={(e) => setDisplayNameNew(e.target.value)}
+                disabled={displayNameLoading}
+                placeholder="e.g., Jane Smith"
+                helperText="Spaces allowed. GivenName will be set to the first word automatically."
+                onKeyDown={(e) => e.key === 'Enter' && !displayNameLoading && handleDisplayNameUpdate()}
+              />
+            </>
+          )}
+
+          {/* Progress output */}
+          {displayNameProgress.length > 0 && (
+            <Terminal
+              output={displayNameProgress}
+              loading={displayNameLoading}
+              title="Update Progress"
+              collapsible={false}
+              showLineNumbers={false}
+              maxHeight={200}
+              minHeight={60}
+            />
+          )}
+
+          {/* Result */}
+          {displayNameResult && (
+            <Alert severity={displayNameResult.success ? 'success' : 'error'} sx={{ mt: 2 }}>
+              {displayNameResult.success
+                ? `Display name updated successfully to "${displayNameResult.result?.NewDisplayName ?? displayNameNew}".`
+                : displayNameResult.error || 'Update failed.'}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {!displayNameResult && (
+            <>
+              <Button onClick={() => setDisplayNameDialogOpen(false)} disabled={displayNameLoading}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDisplayNameUpdate}
+                variant="contained"
+                startIcon={displayNameLoading ? <CircularProgress size={20} color="inherit" /> : undefined}
+                disabled={displayNameLoading || !displayNameSam.trim() || !displayNameNew.trim()}
+                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+              >
+                {displayNameLoading ? 'Updating...' : 'Update Display Name'}
+              </Button>
+            </>
+          )}
+          {displayNameResult && (
+            <Button onClick={() => setDisplayNameDialogOpen(false)} variant="contained">
               Close
             </Button>
           )}

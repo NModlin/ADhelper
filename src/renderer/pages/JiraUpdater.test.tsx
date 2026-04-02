@@ -54,12 +54,17 @@ vi.mock('../electronAPI', () => ({
     onBulkProcessingProgress: vi.fn(),
     removeBulkProcessingProgressListener: vi.fn(),
     saveSiteConfig: vi.fn(),
-    getSiteConfigs: vi.fn(),
+    getSiteConfigs: vi.fn().mockResolvedValue({ success: true, sites: [] }),
     deleteSiteConfig: vi.fn(),
     saveJobProfiles: vi.fn(),
     getJobProfiles: vi.fn(),
     getUserRole: vi.fn(),
     setUserRole: vi.fn(),
+    getResponsibleSites: vi.fn().mockResolvedValue({ success: true, siteIds: [] }),
+    saveResponsibleSites: vi.fn().mockResolvedValue({ success: true }),
+    findSiteJiraTickets: vi.fn().mockResolvedValue({ success: true, tickets: [] }),
+    onSiteTicketCount: vi.fn(),
+    removeSiteTicketCountListener: vi.fn(),
   },
   isElectron: true,
 }));
@@ -88,11 +93,11 @@ const renderJira = () =>
     </ThemeProvider>,
   );
 
-/** Render and wait for credential loading skeleton to clear */
+/** Render and wait for the page heading to appear */
 const renderJiraAndWait = async () => {
   renderJira();
   await waitFor(() => {
-    expect(screen.getByText('Jira 48h Updater')).toBeInTheDocument();
+    expect(screen.getByText('Jira Updater')).toBeInTheDocument();
   });
 };
 
@@ -106,14 +111,11 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
 
   // ── 1. Configuration Flow ─────────────────────────────────────────
   describe('Configuration Flow', () => {
-    it('loads saved credentials on mount and shows info toast', async () => {
-      mocks.getCredential.mockResolvedValue(SAVED_CRED);
-      renderJira();
-
-      await waitFor(() => {
-        expect(mocks.showInfo).toHaveBeenCalledWith('Credentials loaded from Settings');
-      });
-      expect(mocks.getCredential).toHaveBeenCalledWith('ADHelper_Jira');
+    it('shows info alert directing users to Settings for credentials', async () => {
+      // Credentials are no longer loaded into renderer state — the component
+      // shows a static Alert instead of credential input fields.
+      await renderJiraAndWait();
+      expect(screen.getByText(/Jira credentials are managed in/i)).toBeInTheDocument();
     });
 
     it('renders empty fields when no credentials are saved', async () => {
@@ -124,19 +126,19 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
       });
     });
 
-    it('disables Find Stale Tickets button when credentials are empty', async () => {
+    it('Find Stale Tickets button is enabled (credentials managed server-side)', async () => {
+      // The button is no longer disabled based on renderer-side credential state;
+      // it is only disabled while a request is in-flight (loading=true).
       await renderJiraAndWait();
       const btn = screen.getByRole('button', { name: /find stale tickets/i });
-      expect(btn).toBeDisabled();
+      expect(btn).not.toBeDisabled();
     });
 
-    it('enables Find Stale Tickets when all credential fields are filled', async () => {
+    it('Find Stale Tickets button is always enabled regardless of credential mock', async () => {
+      // Credentials are managed server-side; button state does not depend on them.
       mocks.getCredential.mockResolvedValue(SAVED_CRED);
-      renderJira();
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /find stale tickets/i })).not.toBeDisabled();
-      });
+      await renderJiraAndWait();
+      expect(screen.getByRole('button', { name: /find stale tickets/i })).not.toBeDisabled();
     });
   });
 
@@ -217,10 +219,9 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
       fireEvent.click(screen.getByRole('button', { name: /find stale tickets/i }));
 
       await waitFor(() => {
-        expect(mocks.findStaleJiraTickets).toHaveBeenCalledWith(
-          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: TEST_JIRA_TOKEN },
-          48,
-        );
+        // Credentials are no longer passed from the renderer; the main process
+        // retrieves them internally. Only the threshold is sent over IPC.
+        expect(mocks.findStaleJiraTickets).toHaveBeenCalledWith(48);
       });
     });
 
@@ -266,8 +267,8 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
       fireEvent.click(screen.getByRole('button', { name: /update all/i }));
 
       await waitFor(() => {
+        // Credentials are no longer passed from the renderer.
         expect(mocks.bulkUpdateJiraTickets).toHaveBeenCalledWith(
-          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: TEST_JIRA_TOKEN },
           MOCK_TICKETS,
           'comment',
           expect.stringContaining('automatically updated'),
@@ -399,7 +400,7 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
       // Should render without crashing
       renderJira();
       await waitFor(() => {
-        expect(screen.getByText('Jira 48h Updater')).toBeInTheDocument();
+        expect(screen.getByText('Jira Updater')).toBeInTheDocument();
       });
       expect(mocks.showInfo).not.toHaveBeenCalledWith('Credentials loaded from Settings');
     });
@@ -407,13 +408,14 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
 
   // ── 5. IPC Integration ────────────────────────────────────────────
   describe('IPC Integration', () => {
-    it('calls electronAPI.getCredential on mount', () => {
+    it('does NOT call electronAPI.getCredential on mount (credentials handled in main process)', () => {
       renderJira();
-      expect(mocks.getCredential).toHaveBeenCalledWith('ADHelper_Jira');
+      // Credential retrieval moved to the main process; the renderer no longer
+      // fetches them into component state.
+      expect(mocks.getCredential).not.toHaveBeenCalled();
     });
 
     it('calls electronAPI.findStaleJiraTickets with correct args', async () => {
-      mocks.getCredential.mockResolvedValue(SAVED_CRED);
       mocks.findStaleJiraTickets.mockResolvedValue({ success: true, tickets: [] });
       renderJira();
       await waitFor(() => {
@@ -423,15 +425,12 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
 
       await waitFor(() => {
         expect(mocks.findStaleJiraTickets).toHaveBeenCalledTimes(1);
-        expect(mocks.findStaleJiraTickets).toHaveBeenCalledWith(
-          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: TEST_JIRA_TOKEN },
-          48,
-        );
+        // Credentials are resolved in the main process — only the threshold is sent over IPC.
+        expect(mocks.findStaleJiraTickets).toHaveBeenCalledWith(48);
       });
     });
 
     it('calls electronAPI.bulkUpdateJiraTickets with correct args', async () => {
-      mocks.getCredential.mockResolvedValue(SAVED_CRED);
       mocks.findStaleJiraTickets.mockResolvedValue({ success: true, tickets: MOCK_TICKETS });
       mocks.bulkUpdateJiraTickets.mockResolvedValue({
         success: true,
@@ -449,8 +448,8 @@ describe('JiraUpdater – Jira Workflow Integration', () => {
 
       await waitFor(() => {
         expect(mocks.bulkUpdateJiraTickets).toHaveBeenCalledTimes(1);
+        // Credentials are resolved in the main process — only tickets, action, and value are sent over IPC.
         expect(mocks.bulkUpdateJiraTickets).toHaveBeenCalledWith(
-          { url: 'https://test.atlassian.net', email: 'user@test.com', apiToken: TEST_JIRA_TOKEN },
           MOCK_TICKETS,
           'comment',
           expect.any(String),

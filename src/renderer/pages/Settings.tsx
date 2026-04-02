@@ -13,10 +13,14 @@ import {
   Chip,
   CircularProgress,
   Skeleton,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import { MaterialSymbol } from '../components/MaterialSymbol';
 import { electronAPI, isElectron } from '../electronAPI';
 import SiteManagement from '../components/SiteManagement';
+import type { SiteConfig } from '../components/SiteManagement';
 import { useNotification } from '../hooks/useNotification';
 import { FormSkeleton } from '../components/ContentSkeleton';
 import { HelpTooltip } from '../components/HelpTooltip';
@@ -37,25 +41,31 @@ const Settings: React.FC = () => {
   const [showAdPassword, setShowAdPassword] = useState(false);
   const [adLoaded, setAdLoaded] = useState(false);
 
+  // Responsible Sites (Jira site-ownership tracking)
+  const [allSites, setAllSites] = useState<SiteConfig[]>([]);
+  const [responsibleSiteIds, setResponsibleSiteIds] = useState<string[]>([]);
+  const [responsibleSitesLoading, setResponsibleSitesLoading] = useState(false);
+
   // UI State
   const [loading, setLoading] = useState(false);
   const [credentialsLoading, setCredentialsLoading] = useState(true);
 
   // Load credentials on mount
   useEffect(() => {
-    Promise.all([loadJiraCredentials(), loadADCredentials()])
+    Promise.all([loadJiraCredentials(), loadADCredentials(), loadResponsibleSites()])
       .finally(() => setCredentialsLoading(false));
   }, []);
 
   const loadJiraCredentials = async () => {
     try {
       const result = await electronAPI.getCredential('ADHelper_Jira');
-      if (result.success && result.username && result.password) {
-        // Username format: "url|email"
+      if (result.success && result.username) {
+        // Username format: "url|email" — load public fields only; token stays in Credential Manager
         const [url, email] = result.username.split('|');
         setJiraUrl(url || '');
         setJiraEmail(email || '');
-        setJiraApiToken(result.password || '');
+        // jiraApiToken is intentionally NOT populated from storage — the field is
+        // write-only: the user enters a new token when they want to update it.
         setJiraLoaded(true);
       }
     } catch (err) {
@@ -73,6 +83,41 @@ const Settings: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load AD credentials:', err);
+    }
+  };
+
+  const loadResponsibleSites = async () => {
+    try {
+      const [sitesResult, respResult] = await Promise.all([
+        electronAPI.getSiteConfigs(),
+        electronAPI.getResponsibleSites(),
+      ]);
+      if (sitesResult.success && sitesResult.sites) setAllSites(sitesResult.sites);
+      if (respResult.success && respResult.siteIds) setResponsibleSiteIds(respResult.siteIds);
+    } catch (err) {
+      console.error('Failed to load responsible sites:', err);
+    }
+  };
+
+  const handleToggleResponsibleSite = (siteId: string) => {
+    setResponsibleSiteIds(prev =>
+      prev.includes(siteId) ? prev.filter(id => id !== siteId) : [...prev, siteId]
+    );
+  };
+
+  const handleSaveResponsibleSites = async () => {
+    setResponsibleSitesLoading(true);
+    try {
+      const result = await electronAPI.saveResponsibleSites(responsibleSiteIds);
+      if (result.success) {
+        showSuccess('Responsible sites saved!');
+      } else {
+        showError(result.error || 'Failed to save responsible sites');
+      }
+    } catch (err: any) {
+      showError(err.message || 'Failed to save responsible sites');
+    } finally {
+      setResponsibleSitesLoading(false);
     }
   };
 
@@ -175,7 +220,9 @@ const Settings: React.FC = () => {
         </Typography>
         <HelpTooltip
           title="Credential Storage"
-          content={`Credentials are stored securely using ${isElectron ? 'Windows Credential Manager (encrypted at OS level)' : 'browser localStorage (less secure)'}. They are never transmitted to external servers.`}
+          content={isElectron
+            ? 'Credentials are encrypted and stored in Windows Credential Manager (OS-level encryption). They are never transmitted to external servers.'
+            : 'Credential storage is not available in browser mode. Please use the desktop app for secure credential management.'}
         />
       </Box>
       <Typography variant="body1" color="text.secondary" paragraph>
@@ -364,7 +411,65 @@ const Settings: React.FC = () => {
               Site Location Management
             </Typography>
             <Divider sx={{ mb: 3 }} />
-            <SiteManagement />
+            <SiteManagement onSitesChange={loadResponsibleSites} />
+          </Paper>
+        </Grid>
+
+        {/* My Responsible Sites */}
+        <Grid size={12}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Typography variant="h6">
+                My Responsible Sites (Jira Tracking)
+              </Typography>
+              <HelpTooltip
+                title="Responsible Sites"
+                content="Select the sites you are in charge of. ADHelper will monitor open Jira tickets from those sites' projects and surface them in the Jira Updater page."
+              />
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+
+            {allSites.length === 0 ? (
+              <Alert severity="info">
+                No sites configured yet. Add sites in <strong>Site Location Management</strong> above, then assign a Jira Project Key to each one to enable tracking.
+              </Alert>
+            ) : (
+              <>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Check the sites you are responsible for. Only sites with a Jira Project Key set will appear in ticket tracking.
+                </Typography>
+                <FormGroup>
+                  {allSites.map((site) => (
+                    <FormControlLabel
+                      key={site.id}
+                      control={
+                        <Checkbox
+                          checked={responsibleSiteIds.includes(site.id)}
+                          onChange={() => handleToggleResponsibleSite(site.id)}
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <span>{site.name}</span>
+                          {site.jiraProjectKey
+                            ? <Chip label={`Jira: ${site.jiraProjectKey}`} size="small" color="secondary" variant="outlined" />
+                            : <Chip label="No Jira key" size="small" variant="outlined" sx={{ opacity: 0.5 }} />}
+                        </Box>
+                      }
+                    />
+                  ))}
+                </FormGroup>
+                <Button
+                  variant="contained"
+                  sx={{ mt: 2, bgcolor: '#0536B6', '&:hover': { bgcolor: '#003063' } }}
+                  startIcon={responsibleSitesLoading ? <CircularProgress size={20} color="inherit" /> : <MaterialSymbol icon="save" />}
+                  onClick={handleSaveResponsibleSites}
+                  disabled={responsibleSitesLoading}
+                >
+                  {responsibleSitesLoading ? 'Saving…' : 'Save Responsible Sites'}
+                </Button>
+              </>
+            )}
           </Paper>
         </Grid>
 
